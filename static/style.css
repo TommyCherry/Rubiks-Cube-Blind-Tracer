@@ -902,3 +902,66 @@ hr {
         font-size: 14px;
     }
 }
+
+/* Bulk scramble input and analysis */
+.bulk-input {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #dedede;
+}
+
+.bulk-input summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bulk-input textarea {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 8px 0 12px;
+    padding: 12px;
+    border: 1px solid #bfc4ca;
+    border-radius: 6px;
+    font: 0.95rem/1.6 monospace;
+    resize: vertical;
+}
+
+.bulk-results {
+    max-width: 1500px;
+    margin-top: 28px;
+    padding: 22px 24px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+.bulk-results h2 { margin-top: 0; }
+.bulk-definition { color: #666; font-size: 0.85rem; line-height: 1.6; }
+.bulk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.bulk-stats > div { padding: 16px; background: #fff; border: 1px solid #dedede; border-radius: 8px; }
+.bulk-stats strong { display: block; font-size: 1.7rem; margin-bottom: 6px; }
+.bulk-stats span { color: #666; font-size: 0.9rem; }
+.bulk-table-scroll { overflow-x: auto; }
+.bulk-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.bulk-table th, .bulk-table td { padding: 14px 12px; border-bottom: 1px solid #dedede; text-align: center; }
+.bulk-table th:first-child, .bulk-table td:first-child { text-align: left; min-width: 240px; }
+.bulk-table .bulk-memo { min-width: 140px; font-family: monospace; overflow-wrap: anywhere; }
+
+.bulk-buffer-usage {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 24px;
+}
+
+.bulk-buffer-usage .bulk-table th:first-child {
+    min-width: 0;
+}
+
+.sandwich-highlight {
+    background: #fff0be;
+    color: #694400;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+.memo-setting { display: block; margin-top: 16px; font-weight: 600; }

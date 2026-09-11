@@ -10,7 +10,9 @@
 <div class="history-results">
 
     {% if history %}
-
+        <button type="button" id="import-history-to-bulk">
+            Import All to Bulk
+        </button>
         <table class="history-table">
             <colgroup>
                 <col class="history-competition-column">
@@ -127,5 +129,25 @@
     {% endif %}
 
 </div>
+<script>
+document
+    .getElementById("import-history-to-bulk")
+    ?.addEventListener("click", () => {
+
+        const scrambles = Array.from(
+            document.querySelectorAll(".scramble-text")
+        )
+            .map(element => element.textContent.trim())
+            .filter(Boolean);
+
+        sessionStorage.setItem(
+            "importedBulkScrambles",
+            scrambles.join("\n")
+        );
+
+        window.location.href = "/";
+    });
+</script>
+
 </body>
 </html>

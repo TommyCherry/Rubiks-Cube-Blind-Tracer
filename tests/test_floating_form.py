@@ -46,14 +46,17 @@ class FloatingFormTests(unittest.TestCase):
         self.assertIn('data-order=\'["UF", "FR",', html)
         self.assertIn('data-enabled=\'["FR", "UL", "UF"]\'', html)
 
-    def test_disabled_floating_keeps_plain_memo(self):
+    def test_standalone_does_not_float_without_enabled_buffers(self):
         html = self.post([])
         self.assertNotIn('[Buffer ', html)
         self.assertIn('AB DY LD', html)
 
     def test_buffers_before_primary_are_not_used(self):
         order = ['FR', 'UF'] + [name for name in EDGE_BUFFER_OPTIONS if name not in ('UF', 'FR')]
-        self.assertNotIn('[Buffer ', self.post(['FR'], order))
+        html = self.post(['FR'], order)
+        self.assertNotIn('[Buffer Y]', html)
+        self.assertNotIn('[Buffer ', html)
+        self.assertIn('AB DY LD', html)
 
     def test_invalid_order_shows_error(self):
         self.assertIn('Invalid edge floating buffer order.', self.post(['FR'], ['UF', 'FR']))

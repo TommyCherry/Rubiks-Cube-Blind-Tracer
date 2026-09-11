@@ -83,6 +83,16 @@
             </div>
 
 
+            <details class="bulk-input" {% if bulk_scrambles or bulk_results %}open{% endif %}>
+                <summary>Bulk scramble analysis</summary>
+                <p id="bulk-help">Enter one scramble per line. Leading list numbers such as <code>1.</code> or <code>1)</code> are removed; blank lines are ignored. Uses your selected buffers, edge and corner floating settings, pseudoswap, and letter scheme.</p>
+                <label for="bulk-scrambles">Scrambles (up to 1,000)</label>
+                <textarea id="bulk-scrambles" name="bulk_scrambles" rows="7"
+                          aria-describedby="bulk-help" spellcheck="false"
+                          placeholder="R U R' U'&#10;Rw Uw Rw' Uw'">{{ bulk_scrambles }}</textarea>
+                <button type="submit" name="action" value="bulk">Trace scramble set</button>
+            </details>
+
             {% if error %}
                 <p class="error">
                     <strong>Error:</strong> {{ error }}
@@ -125,6 +135,48 @@
                 </select>
         
             </div>
+            
+            <label class="memo-setting">
+                <input
+                    type="checkbox"
+                    id="include-3twist"
+                    name="include_3twist"
+                    value="on"
+                    {% if include_3twist %}checked{% endif %}
+                >
+                Include 3-twists
+            </label>  
+            <p class="bulk-definition">
+                On non-parity scrambles with at least two more CW twists than CCW twists,
+                or vice versa, mark the final two twists from the larger group as a 3-twist
+                with the corner buffer. This changes the tracing output only and does not
+                affect the estimated algorithm count.
+            </p>
+
+            <label class="memo-setting">
+                <input type="checkbox" id="include-t2c" name="include_t2c" value="on" {% if include_t2c %}checked{% endif %}>
+                Include T2C when LTCT is not used
+            </label>
+            <p class="bulk-definition">On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm.
+                [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.</p>
+            
+            <label class="memo-setting">
+                <input type="checkbox" id="include-ltct" name="include_ltct" value="on" {% if include_ltct %}checked{% endif %}>
+                Include LTCT (UFR corner buffer)
+            </label>
+            <p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
+                Uses the two edges selected in the pseudoswap form on eligible scrambles. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
+                Balanced twist counts and non-parity scrambles are unchanged.</p>
+            
+            <label class="memo-setting">
+                <input type="checkbox" name="include_basic_sandwiching"
+                       {% if include_basic_sandwiching %}checked{% endif %}>
+                Include basic sandwiching
+            </label>
+            <p class="bulk-definition">AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE.
+                Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged.
+                Patterns are matched within each buffer’s memo, without overlapping.</p>
+
             <!-- PSEUDOSWAP SELECTORS -->
 
             <div class="pseudo-swap-settings">
@@ -196,7 +248,7 @@
                 <div>
                     <h2>Floating Settings</h2>
                     <p>
-                        Choose which buffers can be used for floating and drag them to set priority.
+                        Choose which buffers can be used for floating and drag them to set priority. Standalone cycles float only when their opening buffer is enabled in the remaining priority order: they start at a pair boundary, have even length, and open and close on the same sticker.
                     </p>
                 </div>
             </div>
@@ -885,6 +937,8 @@
             </div>
         </section>
 
+        {% include "bulk_results.html" %}
+
         <!-- MEMO -->
 
         {% if edge_memo is not none %}
@@ -910,7 +964,7 @@
                     <div class="memo-content">
 
                         <p class="memo" id="edge-memo">
-                            {{ edge_memo }}
+                            {{ edge_memo | highlight_sandwiches }}
                         </p>
 
                         <button
@@ -922,6 +976,10 @@
                         </button>
 
                     </div>
+
+                    <p class="bulk-definition">Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets.
+                        Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up.
+                        The selected edge buffer is excluded from the flip list and count.</p>
 
                 </div>
 
@@ -943,7 +1001,7 @@
                     <div class="memo-content">
 
                         <p class="memo" id="corner-memo">
-                            {{ corner_memo }}
+                            {{ corner_memo | highlight_sandwiches }}
                         </p>
 
                         <button
@@ -955,6 +1013,9 @@
                         </button>
 
                     </div>
+
+                    <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts.
+                        The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.</p>
 
                 </div>
 

@@ -1,5 +1,12 @@
 # Rubik's Cube Blindfolded Memo Tracer
-## DEVELOPER'S NOTE: next step is to look into seeing if there's a way to find what groups competitors were in for given comps
+### DEVELOPER'S NOTE:
+#### Future steps include 3-twist management including niche cases such as comm + LTCT when we have 2 same-direction twisted corners and parity
+#### Filtering bulked scrambles by algcount
+#### Clicking on a button next to the scramble to see what comp it was from (or none if it's not from your comp history)
+#### Being able to search other people's WCA IDs and their history
+#### Weakswap implementation for MBLD tracing
+#### Importing MBLD scrambles from comps
+#### Querying the WCA DB for scrambles with certain properties
 
 A web-based tool for generating blindfolded (BLD) memo traces for 3×3 Rubik's Cube scrambles.
 
@@ -12,6 +19,14 @@ The application takes a scramble, simulates the resulting cube state, and traces
 - Option 1: Enter any valid 3×3 scramble manually.
 - Option 2: Generate random 3×3 scrambles using the csTimer scramble generator.
 - Supports standard face turns and cube rotations and gracefully handles invalid inputs.
+
+### Bulk Scramble Analysis
+
+Open **Bulk scramble analysis**, paste one scramble per line, and select **Trace scramble set**. Batches support up to 1,000 scrambles and use the same primary buffers, edge and corner floating priorities, pseudoswap settings, and custom letters as individual tracing. Blank lines are ignored; invalid lines are reported individually and excluded from statistics.
+
+Each scramble shows edge and corner memo, target counts, estimated algorithm count, permutation parity, and the number of edge and corner buffers actually used. The summary shows average targets (total and by piece type), average estimated algorithms, parity percentage, average buffers, and the minimum/maximum total target count.
+
+Algorithm counts are estimates: `ceil(edge targets / 2) + ceil(corner targets / 2) + ceil(flipped edges / 2)`. In-place edge flips appear separately as `[Flips: SW NT]` using your letter scheme and are excluded from target counts. In-place corner twists appear as `[CW Twists: BQ] [CCW Twists: AR]`, with one custom letter per corner. They are excluded from target counts and add `min(cw, ccw) + abs(cw - ccw)` algorithms. Selected primary buffers are excluded from flip and twist lists and counts. Counts do not add separate parity algorithms. Parity is measured before pseudoswap. A buffer counts only if it supplies targets; edge and corner buffers count separately. Enabled edge and corner floating switches are included in buffer counts.
 
 ### Edge and Corner Tracing
 
@@ -249,3 +264,12 @@ More advanced blindfolded memo and tracing features may be added in the future.
 Random scramble generation uses the csTimer scramble-generation module.
 
 csTimer is licensed under the GNU General Public License v3.0 (GPL-3.0). See the relevant csTimer project and license information for details.
+Standalone edge and corner cycles automatically float when they start at a memo-pair boundary, contain an even number of targets including the opening/closing targets, and open and close on the same sticker. This rule requires the opening buffer to be enabled in the remaining floating priority order; the opening sticker becomes the buffer and both bookend targets are removed. For example, `VT XV` becomes `[Buffer V] TX`. Counts and buffer usage reflect this reduction.
+
+### LTCT
+
+Enable **Include LTCT** with the UFR corner buffer. On parity scrambles with unequal in-place CW/CCW twist counts (excluding the buffer), one corner from the larger group is marked `[LTCT: parity-target[twist-sticker]]` (for example, `[LTCT: V[R]]` for a CCW-twisted A corner) instead of appearing in the regular twist list. Eligible scrambles use the two edges selected in the pseudoswap form. The combined parity/twist algorithm saves one algorithm against the separate twist estimate; target counts exclude the twist as before. Balanced twist counts and non-parity scrambles are unchanged. Bulk results report the number of scrambles using LTCT.
+
+### T2C fallback
+
+Enable **Include T2C when LTCT is not used** to reserve a two-piece corner cycle whose opening and closing stickers differ on the same piece. This applies only on parity scrambles and only when LTCT is not active. The chosen cycle is removed from ordinary tracing and displayed last as `[T2C: …]`, after other memo and twists. It counts as one algorithm; its three sticker targets remain included in target totals. Bulk results report how many scrambles use T2C.

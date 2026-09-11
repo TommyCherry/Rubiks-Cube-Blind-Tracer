@@ -552,7 +552,8 @@ class Cube:
         use_pseudoswap=False,
         pseudoswap_edge_1=None,
         pseudoswap_edge_2=None,
-        floating_buffers=None
+        floating_buffers=None,
+        auto_standalone=False
     ):
         """Trace edges, optionally switching through enabled floating buffers.
 
@@ -573,12 +574,6 @@ class Cube:
             floating_buffers = floating_buffers[floating_buffers.index(buffer) + 1:]
 
         parity = self.has_parity()
-
-        print("\n--- PSEUDOSWAP DEBUG ---")
-        print("parity:", parity)
-        print("use_pseudoswap:", use_pseudoswap)
-        print("pseudoswap_edge_1:", pseudoswap_edge_1)
-        print("pseudoswap_edge_2:", pseudoswap_edge_2)
 
         if use_pseudoswap and parity:
             target_perm = self.get_edge_target_perm(
@@ -614,11 +609,6 @@ class Cube:
         # Track the buffer piece's orientation as cycles are traced.
         buffer_ori = starting_buffer_ori
 
-        print("\n--- EDGE FLOATING START ---")
-        print("buffer:", buffer)
-        print("buffer piece starting position:", buffer_piece_position)
-        print("starting_buffer_ori:", starting_buffer_ori)
-
         # ---------------------------------------------------------
         # Trace the selected buffer
         # ---------------------------------------------------------
@@ -650,12 +640,6 @@ class Cube:
                 starting_buffer_ori ^ initial_closing_ori
             )
 
-            print("\n--- AFTER INITIAL EDGE CYCLE ---")
-            print("targets:", targets)
-            print("initial_closing_ori:", initial_closing_ori)
-            print("buffer_ori:", buffer_ori)
-            print("buffer_target_count:", buffer_target_count)
-
             # If orientation is now 0, the selected buffer is solved.
             if buffer_ori == 0:
                 buffer_solved_at = buffer_target_count
@@ -668,12 +652,6 @@ class Cube:
 
             if buffer_ori == 0:
                 buffer_solved_at = 0
-
-        print("\n--- AFTER INITIAL EDGE BUFFER PROCESSING ---")
-        print("tracked buffer position:", buffer_piece_position)
-        print("tracked buffer orientation:", buffer_ori)
-        print("buffer_target_count:", buffer_target_count)
-        print("buffer_solved_at:", buffer_solved_at)
 
         # ---------------------------------------------------------
         # Trace remaining cycles
@@ -736,6 +714,28 @@ class Cube:
                     opportunity_recorded = False
                     continue
 
+            # A complete even cycle at a pair boundary can use its own
+            # opening sticker as buffer, omitting both cycle-break targets.
+            if (auto_standalone and cycle_break in floating_buffers
+                    and len(trace) % 2 == 0):
+                standalone_targets, standalone_visited, closing_ori = self.trace_edge_cycle(cycle_break, target_perm)
+                if standalone_targets and len(standalone_targets) % 2 == 0 and closing_ori == 0:
+                    floating_opportunities.append({
+                        "after_target": len(trace),
+                        "from_buffer": buffer,
+                        "to_buffer": cycle_break,
+                        "standalone": True,
+                    })
+                    buffer = cycle_break
+                    trace.extend(standalone_targets)
+                    cycles.append(standalone_targets.copy())
+                    visited.update(standalone_visited)
+                    buffer_ori = 0
+                    buffer_target_count = len(trace)
+                    buffer_solved_at = buffer_target_count
+                    opportunity_recorded = False
+                    continue
+
             cycle_breaks.append(cycle_break)
 
             # Opening cycle-break target always has orientation 0.
@@ -757,12 +757,6 @@ class Cube:
 
             cycles.append(cycle)
 
-            print("\n--- EDGE CYCLE BREAK ---")
-            print("cycle break:", cycle_break)
-            print("targets:", targets)
-            print("closing_ori:", closing_ori)
-            print("buffer_ori BEFORE:", buffer_ori)
-
             # -----------------------------------------------------
             # Track progress toward solving the selected buffer.
             # -----------------------------------------------------
@@ -773,8 +767,6 @@ class Cube:
                 # Apply this cycle's orientation effect to the
                 # original selected buffer piece.
                 buffer_ori ^= closing_ori
-
-                print("buffer_ori AFTER:", buffer_ori)
 
                 # Once the buffer piece is oriented, the selected
                 # buffer has become completely solved.
@@ -830,17 +822,6 @@ class Cube:
             ) % 3
 
             if next_piece == start:
-                print("--- CYCLE CLOSE ---")
-                print("start:", start)
-                print("current:", current)
-                print("current_sticker_ori:", current_sticker_ori)
-                print("corner_ori[current]:", self.corner_ori[current])
-                print("next_sticker_ori:", next_sticker_ori)
-                print(
-                    "closing target:",
-                    CORNER_TARGET_NAMES[(next_piece, next_sticker_ori)]
-                )
-
                 return targets, visited, next_sticker_ori
 
             targets.append((next_piece, next_sticker_ori))
@@ -869,8 +850,24 @@ class Cube:
         buffer=UFR,
         return_cycle_breaks=False,
         return_cycles=False,
-        return_floating=False
+        return_floating=False,
+        floating_buffers=None,
+        auto_standalone=False
     ):
+        """Trace corners, switching to enabled buffers after solved pairs.
+
+        Buffer priorities and switch records follow the edge tracing API.
+        With no floating buffers, retain fixed-buffer tracing.
+        """
+        floating_buffers = list(floating_buffers or [])
+        if any(type(position) is not int or position not in range(8)
+               for position in floating_buffers):
+            raise ValueError("Floating buffers must be corner position IDs (0–7).")
+        if len(set(floating_buffers)) != len(floating_buffers):
+            raise ValueError("Floating buffers must not contain duplicates.")
+        if buffer in floating_buffers:
+            floating_buffers = floating_buffers[floating_buffers.index(buffer) + 1:]
+        opportunity_recorded = False
         trace = []
         visited = set()
         cycle_breaks = []
@@ -962,15 +959,64 @@ class Cube:
             if (
                 buffer_solved_at is not None
                 and buffer_solved_at % 2 == 0
-                and not floating_opportunities
+                and not opportunity_recorded
             ):
+                opportunity_recorded = True
                 floating_opportunities.append({
                     "after_target": buffer_solved_at
                 })
+                next_buffer = next((
+                    position for position in floating_buffers
+                    if position not in visited
+                    and (self.corner_perm[position] != position
+                         or self.corner_ori[position] != 0)
+                ), None)
+                if next_buffer is not None:
+                    floating_opportunities[-1].update({
+                        "from_buffer": buffer,
+                        "to_buffer": next_buffer,
+                    })
+                    buffer = next_buffer
+                    floating_buffers = floating_buffers[
+                        floating_buffers.index(next_buffer) + 1:
+                    ]
+                    targets, cycle_visited, closing_ori = self.trace_corner_cycle(buffer)
+                    trace.extend(targets)
+                    visited.update(cycle_visited)
+                    if targets:
+                        cycles.append(targets.copy())
+                    # Closing orientation is the negative sum of cycle twists.
+                    buffer_ori = (-closing_ori) % 3
+                    buffer_target_count = len(trace)
+                    buffer_solved_at = buffer_target_count if buffer_ori == 0 else None
+                    opportunity_recorded = False
+                    continue
 
             # -----------------------------------------------------
             # Trace the cycle break normally.
             # -----------------------------------------------------
+
+            # A complete even cycle at a pair boundary can use its own
+            # opening sticker as buffer, omitting both cycle-break targets.
+            if (auto_standalone and cycle_break in floating_buffers
+                    and len(trace) % 2 == 0):
+                standalone_targets, standalone_visited, closing_ori = self.trace_corner_cycle(cycle_break)
+                if standalone_targets and len(standalone_targets) % 2 == 0 and closing_ori == 0:
+                    floating_opportunities.append({
+                        "after_target": len(trace),
+                        "from_buffer": buffer,
+                        "to_buffer": cycle_break,
+                        "standalone": True,
+                    })
+                    buffer = cycle_break
+                    trace.extend(standalone_targets)
+                    cycles.append(standalone_targets.copy())
+                    visited.update(standalone_visited)
+                    buffer_ori = 0
+                    buffer_target_count = len(trace)
+                    buffer_solved_at = buffer_target_count
+                    opportunity_recorded = False
+                    continue
 
             cycle_breaks.append(cycle_break)
 
@@ -1271,16 +1317,3 @@ if __name__ == "__main__":
 
     edge_letters = convert_to_letters(edge_targets)
     corner_letters = convert_to_letters(corner_targets)
-
-    print("\nEdge trace:")
-    print(" ".join(edge_targets))
-
-    print("Edge memo:")
-    print(format_memo(edge_letters))
-
-    print("\nCorner trace:")
-    print(" ".join(corner_targets))
-
-    print("Corner memo:")
-    print(format_memo(corner_letters))
-    

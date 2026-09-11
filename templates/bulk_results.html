@@ -1,0 +1,80 @@
+{% if bulk_results %}
+<section class="bulk-results" aria-labelledby="bulk-title">
+    <h2 id="bulk-title">Scramble set results</h2>
+    {% if bulk_stats %}
+    <p>{{ bulk_stats.count }} scrambles traced · {{ bulk_stats.failed }} invalid lines excluded from statistics.</p>
+    <p><strong>Basic sandwiching: {{ 'Enabled' if include_basic_sandwiching else 'Disabled' }}.</strong>
+        {% if include_basic_sandwiching %}
+        {{ bulk_stats.sandwich_count }} sandwiches in {{ bulk_stats.sandwich_scrambles }} / {{ bulk_stats.count }} scrambles
+        ({{ '%.1f'|format(100 * bulk_stats.sandwich_scrambles / bulk_stats.count) }}%).
+        Matches require AB CD BE within one buffer's memo; floating can remove these patterns.
+        {% else %}
+        Enable “Include basic sandwiching” above and re-submit to analyze sandwiches.
+        {% endif %}
+    </p>
+    <p><strong>LTCT: {{ 'Enabled' if include_ltct else 'Disabled' }}.</strong>
+        {{ bulk_stats.ltct_count }} scrambles use parity plus one leftover corner twist in a combined algorithm.</p>
+    <p><strong>T2C: {{ 'Enabled' if include_t2c else 'Disabled' }}.</strong>
+        {{ bulk_stats.t2c_count }} scrambles use a final T2C algorithm.</p>
+    <div class="bulk-stats">
+        <div><strong>{{ '%.2f'|format(bulk_stats.target_count) }}</strong><span>Average targets</span></div>
+        <div><strong>{{ '%.2f'|format(bulk_stats.alg_count) }}</strong><span>Average estimated algorithms</span></div>
+        <div><strong>{{ '%.1f'|format(bulk_stats.parity_percent) }}%</strong><span>Permutation parity</span></div>
+        <div><strong>{{ '%.2f'|format(bulk_stats.buffers_used) }}</strong><span>Average buffers used</span></div>
+    </div>
+    <p>Average targets: {{ '%.2f'|format(bulk_stats.edge_count) }} edges / {{ '%.2f'|format(bulk_stats.corner_count) }} corners.
+       Average buffers: {{ '%.2f'|format(bulk_stats.edge_buffers_used) }} edges / {{ '%.2f'|format(bulk_stats.corner_buffers_used) }} corners.
+       Total target range: {{ bulk_stats.min_targets }}–{{ bulk_stats.max_targets }}.</p>
+    <h3>Buffer usage by scramble</h3>
+    <p class="bulk-definition">Each percentage is out of all {{ bulk_stats.count }} valid scrambles.
+        A buffer counts once per scramble when used for targets. Multiple buffers can be used in one scramble, so percentages may add up to more than 100%.</p>
+    <div class="bulk-buffer-usage">
+        {% for label, usage in [('Edge buffers', bulk_stats.edge_buffer_usage), ('Corner buffers', bulk_stats.corner_buffer_usage)] %}
+        <div>
+            <h4>{{ label }}</h4>
+            <table class="bulk-table">
+                <thead><tr><th scope="col">Buffer</th><th scope="col">Scrambles</th><th scope="col">Usage</th></tr></thead>
+                <tbody>
+                    {% for buffer in usage %}
+                    <tr><th scope="row">{{ buffer.name }}</th><td>{{ buffer.count }} / {{ bulk_stats.count }}</td><td>{{ '%.1f'|format(buffer.percent) }}%</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No valid scrambles to summarize. Correct the flagged lines and submit again.</p>
+    {% endif %}
+    <p class="bulk-definition">Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets.
+        Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.</p>
+    <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner.
+        Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts.</p>
+    <p class="bulk-definition">Estimated algorithms = ceil(edge targets ÷ 2) + ceil(corner targets ÷ 2) + ceil(flipped edges ÷ 2) + min(CW twists, CCW twists) + |CW twists − CCW twists|.
+        A marked T2C cycle counts as one final algorithm; its three targets are excluded from ordinary target-pair algorithm estimates. Each applied LTCT subtracts one algorithm for the twist combined with parity. CW/CCW counts include the corner marked LTCT. When basic sandwiching is enabled, each highlighted sandwich subtracts one algorithm. Target counts stay unchanged.
+        Buffers count only those used for targets, with edges and corners counted separately.
+        Enabled edge and corner floating switches are included in buffer usage.
+        Parity describes the scrambled permutation before pseudoswap.</p>
+    <div class="bulk-table-scroll">
+        <table class="bulk-table">
+            <thead><tr><th scope="col">Line / scramble</th><th scope="col">Edge memo</th><th scope="col">Corner memo</th><th scope="col">Targets<br>Edge / corner</th><th scope="col">Est. algs</th><th scope="col">Parity</th><th scope="col">Buffers<br>Edge / corner</th></tr></thead>
+            <tbody>
+            {% for row in bulk_results %}
+                <tr>
+                    <td><strong>{{ row.line_number }}.</strong> <code>{{ row.scramble }}</code></td>
+                    {% if row.error is defined %}
+                    <td colspan="6" class="error">{{ row.error }}</td>
+                    {% else %}
+                    <td class="bulk-memo">{{ (row.edge_memo or '—') | highlight_sandwiches }}</td>
+                    <td class="bulk-memo">{{ (row.corner_memo or '—') | highlight_sandwiches }}</td>
+                    <td>{{ row.edge_count }} / {{ row.corner_count }}</td>
+                    <td>{{ row.alg_count }}</td><td>{{ row.parity }}</td>
+                    <td>{{ row.edge_buffers_used }} / {{ row.corner_buffers_used }}</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}

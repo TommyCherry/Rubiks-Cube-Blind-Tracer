@@ -1,3 +1,4 @@
+console.log("MAIN JS FILE LOADED");
 const STORAGE_KEY = "bldLetterScheme";
 const COLOR_SCHEME_STORAGE_KEY = "bldColorScheme";
 const ORIENTATION_STORAGE_KEY = "bldCubeOrientation";
@@ -553,9 +554,22 @@ function getDragAfterElement(container, x) {
 
 enableBufferDragging("edgeFloatingOrder");
 enableBufferDragging("cornerFloatingOrder");
-    
+
+
 // Run once the page is loaded
 document.addEventListener("DOMContentLoaded", () => {
+    const importedScrambles =
+        sessionStorage.getItem("importedBulkScrambles");
+
+    if (importedScrambles) {
+        const bulkInput =
+            document.getElementById("bulk-scrambles");
+
+        if (bulkInput) {
+            bulkInput.value = importedScrambles;
+            sessionStorage.removeItem("importedBulkScrambles");
+        }
+    }
 
     loadLetterScheme();
 
@@ -658,6 +672,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Reset all settings
     document
-        .getElementById("reset-all-settings")
-        .addEventListener("click", resetAllSettings);
+    .getElementById("reset-all-settings")
+    .addEventListener("click", resetAllSettings);
+
+        
 });
+
+
