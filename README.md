@@ -1,10 +1,9 @@
 # Rubik's Cube Blindfolded Memo Tracer
+## DEVELOPER'S NOTE: next step is to look into seeing if there's a way to find what groups competitors were in for given comps
 
 A web-based tool for generating blindfolded (BLD) memo traces for 3×3 Rubik's Cube scrambles.
 
 The application takes a scramble, simulates the resulting cube state, and traces the edge and corner permutation cycles needed for blindfolded solving. It supports custom buffers, custom letter schemes, cycle-break detection, orientation tracking, presence of floating opportunities, and parity-based pseudoswapping.
-
-An intended next step is to expand upon floating opportunities. As of now, the Python program only allows for availability of floating to be detected once per piece type. Later, it will be ideal to allow the user to select which floating buffers to use and in what sequence and generate memo that accounts for floating, rather than all tracing from one buffer.
 
 ## Features
 
