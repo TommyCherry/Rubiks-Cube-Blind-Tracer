@@ -1084,20 +1084,17 @@ class Cube:
         """
         Update the notation reference frame after an x rotation.
 
-        Under our convention:
-            U -> B
-            B -> D
-            D -> F
-            F -> U
+        The map stores which original face is now at each position.
+        An x rotation brings F to U, U to B, B to D, and D to F.
 
         R and L are unchanged.
         """
         old = face_map.copy()
 
-        face_map["U"] = old["B"]
-        face_map["B"] = old["D"]
-        face_map["D"] = old["F"]
-        face_map["F"] = old["U"]
+        face_map["U"] = old["F"]
+        face_map["B"] = old["U"]
+        face_map["D"] = old["B"]
+        face_map["F"] = old["D"]
 
 
     def rotate_face_map_y(self, face_map):
@@ -1157,6 +1154,8 @@ class Cube:
 
             if modifier.startswith("w"):
                 wide_modifier = modifier[1:]
+                if wide_modifier not in {"", "'", "2"}:
+                    raise ValueError(f"Invalid move: {move}")
 
                 opposite = {
                     "R": "L",

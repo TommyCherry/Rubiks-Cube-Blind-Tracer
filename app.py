@@ -440,19 +440,6 @@ def get_3bld_history(wca_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # TEMPORARY DEBUG TEST
-    cursor.execute(
-        """
-        SELECT COUNT(*) AS count
-        FROM results
-        WHERE person_id = %s
-            AND event_id = '333bf'
-        """,
-        (wca_id,)
-    )
-
-    print("3BLD result rows:", cursor.fetchone())
-
     query = """
         SELECT
             c.name AS competition_name,
@@ -463,6 +450,7 @@ def get_3bld_history(wca_id):
             r.round_type_id,
             ra.attempt_number,
             ra.value,
+            s.group_id,
             s.scramble
         FROM results r
 
@@ -476,7 +464,6 @@ def get_3bld_history(wca_id):
             ON s.competition_id = r.competition_id
             AND s.event_id = r.event_id
             AND s.round_type_id = r.round_type_id
-            AND s.group_id = 'A'
             AND s.is_extra = 0
             AND s.scramble_num = ra.attempt_number
 
@@ -488,16 +475,49 @@ def get_3bld_history(wca_id):
             c.month DESC,
             c.day DESC,
             r.round_type_id,
-            ra.attempt_number
+            ra.attempt_number,
+            s.group_id
     """
 
     cursor.execute(query, (wca_id,))
     history = cursor.fetchall()
 
+    grouped_history = []
+
+    for row in history:
+        attempt_key = (
+            row["competition_id"],
+            row["round_type_id"],
+            row["attempt_number"]
+        )
+
+        if (
+            not grouped_history
+            or grouped_history[-1]["key"] != attempt_key
+        ):
+            grouped_history.append({
+                "key": attempt_key,
+                "competition_name": row["competition_name"],
+                "competition_id": row["competition_id"],
+                "year": row["year"],
+                "month": row["month"],
+                "day": row["day"],
+                "round_type_id": row["round_type_id"],
+                "attempt_number": row["attempt_number"],
+                "value": row["value"],
+                "scrambles": []
+            })
+
+        if row["scramble"]:
+            grouped_history[-1]["scrambles"].append({
+                "group_id": row["group_id"],
+                "scramble": row["scramble"]
+            })
+
     cursor.close()
     connection.close()
 
-    return history
+    return grouped_history
 
 @app.route("/my-3bld-history")
 def my_3bld_history():

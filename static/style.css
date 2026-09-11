@@ -133,7 +133,9 @@ body {
     text-decoration: underline;
 }
 
-/* Allows user to view their past solves */
+/* ------------------------------
+   3BLD History
+------------------------------ */
 
 .history-results {
     margin-top: 24px;
@@ -142,25 +144,143 @@ body {
 
 .history-table {
     width: 100%;
-    border-collapse: collapse;
+    min-width: 960px;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 14px;
 }
 
-.history-table th,
-.history-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
-    vertical-align: top;
+.history-competition-column {
+    width: 20%;
+}
+
+.history-date-column {
+    width: 120px;
+}
+
+.history-number-column {
+    width: 76px;
+}
+
+.history-result-column {
+    width: 84px;
 }
 
 .history-table th {
+    padding: 0 12px 4px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.85rem;
     font-weight: 600;
-}
-
-.history-table td:last-child {
-    font-family: monospace;
+    color: #666;
     white-space: nowrap;
 }
+
+/* Each row encloses one attempt, including every scramble group. */
+.history-attempt td {
+    padding: 18px 12px;
+    border-top: 1px solid #dedede;
+    border-bottom: 1px solid #dedede;
+    background: #f8f9fa;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.history-attempt td:first-child {
+    border-left: 1px solid #dedede;
+    border-radius: 12px 0 0 12px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.history-attempt td:last-child {
+    border-right: 1px solid #dedede;
+    border-radius: 0 12px 12px 0;
+    text-align: left;
+}
+
+.history-attempt td:nth-child(2),
+.history-attempt td:nth-child(5) {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Container for all group scrambles */
+
+.scramble-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+/* Individual group scramble */
+
+.history-scramble {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+}
+
+
+/* Group A / Group B label */
+
+.scramble-group {
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+
+    white-space: nowrap;
+}
+
+
+/* Scramble text */
+
+.scramble-text {
+    font-family: "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+
+    white-space: normal;
+}
+
+
+/* Trace form */
+
+.trace-form {
+    margin: 0;
+}
+
+
+/* Trace button */
+
+.history-trace-button {
+    padding: 6px 12px;
+
+    border: 1px solid #aaa;
+    border-radius: 6px;
+
+    background: white;
+
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.history-trace-button:hover {
+    background: #eee;
+}
+
+
+/* Missing scramble */
+
+.no-scramble {
+    color: #888;
+    font-style: italic;
+}
+
+
 
 .tracer-header .scramble-section {
     flex-wrap: wrap;
@@ -509,10 +629,6 @@ hr {
     background: #eee;
 }
 
-.memo {
-    font-size: 26px;
-    letter-spacing: 2px;
-}
 
 /* ------------------------------
    Trace details
