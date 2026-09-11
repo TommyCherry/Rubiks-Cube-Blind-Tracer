@@ -1,0 +1,92 @@
+<div class="history-results">
+
+    {% if history %}
+
+        <table class="history-table">
+
+            <thead>
+                <tr>
+                    <th>Competition</th>
+                    <th>Date</th>
+                    <th>Round</th>
+                    <th>Attempt</th>
+                    <th>Result</th>
+                    <th>Scramble</th>
+                    <th>Trace</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for result in history %}
+
+                    <tr>
+                        <td>
+                            {{ result.competition_name }}
+                        </td>
+
+                        <td>
+                            {{ result.year }}-{{ "%02d"|format(result.month) }}-{{ "%02d"|format(result.day) }}
+                        </td>
+
+                        <td>
+                            {{ result.round_type_id }}
+                        </td>
+
+                        <td>
+                            {{ result.attempt_number }}
+                        </td>
+
+                        <td>
+                            {% if result.value == -1 %}
+                                DNF
+                            {% elif result.value == -2 %}
+                                DNS
+                            {% elif result.value == 0 %}
+                                —
+                            {% else %}
+                                {{ "%.2f"|format(result.value / 100) }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if result.scramble %}
+                                {{ result.scramble }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if result.scramble %}
+                                <form action="{{ url_for('home') }}" method="POST">
+                                    <input
+                                        type="hidden"
+                                        name="scramble"
+                                        value="{{ result.scramble }}"
+                                    >
+                        
+                                    <button type="submit">
+                                        Trace
+                                    </button>
+                                </form>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    {% else %}
+
+        <p>No official 3BLD results found.</p>
+
+    {% endif %}
+
+</div>

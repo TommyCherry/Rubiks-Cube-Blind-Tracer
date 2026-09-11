@@ -75,6 +75,114 @@ const usePseudoswap =
 const pseudoswapEdgeSelection =
     document.getElementById("pseudoswapEdgeSelection");
 
+const edgeBufferSelect =
+    document.getElementById("edge-buffer");
+
+const cornerBufferSelect =
+    document.getElementById("corner-buffer");
+
+
+function updatePrimaryFloatingBuffer(
+    selectElement,
+    checkboxName,
+    previousPrimary
+) {
+    const newPrimary =
+        selectElement.options[
+            selectElement.selectedIndex
+        ].text.trim();
+
+    const checkboxes = document.querySelectorAll(
+        `input[name="${checkboxName}"]`
+    );
+
+    checkboxes.forEach(function (checkbox) {
+
+        // Unlock the previous primary buffer
+        if (checkbox.value === previousPrimary) {
+            checkbox.disabled = false;
+        }
+
+        // Always select and lock the current primary buffer
+        if (checkbox.value === newPrimary) {
+            checkbox.checked = true;
+            checkbox.disabled = true;
+            if (previousPrimary !== null && previousPrimary !== newPrimary) {
+                const item = checkbox.closest(".floating-buffer-item");
+                item.parentElement.prepend(item);
+            }
+        }
+    });
+
+    return newPrimary;
+}
+
+
+// Restore and submit both lists, including their disabled primary checkboxes.
+for (const kind of ["edge", "corner"]) {
+    const list = document.getElementById(`${kind}FloatingOrder`);
+    const enabled = JSON.parse(list.dataset.enabled);
+    JSON.parse(list.dataset.order).forEach(function (name) {
+        const item = [...list.children].find(item => item.dataset.buffer === name);
+        item.querySelector('input[type="checkbox"]').checked = enabled.includes(name);
+        list.appendChild(item);
+    });
+
+    document.getElementById("memo-form").addEventListener("formdata", function (event) {
+        event.formData.delete(`${kind}_floating_buffers`);
+        event.formData.delete(`${kind}_floating_order`);
+        [...list.children].forEach(function (item) {
+            event.formData.append(`${kind}_floating_order`, item.dataset.buffer);
+            if (item.querySelector('input[type="checkbox"]').checked) {
+                event.formData.append(`${kind}_floating_buffers`, item.dataset.buffer);
+            }
+        });
+    });
+}
+
+document.querySelectorAll("[data-floating-select]").forEach(function (button) {
+    button.addEventListener("click", function () {
+        const list = document.getElementById(button.dataset.list);
+        list.querySelectorAll('input[type="checkbox"]').forEach(function (checkbox) {
+            checkbox.checked = checkbox.disabled || button.dataset.floatingSelect === "all";
+        });
+    });
+});
+
+let currentPrimaryEdgeBuffer =
+    updatePrimaryFloatingBuffer(
+        edgeBufferSelect,
+        "edge_floating_buffers",
+        null
+    );
+
+let currentPrimaryCornerBuffer =
+    updatePrimaryFloatingBuffer(
+        cornerBufferSelect,
+        "corner_floating_buffers",
+        null
+    );
+
+
+edgeBufferSelect.addEventListener("change", function () {
+    currentPrimaryEdgeBuffer =
+        updatePrimaryFloatingBuffer(
+            edgeBufferSelect,
+            "edge_floating_buffers",
+            currentPrimaryEdgeBuffer
+        );
+});
+
+
+cornerBufferSelect.addEventListener("change", function () {
+    currentPrimaryCornerBuffer =
+        updatePrimaryFloatingBuffer(
+            cornerBufferSelect,
+            "corner_floating_buffers",
+            currentPrimaryCornerBuffer
+        );
+});
+
 usePseudoswap.addEventListener("change", function () {
     pseudoswapEdgeSelection.hidden = !usePseudoswap.checked;
 });
@@ -363,6 +471,89 @@ function resetAllSettings() {
     updateCubeColors();
 }
 
+function enableBufferDragging(listId) {
+    const list = document.getElementById(listId);
+
+    let draggedItem = null;
+
+    list.addEventListener("dragstart", function (event) {
+        const item = event.target.closest(".floating-buffer-item");
+
+        if (!item) return;
+
+        draggedItem = item;
+
+        event.dataTransfer.effectAllowed = "move";
+
+        item.classList.add("dragging");
+    });
+
+    list.addEventListener("dragend", function () {
+        if (draggedItem) {
+            draggedItem.classList.remove("dragging");
+        }
+
+        draggedItem = null;
+    });
+
+    list.addEventListener("dragover", function (event) {
+        event.preventDefault();
+
+        event.dataTransfer.dropEffect = "move";
+
+        if (!draggedItem) return;
+
+        const afterElement = getDragAfterElement(
+            list,
+            event.clientX
+        );
+
+        if (afterElement == null) {
+            list.appendChild(draggedItem);
+        } else {
+            list.insertBefore(draggedItem, afterElement);
+        }
+    });
+}
+
+
+function getDragAfterElement(container, x) {
+    const items = [
+        ...container.querySelectorAll(
+            ".floating-buffer-item:not(.dragging)"
+        )
+    ];
+
+    return items.reduce(
+        (closest, item) => {
+            const box = item.getBoundingClientRect();
+
+            const offset =
+                x - box.left - box.width / 2;
+
+            if (
+                offset < 0 &&
+                offset > closest.offset
+            ) {
+                return {
+                    offset: offset,
+                    element: item
+                };
+            }
+
+            return closest;
+        },
+        {
+            offset: Number.NEGATIVE_INFINITY,
+            element: null
+        }
+    ).element;
+}
+
+
+enableBufferDragging("edgeFloatingOrder");
+enableBufferDragging("cornerFloatingOrder");
+    
 // Run once the page is loaded
 document.addEventListener("DOMContentLoaded", () => {
 

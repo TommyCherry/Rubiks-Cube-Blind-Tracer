@@ -551,8 +551,27 @@ class Cube:
         return_floating=False,
         use_pseudoswap=False,
         pseudoswap_edge_1=None,
-        pseudoswap_edge_2=None
+        pseudoswap_edge_2=None,
+        floating_buffers=None
     ):
+        """Trace edges, optionally switching through enabled floating buffers.
+
+        floating_buffers contains enabled edge position IDs in priority order.
+        If the starting buffer is listed, only entries after it are considered.
+        With return_floating, an actual switch adds from_buffer and to_buffer
+        to the opportunity record; after_target is its offset in the trace.
+        Omitting floating_buffers preserves the normal fixed-buffer trace.
+        """
+        floating_buffers = list(floating_buffers or [])
+        opportunity_recorded = False
+        if any(type(position) is not int or position not in range(12)
+               for position in floating_buffers):
+            raise ValueError("Floating buffers must be edge position IDs (0–11).")
+        if len(set(floating_buffers)) != len(floating_buffers):
+            raise ValueError("Floating buffers must not contain duplicates.")
+        if buffer in floating_buffers:
+            floating_buffers = floating_buffers[floating_buffers.index(buffer) + 1:]
+
         parity = self.has_parity()
 
         print("\n--- PSEUDOSWAP DEBUG ---")
@@ -670,6 +689,53 @@ class Cube:
             if cycle_break is None:
                 break
 
+            # Check before consuming the next cycle: a solved buffer can
+            # float at a pair boundary, including before the first target.
+            if (
+                buffer_solved_at is not None
+                and buffer_solved_at % 2 == 0
+                and not opportunity_recorded
+            ):
+                opportunity_recorded = True
+                floating_opportunities.append({
+                    "after_target": buffer_solved_at
+                })
+
+                next_buffer = next((
+                    position for position in floating_buffers
+                    if position not in visited
+                    and (
+                        self.edge_perm[position] != target_perm[position]
+                        or self.edge_ori[position] != 0
+                    )
+                ), None)
+
+                if next_buffer is not None:
+                    floating_opportunities[-1].update({
+                        "from_buffer": buffer,
+                        "to_buffer": next_buffer,
+                    })
+                    buffer = next_buffer
+                    floating_buffers = floating_buffers[
+                        floating_buffers.index(next_buffer) + 1:
+                    ]
+                    targets, cycle_visited, buffer_ori = self.trace_edge_cycle(
+                        buffer, target_perm
+                    )
+                    # A buffer's own cycle needs no cycle-break bookends.
+                    trace.extend(targets)
+                    visited.update(cycle_visited)
+                    if targets:
+                        cycles.append(targets.copy())
+                    buffer_target_count = len(trace)
+                    buffer_solved_at = (
+                        buffer_target_count if buffer_ori == 0 else None
+                    )
+                    # Track the new buffer independently, while offsets and
+                    # target counts remain relative to the complete memo.
+                    opportunity_recorded = False
+                    continue
+
             cycle_breaks.append(cycle_break)
 
             # Opening cycle-break target always has orientation 0.
@@ -714,36 +780,6 @@ class Cube:
                 # buffer has become completely solved.
                 if buffer_ori == 0:
                     buffer_solved_at = buffer_target_count
-
-            # -----------------------------------------------------
-            # Check whether another unsolved cycle still remains.
-            # -----------------------------------------------------
-
-            next_cycle_break = self.find_edge_cycle_break(
-                visited,
-                buffer,
-                target_perm
-            )
-
-            print("buffer_target_count:", buffer_target_count)
-            print("buffer_solved_at:", buffer_solved_at)
-            print("next_cycle_break:", next_cycle_break)
-
-            # Floating is possible if:
-            #
-            # 1. The selected buffer has become solved.
-            # 2. It took an even, nonzero number of targets.
-            # 3. Another unsolved edge cycle still remains.
-            if (
-                buffer_solved_at is not None
-                and buffer_solved_at > 0
-                and buffer_solved_at % 2 == 0
-                and next_cycle_break is not None
-                and not floating_opportunities
-            ):
-                floating_opportunities.append({
-                    "after_target": buffer_solved_at
-                })
 
         # ---------------------------------------------------------
         # Return requested tracing information
@@ -1043,24 +1079,150 @@ class Cube:
             tuple(self.corner_perm),
             tuple(self.corner_ori)
         )
+    
+    def rotate_face_map_x(self, face_map):
+        """
+        Update the notation reference frame after an x rotation.
+
+        Under our convention:
+            U -> B
+            B -> D
+            D -> F
+            F -> U
+
+        R and L are unchanged.
+        """
+        old = face_map.copy()
+
+        face_map["U"] = old["B"]
+        face_map["B"] = old["D"]
+        face_map["D"] = old["F"]
+        face_map["F"] = old["U"]
+
+
+    def rotate_face_map_y(self, face_map):
+        """
+        Update the notation reference frame after a y rotation.
+        """
+        old = face_map.copy()
+
+        face_map["F"] = old["R"]
+        face_map["R"] = old["B"]
+        face_map["B"] = old["L"]
+        face_map["L"] = old["F"]
+
+
+    def rotate_face_map_z(self, face_map):
+        """
+        Update the notation reference frame after a z rotation.
+        """
+        old = face_map.copy()
+
+        face_map["U"] = old["L"]
+        face_map["R"] = old["U"]
+        face_map["D"] = old["R"]
+        face_map["L"] = old["D"]
+
     def apply_scramble(self, scramble):
         moves = scramble.split()
 
-        valid_moves = {
-            "U", "U'", "U2",
-            "R", "R'", "R2",
-            "F", "F'", "F2",
-            "D", "D'", "D2",
-            "L", "L'", "L2",
-            "B", "B'", "B2"
+        valid_faces = {"U", "R", "F", "D", "L", "B"}
+
+        face_map = {
+            "U": "U",
+            "R": "R",
+            "F": "F",
+            "D": "D",
+            "L": "L",
+            "B": "B",
         }
 
         for move in moves:
-            if move not in valid_moves:
+
+            # Separate the face from the modifier.
+            # Examples:
+            # R  -> ("R", "")
+            # U' -> ("U", "'")
+            # F2 -> ("F", "2")
+
+            face = move[0]
+            modifier = move[1:]
+
+            if face not in valid_faces:
                 raise ValueError(f"Invalid move: {move}")
 
-            self.move(move)
+            # -------------------------------------------------
+            # Wide move
+            # -------------------------------------------------
 
+            if modifier.startswith("w"):
+                wide_modifier = modifier[1:]
+
+                opposite = {
+                    "R": "L",
+                    "L": "R",
+                    "U": "D",
+                    "D": "U",
+                    "F": "B",
+                    "B": "F",
+                }
+
+                # Turn the opposite face.
+                actual_face = face_map[opposite[face]]
+                self.move(actual_face + wide_modifier)
+
+                # Then perform the corresponding rotation.
+                rotation = {
+                    "R": ("x", 1),
+                    "L": ("x", -1),
+                    "U": ("y", 1),
+                    "D": ("y", -1),
+                    "F": ("z", 1),
+                    "B": ("z", -1),
+                }
+
+                axis, direction = rotation[face]
+
+                # Prime reverses the rotation.
+                if wide_modifier == "'":
+                    direction *= -1
+
+                # A double wide move means a 180° rotation.
+                turns = 2 if wide_modifier == "2" else 1
+
+                for _ in range(turns):
+                    if axis == "x":
+                        if direction == 1:
+                            self.rotate_face_map_x(face_map)
+                        else:
+                            for _ in range(3):
+                                self.rotate_face_map_x(face_map)
+
+                    elif axis == "y":
+                        if direction == 1:
+                            self.rotate_face_map_y(face_map)
+                        else:
+                            for _ in range(3):
+                                self.rotate_face_map_y(face_map)
+
+                    elif axis == "z":
+                        if direction == 1:
+                            self.rotate_face_map_z(face_map)
+                        else:
+                            for _ in range(3):
+                                self.rotate_face_map_z(face_map)
+
+            # -------------------------------------------------
+            # Normal face move
+            # -------------------------------------------------
+
+            else:
+                if modifier not in {"", "'", "2"}:
+                    raise ValueError(f"Invalid move: {move}")
+
+                actual_face = face_map[face]
+
+                self.move(actual_face + modifier)
 # =========================================================
 # FORMATTING
 # =========================================================
@@ -1095,6 +1257,7 @@ def format_memo(letters):
 # =========================================================
 
 if __name__ == "__main__":
+
     scramble = input("Enter scramble: ")
 
     cube = Cube()
@@ -1121,3 +1284,4 @@ if __name__ == "__main__":
 
     print("Corner memo:")
     print(format_memo(corner_letters))
+    

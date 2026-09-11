@@ -15,577 +15,875 @@
 
 <body>
 
-    <h1>Rubik's Cube Blindfolded Tracer</h1>
-
     <form method="POST" id="memo-form">
 
-        <!-- SCRAMBLE -->
+        <header class="tracer-header">
+            {% if wca_user %}
+                <div class="wca-user">
+                    {% if wca_user.avatar_url %}
+                        <img
+                            src="{{ wca_user.avatar_url }}"
+                            alt="WCA profile"
+                            class="wca-avatar"
+                        >
+                    {% endif %}
 
-        <div class="scramble-section">
+                    <div class="wca-user-info">
+                        <strong>{{ wca_user.name }}</strong>
 
-            <label for="scramble">
-                <strong>Scramble:</strong>
-            </label>
+                        {% if wca_user.wca_id %}
+                            <span>{{ wca_user.wca_id }}</span>
+                        {% endif %}
 
-            <div class="scramble-entry">
-                <input
-                    class="scramble-input"
-                    type="text"
-                    id="scramble"
-                    name="scramble"
-                    value="{{ scramble }}"
-                    placeholder="Enter a custom scramble..."
-                >
+                        <div class="wca-user-links">
+                            <a href="{{ url_for('my_3bld_history') }}">
+                                My 3BLD History
+                            </a>
+                    
+                            <a href="{{ url_for('logout') }}">
+                                Log out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <a class="wca-sign-in" href="{{ url_for('wca_login') }}">
+                    Sign in with WCA
+                </a>
+            {% endif %}
+            <h1>Rubik's Cube Blindfolded Tracer</h1>
+
+            <!-- SCRAMBLE -->
+
+            <div class="scramble-section">
+
+                <label for="scramble">
+                    <strong>Scramble:</strong>
+                </label>
+
+                <div class="scramble-entry">
+                    <input
+                        class="scramble-input"
+                        type="text"
+                        id="scramble"
+                        name="scramble"
+                        value="{{ scramble }}"
+                        placeholder="Enter a custom scramble..."
+                    >
             
-                <button type="button" id="generateScrambleButton">
-                    Generate Random Scramble
+                    <button type="button" id="generateScrambleButton">
+                        Generate Random Scramble
+                    </button>
+                </div>
+            
+                <button type="submit">
+                    Generate Memo
                 </button>
+
             </div>
-            
-            <button type="submit">
-                Generate Memo
-            </button>
-
-        </div>
 
 
-        {% if error %}
-            <p class="error">
-                <strong>Error:</strong> {{ error }}
-            </p>
-        {% endif %}
+            {% if error %}
+                <p class="error">
+                    <strong>Error:</strong> {{ error }}
+                </p>
+            {% endif %}
         
-        <!-- BUFFER SELECTORS -->
+            <!-- BUFFER SELECTORS -->
 
-        <div class="buffer-section">
+            <div class="buffer-section">
 
-            <label for="edge-buffer">
-                <strong>Edge Buffer:</strong>
-            </label>
+                <label for="edge-buffer">
+                    <strong>Edge Buffer:</strong>
+                </label>
         
-            <select id="edge-buffer" name="edge_buffer">
-                {% for buffer in edge_buffer_options %}
-                    <option
-                        value="{{ loop.index0 }}"
-                        {% if loop.index0 == edge_buffer %}selected{% endif %}
+                <select id="edge-buffer" name="edge_buffer">
+                    {% for buffer in edge_buffer_options %}
+                        <option
+                            value="{{ loop.index0 }}"
+                            {% if loop.index0 == edge_buffer %}selected{% endif %}
+                        >
+                            {{ buffer }}
+                        </option>
+                    {% endfor %}
+                </select>
+        
+        
+                <label for="corner-buffer">
+                    <strong>Corner Buffer:</strong>
+                </label>
+        
+                <select id="corner-buffer" name="corner_buffer">
+                    {% for buffer in corner_buffer_options %}
+                        <option
+                            value="{{ loop.index0 }}"
+                            {% if loop.index0 == corner_buffer %}selected{% endif %}
+                        >
+                            {{ buffer }}
+                        </option>
+                    {% endfor %}
+                </select>
+        
+            </div>
+            <!-- PSEUDOSWAP SELECTORS -->
+
+            <div class="pseudo-swap-settings">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        id="usePseudoswap"
+                        name="use_pseudoswap"
+                        {% if use_pseudoswap %}checked{% endif %}
                     >
-                        {{ buffer }}
-                    </option>
-                {% endfor %}
-            </select>
+                    Use Pseudoswap
+                </label>
         
-        
-            <label for="corner-buffer">
-                <strong>Corner Buffer:</strong>
-            </label>
-        
-            <select id="corner-buffer" name="corner_buffer">
-                {% for buffer in corner_buffer_options %}
-                    <option
-                        value="{{ loop.index0 }}"
-                        {% if loop.index0 == corner_buffer %}selected{% endif %}
-                    >
-                        {{ buffer }}
-                    </option>
-                {% endfor %}
-            </select>
-        
-        </div>
-        <!-- PSEUDOSWAP SELECTORS -->
-
-        <div class="pseudo-swap-settings">
-
-            <label>
-                <input
-                    type="checkbox"
-                    id="usePseudoswap"
-                    name="use_pseudoswap"
-                    {% if use_pseudoswap %}checked{% endif %}
+                <div
+                    id="pseudoswapEdgeSelection"
+                    {% if not use_pseudoswap %}hidden{% endif %}
                 >
-                Use Pseudoswap
-            </label>
         
-            <div
-                id="pseudoswapEdgeSelection"
-                {% if not use_pseudoswap %}hidden{% endif %}
-            >
+                    <label for="pseudoswapEdge1">
+                        First Edge
+                    </label>
         
-                <label for="pseudoswapEdge1">
-                    First Edge
-                </label>
+                    <select id="pseudoswapEdge1" name="pseudoswap_edge_1">
+                        <option value="0" {% if pseudoswap_edge_1 == 0 %}selected{% endif %}>UF</option>
+                        <option value="1" {% if pseudoswap_edge_1 == 1 %}selected{% endif %}>UB</option>
+                        <option value="2" {% if pseudoswap_edge_1 == 2 %}selected{% endif %}>UR</option>
+                        <option value="3" {% if pseudoswap_edge_1 == 3 %}selected{% endif %}>UL</option>
+                        <option value="4" {% if pseudoswap_edge_1 == 4 %}selected{% endif %}>FR</option>
+                        <option value="5" {% if pseudoswap_edge_1 == 5 %}selected{% endif %}>FL</option>
+                        <option value="6" {% if pseudoswap_edge_1 == 6 %}selected{% endif %}>DF</option>
+                        <option value="7" {% if pseudoswap_edge_1 == 7 %}selected{% endif %}>DB</option>
+                        <option value="8" {% if pseudoswap_edge_1 == 8 %}selected{% endif %}>DR</option>
+                        <option value="9" {% if pseudoswap_edge_1 == 9 %}selected{% endif %}>DL</option>
+                        <option value="10" {% if pseudoswap_edge_1 == 10 %}selected{% endif %}>BR</option>
+                        <option value="11" {% if pseudoswap_edge_1 == 11 %}selected{% endif %}>BL</option>
+                    </select>
         
-                <select id="pseudoswapEdge1" name="pseudoswap_edge_1">
-                    <option value="0" {% if pseudoswap_edge_1 == 0 %}selected{% endif %}>UF</option>
-                    <option value="1" {% if pseudoswap_edge_1 == 1 %}selected{% endif %}>UB</option>
-                    <option value="2" {% if pseudoswap_edge_1 == 2 %}selected{% endif %}>UR</option>
-                    <option value="3" {% if pseudoswap_edge_1 == 3 %}selected{% endif %}>UL</option>
-                    <option value="4" {% if pseudoswap_edge_1 == 4 %}selected{% endif %}>FR</option>
-                    <option value="5" {% if pseudoswap_edge_1 == 5 %}selected{% endif %}>FL</option>
-                    <option value="6" {% if pseudoswap_edge_1 == 6 %}selected{% endif %}>DF</option>
-                    <option value="7" {% if pseudoswap_edge_1 == 7 %}selected{% endif %}>DB</option>
-                    <option value="8" {% if pseudoswap_edge_1 == 8 %}selected{% endif %}>DR</option>
-                    <option value="9" {% if pseudoswap_edge_1 == 9 %}selected{% endif %}>DL</option>
-                    <option value="10" {% if pseudoswap_edge_1 == 10 %}selected{% endif %}>BR</option>
-                    <option value="11" {% if pseudoswap_edge_1 == 11 %}selected{% endif %}>BL</option>
-                </select>
+                    <label for="pseudoswapEdge2">
+                        Second Edge
+                    </label>
         
-                <label for="pseudoswapEdge2">
-                    Second Edge
-                </label>
+                    <select id="pseudoswapEdge2" name="pseudoswap_edge_2">
+                        <option value="0" {% if pseudoswap_edge_2 == 0 %}selected{% endif %}>UF</option>
+                        <option value="1" {% if pseudoswap_edge_2 == 1 %}selected{% endif %}>UB</option>
+                        <option value="2" {% if pseudoswap_edge_2 == 2 %}selected{% endif %}>UR</option>
+                        <option value="3" {% if pseudoswap_edge_2 == 3 %}selected{% endif %}>UL</option>
+                        <option value="4" {% if pseudoswap_edge_2 == 4 %}selected{% endif %}>FR</option>
+                        <option value="5" {% if pseudoswap_edge_2 == 5 %}selected{% endif %}>FL</option>
+                        <option value="6" {% if pseudoswap_edge_2 == 6 %}selected{% endif %}>DF</option>
+                        <option value="7" {% if pseudoswap_edge_2 == 7 %}selected{% endif %}>DB</option>
+                        <option value="8" {% if pseudoswap_edge_2 == 8 %}selected{% endif %}>DR</option>
+                        <option value="9" {% if pseudoswap_edge_2 == 9 %}selected{% endif %}>DL</option>
+                        <option value="10" {% if pseudoswap_edge_2 == 10 %}selected{% endif %}>BR</option>
+                        <option value="11" {% if pseudoswap_edge_2 == 11 %}selected{% endif %}>BL</option>
+                    </select>
         
-                <select id="pseudoswapEdge2" name="pseudoswap_edge_2">
-                    <option value="0" {% if pseudoswap_edge_2 == 0 %}selected{% endif %}>UF</option>
-                    <option value="1" {% if pseudoswap_edge_2 == 1 %}selected{% endif %}>UB</option>
-                    <option value="2" {% if pseudoswap_edge_2 == 2 %}selected{% endif %}>UR</option>
-                    <option value="3" {% if pseudoswap_edge_2 == 3 %}selected{% endif %}>UL</option>
-                    <option value="4" {% if pseudoswap_edge_2 == 4 %}selected{% endif %}>FR</option>
-                    <option value="5" {% if pseudoswap_edge_2 == 5 %}selected{% endif %}>FL</option>
-                    <option value="6" {% if pseudoswap_edge_2 == 6 %}selected{% endif %}>DF</option>
-                    <option value="7" {% if pseudoswap_edge_2 == 7 %}selected{% endif %}>DB</option>
-                    <option value="8" {% if pseudoswap_edge_2 == 8 %}selected{% endif %}>DR</option>
-                    <option value="9" {% if pseudoswap_edge_2 == 9 %}selected{% endif %}>DL</option>
-                    <option value="10" {% if pseudoswap_edge_2 == 10 %}selected{% endif %}>BR</option>
-                    <option value="11" {% if pseudoswap_edge_2 == 11 %}selected{% endif %}>BL</option>
-                </select>
+                </div>
         
+            </div>
+
+        </header>
+
+        <!-- FLOATING SETTINGS -->
+
+        <div class="floating-settings-panel">
+
+            <div class="floating-settings-header">
+                <div>
+                    <h2>Floating Settings</h2>
+                    <p>
+                        Choose which buffers can be used for floating and drag them to set priority.
+                    </p>
+                </div>
+            </div>
+        
+            <!-- Edge Floating Buffers -->
+            <div class="floating-buffer-section">
+        
+                <div class="floating-section-header">
+                    <h3>Edge Buffers</h3>
+                    <div class="floating-selection-actions">
+                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="all">Select all</button>
+                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="none">Select none</button>
+                    </div>
+                    <span class="floating-hint">
+                        Highest priority → Lowest priority
+                    </span>
+                </div>
+        
+                <div id="edgeFloatingOrder" class="floating-buffer-list"
+                     data-order='{{ edge_floating_order | tojson }}'
+                     data-enabled='{{ enabled_edge_floating | tojson }}'>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UF">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UF"
+                        >
+                        <span>UF</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UB">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UB"
+                        >
+                        <span>UB</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UR"
+                        >
+                        <span>UR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UL"
+                        >
+                        <span>UL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="FR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="FR"
+                        >
+                        <span>FR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="FL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="FL"
+                        >
+                        <span>FL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DF">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DF"
+                        >
+                        <span>DF</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DB">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DB"
+                        >
+                        <span>DB</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DR"
+                        >
+                        <span>DR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DL"
+                        >
+                        <span>DL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="BR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="BR"
+                        >
+                        <span>BR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="BL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="BL"
+                        >
+                        <span>BL</span>
+                    </div>
+        
+                </div>
+            </div>
+        
+        
+            <!-- Corner Floating Buffers -->
+            <div class="floating-buffer-section">
+        
+                <div class="floating-section-header">
+                    <h3>Corner Buffers</h3>
+                    <div class="floating-selection-actions">
+                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="all">Select all</button>
+                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="none">Select none</button>
+                    </div>
+                    <span class="floating-hint">
+                        Highest priority → Lowest priority
+                    </span>
+                </div>
+        
+                <div id="cornerFloatingOrder" class="floating-buffer-list"
+                     data-order='{{ corner_floating_order | tojson }}'
+                     data-enabled='{{ enabled_corner_floating | tojson }}'>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UFR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UFR"
+                        >
+                        <span>UFR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UFL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UFL"
+                        >
+                        <span>UFL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UBR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UBR"
+                        >
+                        <span>UBR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UBL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UBL"
+                        >
+                        <span>UBL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DFR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DFR"
+                        >
+                        <span>DFR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DFL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DFL"
+                        >
+                        <span>DFL</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DBR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DBR"
+                        >
+                        <span>DBR</span>
+                    </div>
+        
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DBL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DBL"
+                        >
+                        <span>DBL</span>
+                    </div>
+        
+                </div>
             </div>
         
         </div>
+
         <!-- LETTER SCHEME -->
 
-        <h2>Letter Scheme</h2>
+        <section class="settings-panel" aria-labelledby="letter-scheme-heading">
+            <h2 id="letter-scheme-heading">Letter Scheme</h2>
 
-        <p>
-            Speffz is loaded by default. Click any sticker to change its letter.
-        </p>
+            <p>
+                Speffz is loaded by default. Click any sticker to change its letter.
+            </p>
 
-        <div class="reset-buttons">
-            <button type="button" id="reset-speffz">
-                Reset to Speffz
-            </button>
+            <div class="reset-buttons">
+                <button type="button" id="reset-speffz">
+                    Reset to Speffz
+                </button>
         
-            <button type="button" id="reset-all-settings">
-                Reset All Settings
-            </button>
-        </div>
+                <button type="button" id="reset-all-settings">
+                    Reset All Settings
+                </button>
+            </div>
 
-        <!-- COLOR SCHEME -->
+            <!-- COLOR SCHEME -->
 
-        <div class="color-scheme-section">
+            <div class="color-scheme-section">
 
-            <h3>Color Scheme</h3>
+                <h3>Color Scheme</h3>
         
-            <div class="color-selectors">
+                <div class="color-selectors">
         
-                <label>
-                    U
-                    <input type="color" id="color-u" value="#ffffff">
-                </label>
+                    <label>
+                        U
+                        <input type="color" id="color-u" value="#ffffff">
+                    </label>
         
-                <label>
-                    F
-                    <input type="color" id="color-f" value="#20a84a">
-                </label>
+                    <label>
+                        F
+                        <input type="color" id="color-f" value="#20a84a">
+                    </label>
         
-                <label>
-                    R
-                    <input type="color" id="color-r" value="#e53935">
-                </label>
+                    <label>
+                        R
+                        <input type="color" id="color-r" value="#e53935">
+                    </label>
         
-                <label>
-                    B
-                    <input type="color" id="color-b" value="#2468d8">
-                </label>
+                    <label>
+                        B
+                        <input type="color" id="color-b" value="#2468d8">
+                    </label>
         
-                <label>
-                    L
-                    <input type="color" id="color-l" value="#ff8c00">
-                </label>
+                    <label>
+                        L
+                        <input type="color" id="color-l" value="#ff8c00">
+                    </label>
         
-                <label>
-                    D
-                    <input type="color" id="color-d" value="#ffd92f">
-                </label>
+                    <label>
+                        D
+                        <input type="color" id="color-d" value="#ffd92f">
+                    </label>
+        
+                </div>
         
             </div>
-        
-        </div>
 
-        <div class="orientation-section">
-            <h3>Orientation</h3>
+            <div class="orientation-section">
+                <h3>Orientation</h3>
 
-            <button type="button" id="rotate-x">x</button>
-            <button type="button" id="rotate-x-prime">x'</button>
-            <button type="button" id="rotate-x2">x2</button>
+                <button type="button" id="rotate-x">x</button>
+                <button type="button" id="rotate-x-prime">x'</button>
+                <button type="button" id="rotate-x2">x2</button>
 
-            <button type="button" id="rotate-y">y</button>
-            <button type="button" id="rotate-y-prime">y'</button>
-            <button type="button" id="rotate-y2">y2</button>
+                <button type="button" id="rotate-y">y</button>
+                <button type="button" id="rotate-y-prime">y'</button>
+                <button type="button" id="rotate-y2">y2</button>
 
-            <button type="button" id="rotate-z">z</button>
-            <button type="button" id="rotate-z-prime">z'</button>
-            <button type="button" id="rotate-z2">z2</button>
-        </div>
+                <button type="button" id="rotate-z">z</button>
+                <button type="button" id="rotate-z-prime">z'</button>
+                <button type="button" id="rotate-z2">z2</button>
+            </div>
+        </section>
 
         <!-- CUBE NET GRAPHIC -->
 
-        <div class="cube-net">
+        <section class="settings-panel cube-net-panel" aria-label="Editable cube net">
+            <div class="cube-net">
 
-            <!-- ================= U FACE ================= -->
+                <!-- ================= U FACE ================= -->
         
-            <div class="face face-u">
+                <div class="face face-u">
         
-                <input class="sticker corner u-color"
-                       name="letter_UBL"
-                       value="{{ letter_scheme['UBL'] }}"
-                       data-speffz="{{ SPEFFZ['UBL'] }}"
-                       maxlength="1">
+                    <input class="sticker corner u-color"
+                           name="letter_UBL"
+                           value="{{ letter_scheme['UBL'] }}"
+                           data-speffz="{{ SPEFFZ['UBL'] }}"
+                           maxlength="1">
         
-                <input class="sticker edge u-color"
-                       name="letter_UB"
-                       value="{{ letter_scheme['UB'] }}"
-                       data-speffz="{{ SPEFFZ['UB'] }}"
-                       maxlength="1">
+                    <input class="sticker edge u-color"
+                           name="letter_UB"
+                           value="{{ letter_scheme['UB'] }}"
+                           data-speffz="{{ SPEFFZ['UB'] }}"
+                           maxlength="1">
         
-                <input class="sticker corner u-color"
-                       name="letter_UBR"
-                       value="{{ letter_scheme['UBR'] }}"
-                       data-speffz="{{ SPEFFZ['UBR'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge u-color"
-                       name="letter_UL"
-                       value="{{ letter_scheme['UL'] }}"
-                       data-speffz="{{ SPEFFZ['UL'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center u-color">U</div>
-        
-                <input class="sticker edge u-color"
-                       name="letter_UR"
-                       value="{{ letter_scheme['UR'] }}"
-                       data-speffz="{{ SPEFFZ['UR'] }}"
-                       maxlength="1">
+                    <input class="sticker corner u-color"
+                           name="letter_UBR"
+                           value="{{ letter_scheme['UBR'] }}"
+                           data-speffz="{{ SPEFFZ['UBR'] }}"
+                           maxlength="1">
         
         
-                <input class="sticker corner u-color"
-                       name="letter_UFL"
-                       value="{{ letter_scheme['UFL'] }}"
-                       data-speffz="{{ SPEFFZ['UFL'] }}"
-                       maxlength="1">
+                    <input class="sticker edge u-color"
+                           name="letter_UL"
+                           value="{{ letter_scheme['UL'] }}"
+                           data-speffz="{{ SPEFFZ['UL'] }}"
+                           maxlength="1">
         
-                <input class="sticker edge u-color"
-                       name="letter_UF"
-                       value="{{ letter_scheme['UF'] }}"
-                       data-speffz="{{ SPEFFZ['UF'] }}"
-                       maxlength="1">
+                    <div class="sticker center u-color">U</div>
         
-                <input class="sticker corner u-color"
-                       name="letter_UFR"
-                       value="{{ letter_scheme['UFR'] }}"
-                       data-speffz="{{ SPEFFZ['UFR'] }}"
-                       maxlength="1">
+                    <input class="sticker edge u-color"
+                           name="letter_UR"
+                           value="{{ letter_scheme['UR'] }}"
+                           data-speffz="{{ SPEFFZ['UR'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner u-color"
+                           name="letter_UFL"
+                           value="{{ letter_scheme['UFL'] }}"
+                           data-speffz="{{ SPEFFZ['UFL'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge u-color"
+                           name="letter_UF"
+                           value="{{ letter_scheme['UF'] }}"
+                           data-speffz="{{ SPEFFZ['UF'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner u-color"
+                           name="letter_UFR"
+                           value="{{ letter_scheme['UFR'] }}"
+                           data-speffz="{{ SPEFFZ['UFR'] }}"
+                           maxlength="1">
+        
+                </div>
+        
+        
+                <!-- ================= L FACE ================= -->
+        
+                <div class="face face-l">
+        
+                    <input class="sticker corner l-color"
+                           name="letter_LUB"
+                           value="{{ letter_scheme['LUB'] }}"
+                           data-speffz="{{ SPEFFZ['LUB'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge l-color"
+                           name="letter_LU"
+                           value="{{ letter_scheme['LU'] }}"
+                           data-speffz="{{ SPEFFZ['LU'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner l-color"
+                           name="letter_LUF"
+                           value="{{ letter_scheme['LUF'] }}"
+                           data-speffz="{{ SPEFFZ['LUF'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker edge l-color"
+                           name="letter_LB"
+                           value="{{ letter_scheme['LB'] }}"
+                           data-speffz="{{ SPEFFZ['LB'] }}"
+                           maxlength="1">
+        
+                    <div class="sticker center l-color">L</div>
+        
+                    <input class="sticker edge l-color"
+                           name="letter_LF"
+                           value="{{ letter_scheme['LF'] }}"
+                           data-speffz="{{ SPEFFZ['LF'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner l-color"
+                           name="letter_LDB"
+                           value="{{ letter_scheme['LDB'] }}"
+                           data-speffz="{{ SPEFFZ['LDB'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge l-color"
+                           name="letter_LD"
+                           value="{{ letter_scheme['LD'] }}"
+                           data-speffz="{{ SPEFFZ['LD'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner l-color"
+                           name="letter_LDF"
+                           value="{{ letter_scheme['LDF'] }}"
+                           data-speffz="{{ SPEFFZ['LDF'] }}"
+                           maxlength="1">
+        
+                </div>
+        
+        
+                <!-- ================= F FACE ================= -->
+        
+                <div class="face face-f">
+        
+                    <input class="sticker corner f-color"
+                           name="letter_FUL"
+                           value="{{ letter_scheme['FUL'] }}"
+                           data-speffz="{{ SPEFFZ['FUL'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge f-color"
+                           name="letter_FU"
+                           value="{{ letter_scheme['FU'] }}"
+                           data-speffz="{{ SPEFFZ['FU'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner f-color"
+                           name="letter_FUR"
+                           value="{{ letter_scheme['FUR'] }}"
+                           data-speffz="{{ SPEFFZ['FUR'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker edge f-color"
+                           name="letter_FL"
+                           value="{{ letter_scheme['FL'] }}"
+                           data-speffz="{{ SPEFFZ['FL'] }}"
+                           maxlength="1">
+        
+                    <div class="sticker center f-color">F</div>
+        
+                    <input class="sticker edge f-color"
+                           name="letter_FR"
+                           value="{{ letter_scheme['FR'] }}"
+                           data-speffz="{{ SPEFFZ['FR'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner f-color"
+                           name="letter_FDL"
+                           value="{{ letter_scheme['FDL'] }}"
+                           data-speffz="{{ SPEFFZ['FDL'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge f-color"
+                           name="letter_FD"
+                           value="{{ letter_scheme['FD'] }}"
+                           data-speffz="{{ SPEFFZ['FD'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner f-color"
+                           name="letter_FDR"
+                           value="{{ letter_scheme['FDR'] }}"
+                           data-speffz="{{ SPEFFZ['FDR'] }}"
+                           maxlength="1">
+        
+                </div>
+        
+        
+                <!-- ================= R FACE ================= -->
+        
+                <div class="face face-r">
+        
+                    <input class="sticker corner r-color"
+                           name="letter_RUF"
+                           value="{{ letter_scheme['RUF'] }}"
+                           data-speffz="{{ SPEFFZ['RUF'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge r-color"
+                           name="letter_RU"
+                           value="{{ letter_scheme['RU'] }}"
+                           data-speffz="{{ SPEFFZ['RU'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner r-color"
+                           name="letter_RUB"
+                           value="{{ letter_scheme['RUB'] }}"
+                           data-speffz="{{ SPEFFZ['RUB'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker edge r-color"
+                           name="letter_RF"
+                           value="{{ letter_scheme['RF'] }}"
+                           data-speffz="{{ SPEFFZ['RF'] }}"
+                           maxlength="1">
+        
+                    <div class="sticker center r-color">R</div>
+        
+                    <input class="sticker edge r-color"
+                           name="letter_RB"
+                           value="{{ letter_scheme['RB'] }}"
+                           data-speffz="{{ SPEFFZ['RB'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner r-color"
+                           name="letter_RDF"
+                           value="{{ letter_scheme['RDF'] }}"
+                           data-speffz="{{ SPEFFZ['RDF'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge r-color"
+                           name="letter_RD"
+                           value="{{ letter_scheme['RD'] }}"
+                           data-speffz="{{ SPEFFZ['RD'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner r-color"
+                           name="letter_RDB"
+                           value="{{ letter_scheme['RDB'] }}"
+                           data-speffz="{{ SPEFFZ['RDB'] }}"
+                           maxlength="1">
+        
+                </div>
+        
+        
+                <!-- ================= B FACE ================= -->
+        
+                <div class="face face-b">
+        
+                    <input class="sticker corner b-color"
+                           name="letter_BUR"
+                           value="{{ letter_scheme['BUR'] }}"
+                           data-speffz="{{ SPEFFZ['BUR'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge b-color"
+                           name="letter_BU"
+                           value="{{ letter_scheme['BU'] }}"
+                           data-speffz="{{ SPEFFZ['BU'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner b-color"
+                           name="letter_BUL"
+                           value="{{ letter_scheme['BUL'] }}"
+                           data-speffz="{{ SPEFFZ['BUL'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker edge b-color"
+                           name="letter_BR"
+                           value="{{ letter_scheme['BR'] }}"
+                           data-speffz="{{ SPEFFZ['BR'] }}"
+                           maxlength="1">
+        
+                    <div class="sticker center b-color">B</div>
+        
+                    <input class="sticker edge b-color"
+                           name="letter_BL"
+                           value="{{ letter_scheme['BL'] }}"
+                           data-speffz="{{ SPEFFZ['BL'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner b-color"
+                           name="letter_BDR"
+                           value="{{ letter_scheme['BDR'] }}"
+                           data-speffz="{{ SPEFFZ['BDR'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge b-color"
+                           name="letter_BD"
+                           value="{{ letter_scheme['BD'] }}"
+                           data-speffz="{{ SPEFFZ['BD'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner b-color"
+                           name="letter_BDL"
+                           value="{{ letter_scheme['BDL'] }}"
+                           data-speffz="{{ SPEFFZ['BDL'] }}"
+                           maxlength="1">
+        
+                </div>
+        
+        
+                <!-- ================= D FACE ================= -->
+        
+                <div class="face face-d">
+        
+                    <input class="sticker corner d-color"
+                           name="letter_DFL"
+                           value="{{ letter_scheme['DFL'] }}"
+                           data-speffz="{{ SPEFFZ['DFL'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge d-color"
+                           name="letter_DF"
+                           value="{{ letter_scheme['DF'] }}"
+                           data-speffz="{{ SPEFFZ['DF'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner d-color"
+                           name="letter_DFR"
+                           value="{{ letter_scheme['DFR'] }}"
+                           data-speffz="{{ SPEFFZ['DFR'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker edge d-color"
+                           name="letter_DL"
+                           value="{{ letter_scheme['DL'] }}"
+                           data-speffz="{{ SPEFFZ['DL'] }}"
+                           maxlength="1">
+        
+                    <div class="sticker center d-color">D</div>
+        
+                    <input class="sticker edge d-color"
+                           name="letter_DR"
+                           value="{{ letter_scheme['DR'] }}"
+                           data-speffz="{{ SPEFFZ['DR'] }}"
+                           maxlength="1">
+        
+        
+                    <input class="sticker corner d-color"
+                           name="letter_DBL"
+                           value="{{ letter_scheme['DBL'] }}"
+                           data-speffz="{{ SPEFFZ['DBL'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker edge d-color"
+                           name="letter_DB"
+                           value="{{ letter_scheme['DB'] }}"
+                           data-speffz="{{ SPEFFZ['DB'] }}"
+                           maxlength="1">
+        
+                    <input class="sticker corner d-color"
+                           name="letter_DBR"
+                           value="{{ letter_scheme['DBR'] }}"
+                           data-speffz="{{ SPEFFZ['DBR'] }}"
+                           maxlength="1">
+        
+                </div>
         
             </div>
-        
-        
-            <!-- ================= L FACE ================= -->
-        
-            <div class="face face-l">
-        
-                <input class="sticker corner l-color"
-                       name="letter_LUB"
-                       value="{{ letter_scheme['LUB'] }}"
-                       data-speffz="{{ SPEFFZ['LUB'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge l-color"
-                       name="letter_LU"
-                       value="{{ letter_scheme['LU'] }}"
-                       data-speffz="{{ SPEFFZ['LU'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner l-color"
-                       name="letter_LUF"
-                       value="{{ letter_scheme['LUF'] }}"
-                       data-speffz="{{ SPEFFZ['LUF'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge l-color"
-                       name="letter_LB"
-                       value="{{ letter_scheme['LB'] }}"
-                       data-speffz="{{ SPEFFZ['LB'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center l-color">L</div>
-        
-                <input class="sticker edge l-color"
-                       name="letter_LF"
-                       value="{{ letter_scheme['LF'] }}"
-                       data-speffz="{{ SPEFFZ['LF'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker corner l-color"
-                       name="letter_LDB"
-                       value="{{ letter_scheme['LDB'] }}"
-                       data-speffz="{{ SPEFFZ['LDB'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge l-color"
-                       name="letter_LD"
-                       value="{{ letter_scheme['LD'] }}"
-                       data-speffz="{{ SPEFFZ['LD'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner l-color"
-                       name="letter_LDF"
-                       value="{{ letter_scheme['LDF'] }}"
-                       data-speffz="{{ SPEFFZ['LDF'] }}"
-                       maxlength="1">
-        
-            </div>
-        
-        
-            <!-- ================= F FACE ================= -->
-        
-            <div class="face face-f">
-        
-                <input class="sticker corner f-color"
-                       name="letter_FUL"
-                       value="{{ letter_scheme['FUL'] }}"
-                       data-speffz="{{ SPEFFZ['FUL'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge f-color"
-                       name="letter_FU"
-                       value="{{ letter_scheme['FU'] }}"
-                       data-speffz="{{ SPEFFZ['FU'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner f-color"
-                       name="letter_FUR"
-                       value="{{ letter_scheme['FUR'] }}"
-                       data-speffz="{{ SPEFFZ['FUR'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge f-color"
-                       name="letter_FL"
-                       value="{{ letter_scheme['FL'] }}"
-                       data-speffz="{{ SPEFFZ['FL'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center f-color">F</div>
-        
-                <input class="sticker edge f-color"
-                       name="letter_FR"
-                       value="{{ letter_scheme['FR'] }}"
-                       data-speffz="{{ SPEFFZ['FR'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker corner f-color"
-                       name="letter_FDL"
-                       value="{{ letter_scheme['FDL'] }}"
-                       data-speffz="{{ SPEFFZ['FDL'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge f-color"
-                       name="letter_FD"
-                       value="{{ letter_scheme['FD'] }}"
-                       data-speffz="{{ SPEFFZ['FD'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner f-color"
-                       name="letter_FDR"
-                       value="{{ letter_scheme['FDR'] }}"
-                       data-speffz="{{ SPEFFZ['FDR'] }}"
-                       maxlength="1">
-        
-            </div>
-        
-        
-            <!-- ================= R FACE ================= -->
-        
-            <div class="face face-r">
-        
-                <input class="sticker corner r-color"
-                       name="letter_RUF"
-                       value="{{ letter_scheme['RUF'] }}"
-                       data-speffz="{{ SPEFFZ['RUF'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge r-color"
-                       name="letter_RU"
-                       value="{{ letter_scheme['RU'] }}"
-                       data-speffz="{{ SPEFFZ['RU'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner r-color"
-                       name="letter_RUB"
-                       value="{{ letter_scheme['RUB'] }}"
-                       data-speffz="{{ SPEFFZ['RUB'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge r-color"
-                       name="letter_RF"
-                       value="{{ letter_scheme['RF'] }}"
-                       data-speffz="{{ SPEFFZ['RF'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center r-color">R</div>
-        
-                <input class="sticker edge r-color"
-                       name="letter_RB"
-                       value="{{ letter_scheme['RB'] }}"
-                       data-speffz="{{ SPEFFZ['RB'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker corner r-color"
-                       name="letter_RDF"
-                       value="{{ letter_scheme['RDF'] }}"
-                       data-speffz="{{ SPEFFZ['RDF'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge r-color"
-                       name="letter_RD"
-                       value="{{ letter_scheme['RD'] }}"
-                       data-speffz="{{ SPEFFZ['RD'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner r-color"
-                       name="letter_RDB"
-                       value="{{ letter_scheme['RDB'] }}"
-                       data-speffz="{{ SPEFFZ['RDB'] }}"
-                       maxlength="1">
-        
-            </div>
-        
-        
-            <!-- ================= B FACE ================= -->
-        
-            <div class="face face-b">
-        
-                <input class="sticker corner b-color"
-                       name="letter_BUR"
-                       value="{{ letter_scheme['BUR'] }}"
-                       data-speffz="{{ SPEFFZ['BUR'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge b-color"
-                       name="letter_BU"
-                       value="{{ letter_scheme['BU'] }}"
-                       data-speffz="{{ SPEFFZ['BU'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner b-color"
-                       name="letter_BUL"
-                       value="{{ letter_scheme['BUL'] }}"
-                       data-speffz="{{ SPEFFZ['BUL'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge b-color"
-                       name="letter_BR"
-                       value="{{ letter_scheme['BR'] }}"
-                       data-speffz="{{ SPEFFZ['BR'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center b-color">B</div>
-        
-                <input class="sticker edge b-color"
-                       name="letter_BL"
-                       value="{{ letter_scheme['BL'] }}"
-                       data-speffz="{{ SPEFFZ['BL'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker corner b-color"
-                       name="letter_BDR"
-                       value="{{ letter_scheme['BDR'] }}"
-                       data-speffz="{{ SPEFFZ['BDR'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge b-color"
-                       name="letter_BD"
-                       value="{{ letter_scheme['BD'] }}"
-                       data-speffz="{{ SPEFFZ['BD'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner b-color"
-                       name="letter_BDL"
-                       value="{{ letter_scheme['BDL'] }}"
-                       data-speffz="{{ SPEFFZ['BDL'] }}"
-                       maxlength="1">
-        
-            </div>
-        
-        
-            <!-- ================= D FACE ================= -->
-        
-            <div class="face face-d">
-        
-                <input class="sticker corner d-color"
-                       name="letter_DFL"
-                       value="{{ letter_scheme['DFL'] }}"
-                       data-speffz="{{ SPEFFZ['DFL'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge d-color"
-                       name="letter_DF"
-                       value="{{ letter_scheme['DF'] }}"
-                       data-speffz="{{ SPEFFZ['DF'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner d-color"
-                       name="letter_DFR"
-                       value="{{ letter_scheme['DFR'] }}"
-                       data-speffz="{{ SPEFFZ['DFR'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker edge d-color"
-                       name="letter_DL"
-                       value="{{ letter_scheme['DL'] }}"
-                       data-speffz="{{ SPEFFZ['DL'] }}"
-                       maxlength="1">
-        
-                <div class="sticker center d-color">D</div>
-        
-                <input class="sticker edge d-color"
-                       name="letter_DR"
-                       value="{{ letter_scheme['DR'] }}"
-                       data-speffz="{{ SPEFFZ['DR'] }}"
-                       maxlength="1">
-        
-        
-                <input class="sticker corner d-color"
-                       name="letter_DBL"
-                       value="{{ letter_scheme['DBL'] }}"
-                       data-speffz="{{ SPEFFZ['DBL'] }}"
-                       maxlength="1">
-        
-                <input class="sticker edge d-color"
-                       name="letter_DB"
-                       value="{{ letter_scheme['DB'] }}"
-                       data-speffz="{{ SPEFFZ['DB'] }}"
-                       maxlength="1">
-        
-                <input class="sticker corner d-color"
-                       name="letter_DBR"
-                       value="{{ letter_scheme['DBR'] }}"
-                       data-speffz="{{ SPEFFZ['DBR'] }}"
-                       maxlength="1">
-        
-            </div>
-        
-        </div>
-
+        </section>
 
         <!-- MEMO -->
 
@@ -707,23 +1005,11 @@
                                 <strong>{{ parity }}</strong>
 
 
-                                <span>Edge Floating</span>
-                                <strong>
-                                    {% if edge_floating %}
-                                        Available after {{ edge_floating[0].after_target }} targets
-                                    {% else %}
-                                        Not available
-                                    {% endif %}
-                                </strong>
+                                <span>Edge Buffers</span>
+                                <strong>{{ edge_buffers_used }}</strong>
 
-                                <span>Corner Floating</span>
-                                <strong>
-                                    {% if corner_floating %}
-                                        Available after {{ corner_floating[0].after_target }} targets
-                                    {% else %}
-                                        Not available
-                                    {% endif %}
-                                </strong>
+                                <span>Corner Buffers</span>
+                                <strong>{{ corner_buffers_used }}</strong>
 
 
                                 <span>Edge Cycle Breaks</span>
