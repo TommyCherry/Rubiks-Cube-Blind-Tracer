@@ -146,18 +146,45 @@ class BulkTests(unittest.TestCase):
         normal, _ = self.post(dict(action='bulk', bulk_scrambles=scramble))
         self.assertEqual(normal['bulk_results'][0]['flip_count'], 0)
 
-    def test_reported_standalone_cycle_floats_automatically(self):
+    def test_standalone_corner_cycle_returns_to_twisted_primary_buffer(self):
+        context, _ = self.post(dict(
+            action='bulk',
+            bulk_scrambles="R' U2 F L' U' B U2 L F2 R' D' F2 B R2 L2 D2 F' D2 B Uw2",
+            use_pseudoswap='on', include_basic_sandwiching='on',
+            include_ltct='on', include_t2c='on',
+            edge_floating_buffers=['UF', 'UB', 'UR', 'UL', 'FR', 'FL', 'DF', 'DB', 'DR', 'DL', 'BR', 'BL'],
+            corner_floating_buffers=CORNER_BUFFER_OPTIONS))
+        row = context['bulk_results'][0]
+        self.assertEqual(row['alg_count'], 7)
+        self.assertEqual(row['corner_memo'], '[Buffer D] WB [Buffer C] VG [LTCT: V[H]]')
+        self.assertEqual(row['corner_floating'][-1]['to_buffer'], UFR)
+        self.assertTrue(row['corner_floating'][-1]['standalone_return'])
+        self.assertEqual(row['corner_buffers_used'], 2)
+
+    def test_pseudoswap_flipped_buffer_regression(self):
+        context, _ = self.post(dict(
+            action='bulk',
+            bulk_scrambles="F B2 D' R2 U D2 R' B R2 F2 U' B2 L2 D' R2 L2 F2 B' L Uw2",
+            use_pseudoswap='on', include_basic_sandwiching='on',
+            include_ltct='on', include_t2c='on',
+            edge_floating_buffers=['UF', 'UB', 'UR', 'UL', 'FR', 'FL', 'DF', 'DB', 'DR', 'DL', 'BR', 'BL'],
+            corner_floating_buffers=CORNER_BUFFER_OPTIONS))
+        row = context['bulk_results'][0]
+        self.assertEqual(row['alg_count'], 8)
+        self.assertEqual(row['edge_floating'], [])
+        self.assertEqual(row['edge_buffers_used'], 1)
+
+    def test_standalone_cycle_cannot_abandon_flipped_buffer(self):
         scramble = "F L2 F2 R2 U2 B2 U2 R' B2 D2 U' R' B' D2 U R' U2 R"
         context, _ = self.post(dict(action='bulk', bulk_scrambles=scramble, edge_floating_buffers='DR'))
         row = context['bulk_results'][0]
-        self.assertEqual(row['edge_memo'], 'PS QH FD UE [Buffer V] TX [Flips: BM]')
+        self.assertEqual(row['edge_memo'], 'PS QH FD UE VT XV [Flips: BM]')
         for enabled in ([], ['BR']):
             disabled, _ = self.post(dict(action='bulk', bulk_scrambles=scramble, edge_floating_buffers=enabled))
             self.assertEqual(disabled['bulk_results'][0]['edge_memo'], 'PS QH FD UE VT XV [Flips: BM]')
-        self.assertEqual(row['edge_count'], 10)
-        self.assertEqual(row['edge_buffers_used'], 2)
-        self.assertEqual(row['edge_floating'][-1]['after_target'], 8)
-        self.assertTrue(row['edge_floating'][-1]['standalone'])
+        self.assertEqual(row['edge_count'], 12)
+        self.assertEqual(row['edge_buffers_used'], 1)
+        self.assertFalse(any('to_buffer' in item for item in row['edge_floating']))
 
     def test_real_scramble_sandwich_reaches_bulk_form_and_statistics(self):
         scramble = "L U2 U D B U2 R R2 D' U2 B2 L' B' U L2 D U2 B' L' U2 B2 D"

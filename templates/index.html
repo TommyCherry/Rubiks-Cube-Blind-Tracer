@@ -37,7 +37,7 @@
 
                         <div class="wca-user-links">
                             <a href="{{ url_for('my_3bld_history') }}">
-                                My 3BLD History
+                                My Official Solve History
                             </a>
                     
                             <a href="{{ url_for('logout') }}">
@@ -162,10 +162,10 @@
             
             <label class="memo-setting">
                 <input type="checkbox" id="include-ltct" name="include_ltct" value="on" {% if include_ltct %}checked{% endif %}>
-                Include LTCT (UFR corner buffer)
+                Include LTCT (U-layer corner buffers)
             </label>
             <p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
-                Uses the two edges selected in the pseudoswap form on eligible scrambles. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
+                LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
                 Balanced twist counts and non-parity scrambles are unchanged.</p>
             
             <label class="memo-setting">
@@ -177,6 +177,8 @@
                 Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged.
                 Patterns are matched within each buffer’s memo, without overlapping.</p>
 
+            {% include 'cycle_break_settings.html' %}
+            {% include 'parity_settings.html' %}
             <!-- PSEUDOSWAP SELECTORS -->
 
             <div class="pseudo-swap-settings">
@@ -1131,6 +1133,9 @@
 
     </form>
 
+    {% if bulk_batch_id %}
+    <form id="bulk-query-form" method="GET" action="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}"></form>
+    {% endif %}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>

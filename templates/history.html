@@ -3,23 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My 3BLD History</title>
+    <title>My Official Solve History</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="history-results">
+    <h1>My Official Solve History</h1>
+    <a href="{{ url_for('home') }}">Back to tracer</a>
+    <form method="GET" action="/my-official-solve-history" class="bulk-query-controls">
+        <label for="history-event">Event
+            <select id="history-event" name="event">
+                <option value="333bf" {% if event == '333bf' %}selected{% endif %}>3x3 blindfolded</option>
+                <option value="333mbf" {% if event == '333mbf' %}selected{% endif %}>3x3 multiple blindfolded</option>
+            </select>
+        </label>
+        <button type="submit">Show history</button>
+    </form>
+    {% if event == '333mbf' %}
+    <p>All available multi-blind scramble sets from competitions where you have an official result in any event, including extra scrambles. These are competition scrambles, not a record of which cubes you personally attempted.</p>
+    {% endif %}
+    {% if history_error %}<p role="status">{{ history_error }}</p>{% endif %}
 
     {% if history %}
         <button type="button" id="import-history-to-bulk">
             Import All to Bulk
         </button>
+        {% if event == '333mbf' %}
+            {% include 'multiblind_history.html' %}
+        {% else %}
         <table class="history-table">
             <colgroup>
                 <col class="history-competition-column">
                 <col class="history-date-column">
                 <col class="history-number-column">
                 <col class="history-number-column">
-                <col class="history-result-column">
+                {% if event != '333mbf' %}<col class="history-result-column">{% endif %}
                 <col>
             </colgroup>
 
@@ -28,8 +46,8 @@
                     <th scope="col">Competition</th>
                     <th scope="col">Date</th>
                     <th scope="col">Round</th>
-                    <th scope="col">Attempt</th>
-                    <th scope="col">Result</th>
+                    <th scope="col">{{ 'Group' if event == '333mbf' else 'Attempt' }}</th>
+                    {% if event != '333mbf' %}<th scope="col">Result</th>{% endif %}
                     <th scope="col">Scramble</th>
                 </tr>
             </thead>
@@ -52,10 +70,10 @@
                         </td>
 
                         <td>
-                            {{ result.attempt_number }}
+                            {{ result.group_id if event == '333mbf' else result.attempt_number }}
                         </td>
 
-                        <td>
+                        {% if event != '333mbf' %}<td>
                             {% if result.value == -1 %}
                                 DNF
                             {% elif result.value == -2 %}
@@ -67,6 +85,7 @@
                             {% endif %}
                         </td>
 
+                        {% endif %}
                         <td class="history-scrambles">
                             {% if result.scrambles %}
 
@@ -78,6 +97,7 @@
 
                                             <span class="scramble-group">
                                                 Group {{ scramble_info.group_id }}
+                                                {% if event == '333mbf' %} · {{ 'Extra' if scramble_info.is_extra else 'Cube' }} {{ scramble_info.scramble_num }}{% endif %}
                                             </span>
 
                                             <code class="scramble-text">
@@ -121,32 +141,28 @@
             </tbody>
 
         </table>
+        {% endif %}
 
     {% else %}
 
-        <p>No official 3BLD results found.</p>
+        {% if not history_error %}
+        <p>{{ 'No multi-blind scrambles found for competitions you attended.' if event == '333mbf' else 'No official 3x3 blindfolded results found.' }}</p>
+        {% endif %}
 
     {% endif %}
 
 </div>
 <script>
-document
-    .getElementById("import-history-to-bulk")
-    ?.addEventListener("click", () => {
-
-        const scrambles = Array.from(
-            document.querySelectorAll(".scramble-text")
-        )
-            .map(element => element.textContent.trim())
-            .filter(Boolean);
-
-        sessionStorage.setItem(
-            "importedBulkScrambles",
-            scrambles.join("\n")
-        );
-
-        window.location.href = "/";
-    });
+function importScrambles(container) {
+    const scrambles = Array.from(container.querySelectorAll('.scramble-text'))
+        .map(element => element.textContent.trim()).filter(Boolean);
+    sessionStorage.setItem('importedBulkScrambles', scrambles.join('\n'));
+    window.location.href = {{ url_for('home') | tojson }};
+}
+document.getElementById('import-history-to-bulk')?.addEventListener('click', () => importScrambles(document));
+document.querySelectorAll('.import-mbld-attempt').forEach(button => {
+    button.addEventListener('click', () => importScrambles(button.closest('.mbld-attempt')));
+});
 </script>
 
 </body>

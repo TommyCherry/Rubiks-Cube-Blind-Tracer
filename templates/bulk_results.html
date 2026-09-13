@@ -1,6 +1,7 @@
-{% if bulk_results %}
+{% if bulk_results or bulk_batch_id %}
 <section class="bulk-results" aria-labelledby="bulk-title">
     <h2 id="bulk-title">Scramble set results</h2>
+    {% if bulk_history_warning %}<p role="status">{{ bulk_history_warning }}</p>{% endif %}
     {% if bulk_stats %}
     <p>{{ bulk_stats.count }} scrambles traced · {{ bulk_stats.failed }} invalid lines excluded from statistics.</p>
     <p><strong>Basic sandwiching: {{ 'Enabled' if include_basic_sandwiching else 'Disabled' }}.</strong>
@@ -55,13 +56,47 @@
         Buffers count only those used for targets, with edges and corners counted separately.
         Enabled edge and corner floating switches are included in buffer usage.
         Parity describes the scrambled permutation before pseudoswap.</p>
+    <div class="bulk-query-controls">
+        <label for="bulk-alg-count">Exact estimated alg count
+            <input id="bulk-alg-count" name="alg_count" type="number" min="0" max="999999999" step="1"
+                   list="bulk-alg-counts" value="{{ bulk_alg_filter }}" placeholder="All counts" form="bulk-query-form">
+        </label>
+        <datalist id="bulk-alg-counts">
+            {% for count in bulk_alg_counts %}<option value="{{ count }}"></option>{% endfor %}
+        </datalist>
+        <label for="bulk-sort">Sort scrambles
+            <select id="bulk-sort" name="sort" form="bulk-query-form">
+                {% for value, label in [('original', 'Original line order'), ('asc', 'Alg count: low to high'), ('desc', 'Alg count: high to low')] %}
+                <option value="{{ value }}" {% if bulk_sort == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" form="bulk-query-form">Search / sort</button>
+        <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset</a>
+    </div>
+    <p>Showing {{ bulk_results|length }} of {{ bulk_total }} lines. Statistics above describe the full batch.
+       Invalid lines have no alg count and appear last when sorting by count.</p>
+    {% if not bulk_results %}<p role="status">No scrambles match this algorithm count.</p>{% endif %}
     <div class="bulk-table-scroll">
         <table class="bulk-table">
             <thead><tr><th scope="col">Line / scramble</th><th scope="col">Edge memo</th><th scope="col">Corner memo</th><th scope="col">Targets<br>Edge / corner</th><th scope="col">Est. algs</th><th scope="col">Parity</th><th scope="col">Buffers<br>Edge / corner</th></tr></thead>
             <tbody>
             {% for row in bulk_results %}
                 <tr>
-                    <td><strong>{{ row.line_number }}.</strong> <code>{{ row.scramble }}</code></td>
+                    <td><strong>{{ row.line_number }}.</strong> <code>{{ row.scramble }}</code>
+                        {% if row.wca_matches %}
+                        <details class="bulk-wca-details">
+                            <summary>WCA competition details ({{ row.wca_matches|length }})</summary>
+                            <ul>
+                            {% for match in row.wca_matches %}
+                                <li><strong>{{ match.competition_name }}</strong><br>
+                                    Round {{ match.round_type_id }} · Solve {{ match.solve }} · Group {{ match.group if match.group is not none else 'Unknown' }}</li>
+                            {% endfor %}
+                            </ul>
+                            <p>Matches a scramble group in your 3BLD history. Your personal group assignment is not recorded in this data.</p>
+                        </details>
+                        {% endif %}
+                    </td>
                     {% if row.error is defined %}
                     <td colspan="6" class="error">{{ row.error }}</td>
                     {% else %}

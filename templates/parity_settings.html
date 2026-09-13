@@ -1,0 +1,26 @@
+<details class="parity-settings" id="corner-parity-settings">
+    <summary>Corner parity pseudoswaps — 84 cases</summary>
+    <p>Override the edge pair for the final unpaired corner target when Use Pseudoswap is enabled. Leave both edges at Default to use the global pair. LTCT and T2C use their own rules.</p>
+    <button type="button" id="reset-parity-overrides">Reset all parity overrides</button>
+    {% for group in parity_cases %}
+    <details data-parity-buffer="{{ group.buffer }}" {% if not group.count %}hidden{% endif %}>
+        <summary>{{ group.buffer }} buffer — {{ group.count }} cases</summary>
+        <div class="parity-case-grid">
+        {% for case in group.cases %}
+        <fieldset data-parity-piece="{{ case.piece }}" {% if not case.visible %}hidden{% endif %}>
+            <legend>{{ group.buffer }} → {{ case.target }}</legend>
+            {% for side in ['first', 'second'] %}
+            {% set selected = parity_pseudoswaps.get(case.key, ['', ''])[loop.index0] %}
+            <label>{{ 'First' if side == 'first' else 'Second' }} edge
+                <select name="parity_{{ case.key }}_{{ side }}" data-parity-override>
+                    <option value="">Default</option>
+                    {% for edge in edge_buffer_options %}<option value="{{ loop.index0 }}" {% if selected == loop.index0 %}selected{% endif %}>{{ edge }}</option>{% endfor %}
+                </select>
+            </label>
+            {% endfor %}
+        </fieldset>
+        {% endfor %}
+        </div>
+    </details>
+    {% endfor %}
+</details>

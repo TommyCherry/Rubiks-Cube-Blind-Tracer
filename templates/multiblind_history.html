@@ -1,0 +1,28 @@
+<div class="mbld-attempts">
+{% for attempt in history %}
+<section class="mbld-attempt" aria-labelledby="mbld-title-{{ loop.index }}">
+    <header class="mbld-attempt-header">
+        <div>
+            <h2 id="mbld-title-{{ loop.index }}">{{ attempt.competition_name }}</h2>
+            <p>{{ attempt.year }}-{{ '%02d'|format(attempt.month) }}-{{ '%02d'|format(attempt.day) }} · Round {{ attempt.round_type_id }} · {{ 'Extra set' if attempt.is_extra else 'Attempt' }} {{ attempt.attempt_number }} · Group {{ attempt.group_id }} · {{ attempt.scrambles|length }} cubes</p>
+        </div>
+        <button type="button" class="import-mbld-attempt" {% if not attempt.scrambles %}disabled{% endif %}>Import {{ 'extra set' if attempt.is_extra else 'attempt' }} to Bulk</button>
+    </header>
+    <table class="mbld-cubes">
+        <thead><tr><th scope="col">Cube</th><th scope="col">Scramble</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+        {% for cube in attempt.scrambles %}
+        <tr>
+            <th scope="row">{{ cube.cube_number }}</th>
+            <td><code class="scramble-text">{{ cube.scramble }}</code></td>
+            <td><form action="{{ url_for('home') }}" method="POST">
+                <input type="hidden" name="scramble" value="{{ cube.scramble }}">
+                <button type="submit" aria-label="Trace cube {{ cube.cube_number }}">Trace</button>
+            </form></td>
+        </tr>
+        {% else %}<tr><td colspan="3">No scrambles available for this attempt.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endfor %}
+</div>

@@ -1,0 +1,47 @@
+{% for parity in ['even', 'odd'] %}
+<details class="parity-settings">
+    <summary>Cycle-break decisions — {{ parity }} target counts</summary>
+    <p>Choose which piece to break into after an {{ parity }} number of targets{% if parity == 'even' %}, including zero{% endif %}. The first unsolved, unvisited piece wins; the active buffer is skipped. Each decision uses the current number of traced targets. Floating still follows its separate settings.</p>
+    <p>Drag panels to reorder, or use the left/right buttons. Highest priority → Lowest priority.</p>
+    <div class="cycle-break-groups">
+    {% set orders = [('edge', edge_break_order), ('corner', corner_break_order)] if parity == 'even' else [('edge', odd_break_orders.edge), ('corner', odd_break_orders.corner)] %}
+    {% for kind, order in orders %}
+    <div>
+        <h3>{{ kind|capitalize }} cycle-break order</h3>
+        <ol data-cycle-break-order="{{ kind }}" data-count-parity="{{ parity }}">
+        {% for name in order %}
+        <li data-piece="{{ name }}" draggable="true">
+            <span class="cycle-drag-handle" aria-hidden="true">≡</span>
+            <input type="hidden" name="{{ kind }}_{{ parity }}_cycle_break_order" value="{{ name }}">
+            <strong>{{ name }}</strong>
+            <button type="button" data-move="up" aria-label="Move {{ name }} earlier">‹</button>
+            <button type="button" data-move="down" aria-label="Move {{ name }} later">›</button>
+        </li>
+        {% endfor %}
+        </ol>
+        {% if parity == 'odd' %}
+        <p>Per-target overrides inherit this order unless enabled. Targets refer to stickers, so opposite orientations can have different choices.</p>
+        {% for target in (edge_targets if kind == 'edge' else corner_targets) %}
+        <details data-odd-override>
+            <summary>Starting target {{ target }}</summary>
+            <label><input type="checkbox" data-override-enabled name="{{ kind }}_odd_override_{{ target }}_enabled" {% if target in odd_break_overrides[kind] %}checked{% endif %}> Use a custom order for {{ target }}</label>
+            <ol data-cycle-break-order="{{ kind }}" data-count-parity="odd" data-starting-target="{{ target }}" {% if target not in odd_break_overrides[kind] %}hidden{% endif %}>
+            {% for name in odd_break_overrides[kind].get(target, order) %}
+            <li data-piece="{{ name }}" draggable="true">
+                <span class="cycle-drag-handle" aria-hidden="true">≡</span>
+                <input type="hidden" name="{{ kind }}_odd_override_{{ target }}" value="{{ name }}">
+                <strong>{{ name }}</strong>
+                <button type="button" data-move="up" aria-label="Move {{ name }} earlier">‹</button>
+                <button type="button" data-move="down" aria-label="Move {{ name }} later">›</button>
+            </li>
+            {% endfor %}
+            </ol>
+        </details>
+        {% endfor %}
+        {% endif %}
+    </div>
+    {% endfor %}
+    </div>
+</details>
+
+{% endfor %}

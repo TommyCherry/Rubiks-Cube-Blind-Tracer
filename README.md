@@ -1,7 +1,6 @@
 # Rubik's Cube Blindfolded Memo Tracer
 ### DEVELOPER'S NOTE:
 #### Future steps include 3-twist management including niche cases such as comm + LTCT when we have 2 same-direction twisted corners and parity
-#### Filtering bulked scrambles by algcount
 #### Clicking on a button next to the scramble to see what comp it was from (or none if it's not from your comp history)
 #### Being able to search other people's WCA IDs and their history
 #### Weakswap implementation for MBLD tracing
@@ -23,6 +22,10 @@ The application takes a scramble, simulates the resulting cube state, and traces
 ### Bulk Scramble Analysis
 
 Open **Bulk scramble analysis**, paste one scramble per line, and select **Trace scramble set**. Batches support up to 1,000 scrambles and use the same primary buffers, edge and corner floating priorities, pseudoswap settings, and custom letters as individual tracing. Blank lines are ignored; invalid lines are reported individually and excluded from statistics.
+
+Bulk batches are saved automatically in SQLite (`instance/bulk.sqlite3`; override with `BULK_DATABASE`). Use **Exact estimated alg count** to type or select a count, then **Search / sort** to filter or order results low-to-high or high-to-low. Reset restores all lines. Queries reuse saved traces and their original settings; summary statistics always cover the full batch. Bookmark the results URL to return to a batch. Anyone with that URL can view it. SQLite uses Python’s standard library and requires no additional database service.
+
+When signed in with a WCA ID, matching bulk scrambles show expandable competition details: competition, round ID, solve number, and scramble group. Matches use your 3BLD history in the local WCA database, ignoring whitespace differences. All matching groups are shown; the WCA results data does not identify your personal group assignment. Details follow the currently logged-in profile, including when viewing saved batches.
 
 Each scramble shows edge and corner memo, target counts, estimated algorithm count, permutation parity, and the number of edge and corner buffers actually used. The summary shows average targets (total and by piece type), average estimated algorithms, parity percentage, average buffers, and the minimum/maximum total target count.
 
@@ -273,3 +276,7 @@ Enable **Include LTCT** with the UFR corner buffer. On parity scrambles with une
 ### T2C fallback
 
 Enable **Include T2C when LTCT is not used** to reserve a two-piece corner cycle whose opening and closing stickers differ on the same piece. This applies only on parity scrambles and only when LTCT is not active. The chosen cycle is removed from ordinary tracing and displayed last as `[T2C: …]`, after other memo and twists. It counts as one algorithm; its three sticker targets remain included in target totals. Bulk results report how many scrambles use T2C.
+
+### Official Solve History
+
+**My Official Solve History** offers 3x3 blindfolded and 3x3 multiple blindfolded (`333mbf`). The multi-blind view lists every available scramble group (including extras) from competitions where your WCA ID has results in any event. Each multi-blind database record is split on newlines into numbered cube rows, each with its own Trace button. Use **Import attempt to Bulk** to import only that attempt and group. Cube numbers are shown separately from attempt numbers and groups; these are not personal attempt records. Both views support individual tracing and **Import All to Bulk**. The existing WCA `scrambles` columns are sufficient; no database migration is required. The old `/my-3bld-history` URL remains supported.

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk scramble results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main>
+        <a href="{{ url_for('home') }}">Trace another scramble set</a>
+        {% include "bulk_results.html" %}
+        <form id="bulk-query-form" method="GET" action="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}"></form>
+    </main>
+</body>
+</html>

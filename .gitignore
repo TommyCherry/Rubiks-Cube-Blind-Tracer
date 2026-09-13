@@ -1,1 +1,3 @@
 node_modules/
+instance/
+__pycache__/

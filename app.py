@@ -1,15 +1,18 @@
 import os
+import json
+import sqlite3
+from contextlib import closing
 import re
 import secrets
 from urllib.parse import urlencode
 import requests
 import mysql.connector
 
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import abort, Flask, render_template, request, redirect, session, url_for
 
 from Cube import (
     Cube,
-    SPEFFZ,
+    SPEFFZ, EDGE_BUFFER_ORDER, CORNER_BUFFER_ORDER,
 
     UF, UB, UR, UL,
     FR, FL, DF, DB, DR, DL, BR, BL,
@@ -26,6 +29,7 @@ from Cube import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["BULK_DATABASE"] = os.environ.get("BULK_DATABASE", os.path.join(app.instance_path, "bulk.sqlite3"))
 WCA_REDIRECT_URI = os.environ.get(
     "WCA_REDIRECT_URI", "http://localhost:5001/auth/wca/callback"
 )
@@ -61,12 +65,126 @@ CORNER_BUFFER_OPTIONS = [
     "DFR", "DFL", "DBR", "DBL"
 ]
 
+def parity_case_groups(order, primary=None, include_hidden=False):
+    order = list(order)
+    if primary is not None:
+        order.remove(primary)
+        order.insert(0, primary)
+    groups = []
+    for index, name in enumerate(order):
+        cases = []
+        for target_index, target in enumerate(order):
+            if target == name or (not include_hidden and target_index <= index):
+                continue
+            position = CORNER_BUFFER_OPTIONS.index(target)
+            for sticker in format_corner_trace([(position, 0), (position, 1), (position, 2)]):
+                cases.append(dict(key=f"{name}_{sticker}", target=sticker,
+                                  piece=target, visible=target_index > index))
+        if cases:
+            groups.append(dict(buffer=name, cases=cases, count=3 * (7 - index)))
+    return groups
+
+
+PARITY_CASES = parity_case_groups(CORNER_BUFFER_OPTIONS)
+PARITY_CASE_KEYS = {case["key"] for group in parity_case_groups(CORNER_BUFFER_OPTIONS, include_hidden=True)
+                    for case in group["cases"]}
+
+
 def get_db_connection():
     return mysql.connector.connect(
         host="localhost",
         user="root",
         database="wca_results"
     )
+
+def bulk_connection():
+    path = app.config["BULK_DATABASE"]
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    connection.executescript("""
+        CREATE TABLE IF NOT EXISTS bulk_batches (
+            id TEXT PRIMARY KEY, metadata TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS bulk_scrambles (
+            batch_id TEXT NOT NULL REFERENCES bulk_batches(id),
+            line_number INTEGER NOT NULL, alg_count INTEGER, result TEXT NOT NULL,
+            PRIMARY KEY (batch_id, line_number)
+        );
+        CREATE INDEX IF NOT EXISTS bulk_alg_count
+            ON bulk_scrambles(batch_id, alg_count, line_number);
+    """)
+    return connection
+
+
+def save_bulk_batch(results, metadata):
+    batch_id = secrets.token_urlsafe(24)
+    with closing(bulk_connection()) as connection, connection:
+        connection.execute("INSERT INTO bulk_batches VALUES (?, ?)",
+                           (batch_id, json.dumps(metadata)))
+        connection.executemany("INSERT INTO bulk_scrambles VALUES (?, ?, ?, ?)",
+                               [(batch_id, row["line_number"], row.get("alg_count"),
+                                 json.dumps(row)) for row in results])
+    return batch_id
+
+
+def annotate_bulk_history(results):
+    """Match against the current viewer's history without persisting profile data."""
+    wca_id = (session.get("wca_user") or {}).get("wca_id")
+    if not wca_id or not results:
+        return None
+    try:
+        history = get_3bld_history(wca_id)
+    except mysql.connector.Error:
+        app.logger.warning("WCA history lookup unavailable for bulk results", exc_info=True)
+        return "Competition details are temporarily unavailable. Your bulk traces are still available."
+    matches = {}
+    for attempt in history:
+        for scramble in attempt["scrambles"]:
+            key = " ".join(scramble["scramble"].split())
+            match = dict(competition_name=attempt["competition_name"],
+                         competition_id=attempt["competition_id"],
+                         round_type_id=attempt["round_type_id"],
+                         solve=attempt["attempt_number"], group=scramble["group_id"])
+            entries = matches.setdefault(key, [])
+            if match not in entries:
+                entries.append(match)
+    for row in results:
+        row["wca_matches"] = matches.get(" ".join(row["scramble"].split()), [])
+    return None
+
+
+@app.get("/bulk/<batch_id>")
+def query_bulk(batch_id):
+    count = request.args.get("alg_count", "").strip()
+    if count and (not re.fullmatch(r"[0-9]{1,9}", count)):
+        abort(400, description="Algorithm count must be a non-negative whole number (up to 9 digits).")
+    sort = request.args.get("sort", "original")
+    orders = {"original": "line_number", "asc": "alg_count IS NULL, alg_count ASC, line_number",
+              "desc": "alg_count IS NULL, alg_count DESC, line_number"}
+    if sort not in orders:
+        abort(400, description="Invalid sort order.")
+    with closing(bulk_connection()) as connection:
+        batch = connection.execute("SELECT metadata FROM bulk_batches WHERE id = ?", (batch_id,)).fetchone()
+        if batch is None:
+            abort(404)
+        parameters = [batch_id]
+        where = "batch_id = ?"
+        if count:
+            where += " AND alg_count = ?"
+            parameters.append(int(count))
+        rows = connection.execute(
+            f"SELECT result FROM bulk_scrambles WHERE {where} ORDER BY {orders[sort]}", parameters).fetchall()
+        counts = [row[0] for row in connection.execute(
+            "SELECT DISTINCT alg_count FROM bulk_scrambles WHERE batch_id = ? AND alg_count IS NOT NULL ORDER BY alg_count",
+            (batch_id,))]
+    results = [json.loads(row["result"]) for row in rows]
+    history_warning = annotate_bulk_history(results)
+    return render_template("bulk_page.html", **json.loads(batch["metadata"]),
+                           bulk_results=results, bulk_history_warning=history_warning,
+                           bulk_batch_id=batch_id, bulk_alg_counts=counts,
+                           bulk_alg_filter=count, bulk_sort=sort)
+
 
 def sandwich_memo(targets, letters, enabled=False):
     """Reduce non-overlapping AB CD BE patterns at target-pair boundaries."""
@@ -94,18 +212,44 @@ def highlight_sandwiches(memo):
     return Markup(re.sub(r"(\[Sandwich [^\]]*\])", r'<mark class="sandwich-highlight">\1</mark>', str(escape(memo))))
 
 
-def trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
+def trace_scramble(scramble, **settings):
+    """Apply final corner-buffer restrictions before returning a trace."""
+    settings = settings.copy()
+    overrides = settings.pop("parity_pseudoswaps", {})
+    if settings["corner_buffer"] in (DFR, DFL, DBR, DBL):
+        settings.update(include_ltct=False, include_t2c=False)
+    result = _trace_scramble(scramble, **settings)
+    if result["ltct_active"] or result["t2c_active"]:
+        buffer = result["technique_buffer"]
+        if buffer in (DFR, DFL, DBR, DBL):
+            settings.update(include_ltct=False, include_t2c=False)
+            result = _trace_scramble(scramble, **settings)
+        swaps = {UFL: (UF, UL), UBR: (UB, UR), UBL: (UB, UL)}
+        if (result["ltct_active"] or result["t2c_active"]) and buffer in swaps:
+            first, second = swaps[buffer]
+            settings.update(use_pseudoswap=True, pseudoswap_edge_1=first,
+                            pseudoswap_edge_2=second)
+            result = _trace_scramble(scramble, **settings)
+    if (settings.get("use_pseudoswap") and not result["ltct_active"]
+            and not result["t2c_active"] and result["parity_case"] in overrides):
+        first, second = overrides[result["parity_case"]]
+        if first not in range(12) or second not in range(12) or first == second:
+            raise ValueError("A parity override must select two different edges.")
+        settings.update(pseudoswap_edge_1=first, pseudoswap_edge_2=second)
+        result = _trace_scramble(scramble, **settings)
+    return result
+
+
+def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False,):
+                   letter_scheme, corner_floating_buffers=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
     """Shared tracing and memo formatting for individual and bulk input."""
     cube = Cube()
     cube.apply_scramble(scramble)
 
-    if include_ltct and corner_buffer != UFR:
-        raise ValueError("LTCT currently requires the UFR corner buffer.")
     ltct_positions = {
         orientation: [position for position, value in enumerate(cube.corner_ori)
-                      if position != UFR and cube.corner_perm[position] == position
+                      if position != corner_buffer and cube.corner_perm[position] == position
                       and value == orientation]
         for orientation in (1, 2)
     }
@@ -137,7 +281,10 @@ def trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             pseudoswap_edge_1=pseudoswap_edge_1,
             pseudoswap_edge_2=pseudoswap_edge_2,
             floating_buffers=floating_buffers,
-            auto_standalone=True
+            auto_standalone=True,
+            even_cycle_break_order=edge_even_cycle_break_order,
+            odd_cycle_break_order=edge_odd_cycle_break_order,
+            odd_cycle_break_overrides=edge_odd_cycle_break_overrides
         )
     finally:
         cube.edge_ori = original_edge_ori
@@ -173,7 +320,10 @@ def trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             return_cycles=True,
             return_floating=True,
             floating_buffers=corner_floating_buffers,
-            auto_standalone=True
+            auto_standalone=True,
+            even_cycle_break_order=corner_even_cycle_break_order,
+            odd_cycle_break_order=corner_odd_cycle_break_order,
+            odd_cycle_break_overrides=corner_odd_cycle_break_overrides
         )
     finally:
         cube.corner_ori = original_corner_ori
@@ -284,7 +434,7 @@ def trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                 corner_used_buffers.add(position)
                 segment, count = sandwich_memo(corner_trace[start:offset], letters, include_basic_sandwiching)
                 corner_sandwiches += count
-                if position != corner_buffer:
+                if position != corner_buffer or start > 0:
                     label = letter_scheme[CORNER_BUFFER_OPTIONS[position]]
                     segment = f"[Buffer {label}] {segment}"
                 parts.append(segment)
@@ -363,7 +513,25 @@ def trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     ccw_twist_count = len(twist_positions[2])
     twist_alg_count = min(cw_twist_count, ccw_twist_count) + abs(cw_twist_count - ccw_twist_count)
 
+    technique_buffer = corner_buffer
+    for switch in corner_floating:
+        if "to_buffer" in switch:
+            # LTCT absorbs the last target; T2C follows the entire trace.
+            if not ltct_active or switch["after_target"] < len(corner_trace):
+                technique_buffer = switch["to_buffer"]
+
+    parity_case = None
+    if len(corner_trace) % 2 and not ltct_active and not t2c_targets:
+        parity_buffer = corner_buffer
+        for switch in corner_floating:
+            if "to_buffer" in switch and switch["after_target"] < len(corner_trace):
+                parity_buffer = switch["to_buffer"]
+        parity_case = f"{CORNER_BUFFER_OPTIONS[parity_buffer]}_{format_corner_trace([corner_trace[-1]])[0]}"
+
     return dict(
+        parity_case=parity_case,
+        technique_buffer=technique_buffer,
+        effective_pseudoswap_edges=[pseudoswap_edge_1, pseudoswap_edge_2],
         t2c_active=bool(t2c_targets),
         ltct_active=ltct_active,
         ltct_direction=ltct_direction,
@@ -447,6 +615,11 @@ def home():
     include_basic_sandwiching = request.form.get("include_basic_sandwiching") == "on"
     include_3twist = request.form.get("include_3twist") == "on"
     bulk_stats = None
+    edge_break_order = [EDGE_BUFFER_OPTIONS[i] for i in EDGE_BUFFER_ORDER]
+    corner_break_order = [CORNER_BUFFER_OPTIONS[i] for i in CORNER_BUFFER_ORDER]
+    odd_break_overrides = dict(edge={}, corner={})
+    odd_break_orders = dict(edge=edge_break_order.copy(), corner=corner_break_order.copy())
+    parity_pseudoswaps = {}
     trace_result = {}
 
     error = None
@@ -487,6 +660,37 @@ def home():
             letter_scheme[target] = letter
 
         try:
+            for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
+                submitted = request.form.getlist(f"{kind}_even_cycle_break_order")
+                if submitted:
+                    if len(submitted) != len(options) or set(submitted) != set(options):
+                        raise ValueError(f"Invalid {kind} even cycle-break order.")
+                    if kind == "edge":
+                        edge_break_order = submitted
+                    else:
+                        corner_break_order = submitted
+            for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
+                submitted = request.form.getlist(f"{kind}_odd_cycle_break_order")
+                if submitted:
+                    if len(submitted) != len(options) or set(submitted) != set(options):
+                        raise ValueError(f"Invalid {kind} odd cycle-break order.")
+                    odd_break_orders[kind] = submitted
+            for kind, targets, options in (("edge", EDGE_TARGETS, EDGE_BUFFER_OPTIONS), ("corner", CORNER_TARGETS, CORNER_BUFFER_OPTIONS)):
+                for target in targets:
+                    if request.form.get(f"{kind}_odd_override_{target}_enabled") != "on":
+                        continue
+                    order = request.form.getlist(f"{kind}_odd_override_{target}")
+                    if len(order) != len(options) or set(order) != set(options):
+                        raise ValueError(f"Invalid {kind} cycle-break order for {target}.")
+                    odd_break_overrides[kind][target] = order
+            for key in PARITY_CASE_KEYS:
+                first = request.form.get(f"parity_{key}_first", "")
+                second = request.form.get(f"parity_{key}_second", "")
+                if first or second:
+                    if (first not in [str(i) for i in range(12)]
+                            or second not in [str(i) for i in range(12)] or first == second):
+                        raise ValueError(f"Select two different edges for parity case {key}, or leave both as Default.")
+                    parity_pseudoswaps[key] = [int(first), int(second)]
             submitted_corner_order = request.form.getlist("corner_floating_order")
             if submitted_corner_order:
                 if (len(submitted_corner_order) != len(CORNER_BUFFER_OPTIONS)
@@ -517,6 +721,13 @@ def home():
                 if name in enabled_edge_floating
             ]
             settings = dict(
+                edge_odd_cycle_break_overrides={target: [EDGE_BUFFER_OPTIONS.index(name) for name in order] for target, order in odd_break_overrides["edge"].items()},
+                corner_odd_cycle_break_overrides={target: [CORNER_BUFFER_OPTIONS.index(name) for name in order] for target, order in odd_break_overrides["corner"].items()},
+                edge_odd_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in odd_break_orders["edge"]],
+                corner_odd_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in odd_break_orders["corner"]],
+                edge_even_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in edge_break_order],
+                corner_even_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in corner_break_order],
+                parity_pseudoswaps=parity_pseudoswaps,
                 include_3twist=include_3twist,
                 include_t2c=include_t2c,
                 include_ltct=include_ltct,
@@ -581,6 +792,10 @@ def home():
             error = str(e)
 
     context = dict(
+        odd_break_overrides=odd_break_overrides,
+        odd_break_orders=odd_break_orders,
+        edge_break_order=edge_break_order, corner_break_order=corner_break_order,
+        parity_cases=parity_case_groups(corner_floating_order, CORNER_BUFFER_OPTIONS[corner_buffer], include_hidden=True), parity_pseudoswaps=parity_pseudoswaps,
         include_3twist=include_3twist,
         include_t2c=include_t2c,
         include_ltct=include_ltct,
@@ -635,6 +850,15 @@ def home():
         wca_user=session.get("wca_user")
     )
     context.update(trace_result)
+    if bulk_results:
+        metadata = dict(bulk_stats=bulk_stats, bulk_total=len(bulk_results),
+                        include_basic_sandwiching=include_basic_sandwiching,
+                        include_ltct=include_ltct, include_t2c=include_t2c)
+        context.update(bulk_batch_id=save_bulk_batch(bulk_results, metadata),
+                       bulk_total=len(bulk_results),
+                       bulk_alg_counts=sorted({row["alg_count"] for row in bulk_results if "error" not in row}),
+                       bulk_alg_filter="", bulk_sort="original")
+    context["bulk_history_warning"] = annotate_bulk_history(bulk_results)
     return render_template("index.html", **context, bulk_scrambles=bulk_scrambles,
                            bulk_results=bulk_results, bulk_stats=bulk_stats)
 
@@ -803,7 +1027,39 @@ def get_3bld_history(wca_id):
 
     return grouped_history
 
+def get_multiblind_history(wca_id):
+    # Attendance is any recorded event result, not only multi-blind participation.
+    # Each scramble record is an attempt containing newline-separated cubes.
+    with closing(get_db_connection()) as connection:
+        with closing(connection.cursor(dictionary=True)) as cursor:
+            cursor.execute("""
+                SELECT c.name AS competition_name, s.competition_id,
+                       c.year, c.month, c.day, s.round_type_id,
+                       s.group_id, s.scramble_num, s.is_extra, s.scramble
+                FROM scrambles s
+                JOIN competitions c ON c.id = s.competition_id
+                WHERE s.event_id = %s
+                  AND EXISTS (
+                      SELECT 1 FROM results r
+                      WHERE r.competition_id = s.competition_id AND r.person_id = %s
+                  )
+                ORDER BY c.year DESC, c.month DESC, c.day DESC,
+                         s.competition_id, s.round_type_id, s.group_id,
+                         s.is_extra, s.scramble_num
+            """, ("333mbf", wca_id))
+            rows = cursor.fetchall()
+    attempts = []
+    for row in rows:
+        cubes = [line.strip() for line in (row["scramble"] or "").splitlines() if line.strip()]
+        attempts.append(dict(row, attempt_number=row["scramble_num"], scrambles=[
+            dict(cube_number=number, scramble=scramble)
+            for number, scramble in enumerate(cubes, 1)
+        ]))
+    return attempts
+
+
 @app.route("/my-3bld-history")
+@app.route("/my-official-solve-history")
 def my_3bld_history():
     wca_user = session.get("wca_user")
 
@@ -814,12 +1070,21 @@ def my_3bld_history():
 
     if not wca_id:
         return "Your WCA account does not have a WCA ID yet.", 400
-    history = get_3bld_history(wca_id)
+    event = request.args.get("event", "333bf")
+    if event not in ("333bf", "333mbf"):
+        abort(400, description="Unsupported history event.")
+    history_error = None
+    try:
+        history = get_multiblind_history(wca_id) if event == "333mbf" else get_3bld_history(wca_id)
+    except mysql.connector.Error:
+        app.logger.warning("Official history database unavailable", exc_info=True)
+        history = []
+        history_error = "Official solve history is temporarily unavailable. Please try again later."
 
     return render_template(
         "history.html",
         wca_user=wca_user,
-        history=history,
+        history=history, event=event, history_error=history_error,
     )
 
 if __name__ == "__main__":

@@ -679,3 +679,126 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+// Persist per-case parity choices independently of the letter scheme.
+(() => {
+    const controls = [...document.querySelectorAll('[data-parity-override]')];
+    const key = 'cornerParityPseudoswaps';
+    try {
+        const saved = JSON.parse(localStorage.getItem(key) || '{}');
+        controls.forEach(control => {
+            if (!control.value && Object.hasOwn(saved, control.name)
+                && [...control.options].some(option => option.value === saved[control.name])) {
+                control.value = saved[control.name];
+            }
+        });
+    } catch (_) { /* Keep server values when browser storage is unavailable. */ }
+    const save = () => {
+        try { localStorage.setItem(key, JSON.stringify(Object.fromEntries(controls.map(c => [c.name, c.value])))); } catch (_) {}
+    };
+    controls.forEach(control => control.addEventListener('change', save));
+    document.getElementById('reset-parity-overrides')?.addEventListener('click', () => {
+        controls.forEach(control => { control.value = ''; });
+        save();
+    });
+})();
+
+// Reorder existing controls so edits survive priority and primary changes.
+(() => {
+    const list = document.getElementById('cornerFloatingOrder');
+    const primary = document.getElementById('corner-buffer');
+    const section = document.getElementById('corner-parity-settings');
+    if (!list || !primary || !section) return;
+    const refresh = () => {
+        const selected = primary.selectedOptions[0].textContent.trim();
+        const order = [selected, ...[...list.children].map(item => item.dataset.buffer).filter(name => name !== selected)];
+        order.forEach((name, index) => {
+            const group = section.querySelector(`[data-parity-buffer="${name}"]`);
+            group.hidden = index === order.length - 1;
+            group.querySelector('summary').textContent = `${name} buffer — ${(order.length - index - 1) * 3} cases`;
+            const grid = group.querySelector('.parity-case-grid');
+            order.forEach((piece, targetIndex) => {
+                grid.querySelectorAll(`[data-parity-piece="${piece}"]`).forEach(fieldset => {
+                    fieldset.hidden = targetIndex <= index;
+                    grid.appendChild(fieldset);
+                });
+            });
+            section.appendChild(group);
+        });
+    };
+    new MutationObserver(refresh).observe(list, { childList: true });
+    primary.addEventListener('change', refresh);
+    refresh();
+})();
+
+// Hidden inputs move with their panels, preserving submission order.
+document.querySelectorAll('[data-cycle-break-order]').forEach(list => {
+    const key = `${list.dataset.countParity || "even"}CycleBreakOrder-${list.dataset.cycleBreakOrder}${list.dataset.startingTarget ? '-' + list.dataset.startingTarget : ''}`;
+    const toggle = list.closest('[data-odd-override]')?.querySelector('[data-override-enabled]');
+    if (toggle) {
+        try {
+            const saved = localStorage.getItem(key + '-enabled');
+            if (saved !== null) toggle.checked = saved === 'true';
+        } catch (_) {}
+        list.hidden = !toggle.checked;
+        toggle.addEventListener('change', () => {
+            list.hidden = !toggle.checked;
+            if (toggle.checked) {
+                const base = document.querySelector(`[data-cycle-break-order="${list.dataset.cycleBreakOrder}"][data-count-parity="odd"]:not([data-starting-target])`);
+                [...base.children].forEach(item => list.appendChild([...list.children].find(child => child.dataset.piece === item.dataset.piece)));
+            }
+            save();
+            try { localStorage.setItem(key + '-enabled', String(toggle.checked)); } catch (_) {}
+        });
+    }
+    const save = () => {
+        try { localStorage.setItem(key, JSON.stringify([...list.children].map(c => c.dataset.piece))); } catch (_) {}
+    };
+    try {
+        const saved = JSON.parse(localStorage.getItem(key) || 'null');
+        const items = [...list.children];
+        if (Array.isArray(saved) && saved.length === items.length && new Set(saved).size === items.length
+            && saved.every(name => items.some(item => item.dataset.piece === name))) {
+            saved.forEach(name => list.appendChild(items.find(item => item.dataset.piece === name)));
+        }
+    } catch (_) {}
+    list.addEventListener('click', event => {
+        const button = event.target.closest('[data-move]');
+        if (!button) return;
+        const item = button.closest('li');
+        if (button.dataset.move === 'up' && item.previousElementSibling) {
+            list.insertBefore(item, item.previousElementSibling);
+        } else if (button.dataset.move === 'down' && item.nextElementSibling) {
+            list.insertBefore(item.nextElementSibling, item);
+        }
+        button.focus();
+        save();
+    });
+    let dragged = null;
+    list.addEventListener('dragstart', event => {
+        dragged = event.target.closest('li');
+        if (!dragged) return;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', dragged.dataset.piece);
+        dragged.classList.add('dragging');
+    });
+    list.addEventListener('dragover', event => {
+        if (!dragged) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        const target = event.target.closest('li');
+        if (!target || target === dragged || target.parentElement !== list) return;
+        const rect = target.getBoundingClientRect();
+        list.insertBefore(dragged, event.clientX < rect.left + rect.width / 2 ? target : target.nextSibling);
+    });
+    list.addEventListener('drop', event => {
+        if (!dragged) return;
+        event.preventDefault();
+        save();
+    });
+    list.addEventListener('dragend', () => {
+        dragged?.classList.remove('dragging');
+        dragged = null;
+        save();
+    });
+});
