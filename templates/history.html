@@ -3,155 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Official Solve History</title>
+    <title>{{ 'My Official Solve History' if history_view == 'mine' else 'Official Solve History' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-<div class="history-results">
-    <h1>My Official Solve History</h1>
-    <a href="{{ url_for('home') }}">Back to tracer</a>
-    <form method="GET" action="/my-official-solve-history" class="bulk-query-controls">
-        <label for="history-event">Event
-            <select id="history-event" name="event">
-                <option value="333bf" {% if event == '333bf' %}selected{% endif %}>3x3 blindfolded</option>
-                <option value="333mbf" {% if event == '333mbf' %}selected{% endif %}>3x3 multiple blindfolded</option>
-            </select>
-        </label>
-        <button type="submit">Show history</button>
-    </form>
+<body class="history-page">
+<main class="history-results">
+    <a class="history-back" href="{{ url_for('home') }}"><span aria-hidden="true">←</span> Back to tracer</a>
+    <header class="history-hero">
+        <div>
+            <p class="history-eyebrow">{{ 'YOUR COMPETITION ARCHIVE' if history_view == 'mine' else 'EXPLORE COMPETITION HISTORY' }}</p>
+            <h1>{{ 'My Official Solve History' if history_view == 'mine' else 'Official Solve History' }}<span class="history-title-dot" aria-hidden="true">.</span></h1>
+            <p class="history-subtitle">Browse competitions. Find a scramble. Trace it again.</p>
+        </div>
+        {% if viewed_wca_id %}<span class="history-profile">Viewing {{ viewed_wca_id }}</span>{% endif %}
+    </header>
+    <div class="history-toolbar">
+        <form method="GET" action="{{ url_for('my_3bld_history') }}" class="history-event-form">
+            <label for="history-view">Whose history?
+                <select id="history-view" name="view">
+                    <option value="mine" {% if history_view == 'mine' %}selected{% endif %}>My solve history</option>
+                    <option value="other" {% if history_view == 'other' %}selected{% endif %}>Search by WCA ID</option>
+                </select>
+            </label>
+            <label for="history-wca-id" id="history-wca-field">WCA ID
+                <input id="history-wca-id" name="wca_id" value="{{ lookup_id }}" placeholder="e.g. 2015CHER07" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false">
+            </label>
+            <label for="history-event">Event
+                <select id="history-event" name="event">
+                    <option value="333bf" {% if event == '333bf' %}selected{% endif %}>3x3 blindfolded</option>
+                    <option value="333mbf" {% if event == '333mbf' %}selected{% endif %}>3x3 multiple blindfolded</option>
+                </select>
+            </label>
+            <button type="submit" class="history-primary">Show history <span aria-hidden="true">→</span></button>
+        </form>
+        {% if history %}<button type="button" id="import-history-to-bulk">Import All to Bulk <span aria-hidden="true">↗</span></button>{% endif %}
+    </div>
     {% if event == '333mbf' %}
-    <p>All available multi-blind scramble sets from competitions where you have an official result in any event, including extra scrambles. These are competition scrambles, not a record of which cubes you personally attempted.</p>
+    <p class="history-notice">All available multi-blind scramble sets from competitions where the selected person has an official result in any event, including extra scrambles. These are competition scrambles, not a record of which cubes that person personally attempted.</p>
     {% endif %}
-    {% if history_error %}<p role="status">{{ history_error }}</p>{% endif %}
-
+    {% if history_error %}<p class="history-empty" role="status">{{ history_error }}</p>{% endif %}
     {% if history %}
-        <button type="button" id="import-history-to-bulk">
-            Import All to Bulk
-        </button>
-        {% if event == '333mbf' %}
-            {% include 'multiblind_history.html' %}
-        {% else %}
-        <table class="history-table">
-            <colgroup>
-                <col class="history-competition-column">
-                <col class="history-date-column">
-                <col class="history-number-column">
-                <col class="history-number-column">
-                {% if event != '333mbf' %}<col class="history-result-column">{% endif %}
-                <col>
-            </colgroup>
-
-            <thead>
-                <tr>
-                    <th scope="col">Competition</th>
-                    <th scope="col">Date</th>
-                    <th scope="col">Round</th>
-                    <th scope="col">{{ 'Group' if event == '333mbf' else 'Attempt' }}</th>
-                    {% if event != '333mbf' %}<th scope="col">Result</th>{% endif %}
-                    <th scope="col">Scramble</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for result in history %}
-
+    <div class="history-list-heading">
+        <h2>Competitions <span id="competition-count" role="status" aria-live="polite" aria-atomic="true">{{ competitions|length }}</span></h2>
+        <span id="competition-sort-description">Newest first</span>
+    </div>
+    <div class="history-filters">
+    <div class="history-search">
+        <label for="competition-search">Search competitions</label>
+        <input type="search" id="competition-search" placeholder="Search by name, keyword or year…" aria-controls="history-competitions">
+    </div>
+    <div class="history-filter">
+        <label for="competition-year">Year</label>
+        <select id="competition-year" aria-controls="history-competitions">
+            <option value="">All years</option>
+            {% for year in competitions|map(attribute='year')|unique|sort(reverse=true) %}
+            <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="history-filter">
+        <label for="competition-sort">Sort by date</label>
+        <select id="competition-sort" aria-controls="history-competitions">
+            <option value="newest">New to old</option>
+            <option value="oldest">Old to new</option>
+        </select>
+    </div>
+    </div>
+    <p id="competition-no-matches" class="history-empty" hidden>No competitions match your search. Try another keyword or year, or clear your filters.</p>
+    <div class="history-competitions" id="history-competitions">
+    {% for competition in competitions %}
+        <section class="competition-card" data-year="{{ competition.year }}" data-date="{{ competition.year }}-{{ '%02d'|format(competition.month) }}-{{ '%02d'|format(competition.day) }}" data-search="{{ competition.name }} {{ competition.id }} {{ competition.year }}" aria-labelledby="competition-{{ loop.index }}">
+            <header class="competition-header">
+                <div class="competition-identity">
+                    <div class="competition-date" aria-hidden="true"><span>{{ ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][competition.month - 1] }}</span><strong>{{ '%02d'|format(competition.day) }}</strong></div>
+                    <div><h2 id="competition-{{ loop.index }}">{{ competition.name }}</h2>
+                    <p><time datetime="{{ competition.year }}-{{ '%02d'|format(competition.month) }}-{{ '%02d'|format(competition.day) }}">{{ competition.year }}-{{ '%02d'|format(competition.month) }}-{{ '%02d'|format(competition.day) }}</time><span aria-hidden="true"> · </span>{{ competition.attempts|length }} {{ 'scramble set' if event == '333mbf' else 'attempt' }}{{ '' if competition.attempts|length == 1 else 's' }}</p></div>
+                </div>
+                <div class="competition-actions">
+                    <button type="button" class="import-competition">Import competition <span aria-hidden="true">↗</span></button>
+                    <button type="button" class="competition-toggle" aria-expanded="true" aria-controls="competition-content-{{ loop.index }}" aria-label="Collapse {{ competition.name }}">
+                        <span class="competition-toggle-label">Collapse</span><span class="competition-chevron" aria-hidden="true">⌃</span>
+                    </button>
+                </div>
+            </header>
+            <div id="competition-content-{{ loop.index }}" class="competition-content">
+            {% if event == '333mbf' %}
+                {% with history=competition.attempts %}{% include 'multiblind_history.html' %}{% endwith %}
+            {% else %}
+            <table class="competition-table" aria-label="{{ competition.name }} attempts">
+                <thead><tr><th scope="col">Round</th><th scope="col">Attempt</th><th scope="col">Result</th><th scope="col">Scrambles</th></tr></thead>
+                <tbody>
+                {% for result in competition.attempts %}
                     <tr class="history-attempt">
-                        <td>
-                            {{ result.competition_name }}
-                        </td>
-
-                        <td>
-                            {{ result.year }}-{{ "%02d"|format(result.month) }}-{{ "%02d"|format(result.day) }}
-                        </td>
-
-                        <td>
-                            {{ result.round_type_id }}
-                        </td>
-
-                        <td>
-                            {{ result.group_id if event == '333mbf' else result.attempt_number }}
-                        </td>
-
-                        {% if event != '333mbf' %}<td>
-                            {% if result.value == -1 %}
-                                DNF
-                            {% elif result.value == -2 %}
-                                DNS
-                            {% elif result.value == 0 %}
-                                —
-                            {% else %}
-                                {{ "%.2f"|format(result.value / 100) }}
-                            {% endif %}
-                        </td>
-
-                        {% endif %}
+                        <td data-label="Round"><span class="round-badge">{{ {'1': 'Round 1', '2': 'Round 2', '3': 'Round 3', 'f': 'Final', 's': 'Semi-final', 'c': 'Combined final', 'd': 'Combined round 1', 'e': 'Combined round 2', 'g': 'Combined round 3', 'h': 'Combined semi-final'}.get(result.round_type_id, result.round_type_id) }}</span></td>
+                        <td data-label="Attempt" class="attempt-number">{{ '%02d'|format(result.attempt_number) }}</td>
+                        <td data-label="Result"><span class="result-badge {{ 'result-success' if result.value > 0 else 'result-unfinished' }}">
+                            {% if result.value == -1 %}DNF{% elif result.value == -2 %}DNS{% elif result.value == 0 %}—{% else %}{{ '%.2f'|format(result.value / 100) }}<small>s</small>{% endif %}
+                        </span></td>
                         <td class="history-scrambles">
-                            {% if result.scrambles %}
-
-                                <div class="scramble-options">
-
-                                    {% for scramble_info in result.scrambles %}
-
-                                        <div class="history-scramble">
-
-                                            <span class="scramble-group">
-                                                Group {{ scramble_info.group_id }}
-                                                {% if event == '333mbf' %} · {{ 'Extra' if scramble_info.is_extra else 'Cube' }} {{ scramble_info.scramble_num }}{% endif %}
-                                            </span>
-
-                                            <code class="scramble-text">
-                                                {{ scramble_info.scramble }}
-                                            </code>
-
-                                            <form
-                                                action="{{ url_for('home') }}"
-                                                method="POST"
-                                                class="trace-form"
-                                            >
-                                                <input
-                                                    type="hidden"
-                                                    name="scramble"
-                                                    value="{{ scramble_info.scramble }}"
-                                                >
-
-                                                <button
-                                                    type="submit"
-                                                    class="history-trace-button"
-                                                >
-                                                    Trace
-                                                </button>
-                                            </form>
-
-                                        </div>
-
-                                    {% endfor %}
-
+                            <div class="scramble-options">
+                            {% for scramble_info in result.scrambles %}
+                                <div class="history-scramble">
+                                    <span class="scramble-group">Group {{ scramble_info.group_id }}</span>
+                                    <code class="scramble-text">{{ scramble_info.scramble }}</code>
+                                    <form action="{{ url_for('home') }}" method="POST" class="trace-form">
+                                        <input type="hidden" name="scramble" value="{{ scramble_info.scramble }}">
+                                        <button type="submit" class="history-trace-button">Trace <span aria-hidden="true">→</span></button>
+                                    </form>
                                 </div>
-
-                            {% else %}
-                                <span class="no-scramble">Unavailable</span>
-                            {% endif %}
+                            {% else %}<span class="no-scramble">Scramble unavailable</span>{% endfor %}
+                            </div>
                         </td>
-
                     </tr>
-
                 {% endfor %}
-
-            </tbody>
-
-        </table>
-        {% endif %}
-
-    {% else %}
-
-        {% if not history_error %}
-        <p>{{ 'No multi-blind scrambles found for competitions you attended.' if event == '333mbf' else 'No official 3x3 blindfolded results found.' }}</p>
-        {% endif %}
-
+                </tbody>
+            </table>
+            {% endif %}
+            </div>
+        </section>
+    {% endfor %}
+    </div>
+    {% elif not history_error and viewed_wca_id %}
+        <div class="history-empty"><h2>No history to show yet</h2><p>{{ 'No multi-blind scrambles found for competitions this person attended.' if event == '333mbf' else 'No official 3x3 blindfolded results found for this WCA ID in the local database.' }}</p></div>
+    {% elif not history_error %}
+        <div class="history-empty">Enter a WCA ID above to explore someone's official history.</div>
     {% endif %}
-
-</div>
+</main>
 <script>
 function importScrambles(container) {
     const scrambles = Array.from(container.querySelectorAll('.scramble-text'))
@@ -160,10 +137,14 @@ function importScrambles(container) {
     window.location.href = {{ url_for('home') | tojson }};
 }
 document.getElementById('import-history-to-bulk')?.addEventListener('click', () => importScrambles(document));
+document.querySelectorAll('.import-competition').forEach(button => {
+    button.addEventListener('click', () => importScrambles(button.closest('.competition-card')));
+});
 document.querySelectorAll('.import-mbld-attempt').forEach(button => {
     button.addEventListener('click', () => importScrambles(button.closest('.mbld-attempt')));
 });
 </script>
 
+<script src="{{ url_for('static', filename='history.js') }}"></script>
 </body>
 </html>

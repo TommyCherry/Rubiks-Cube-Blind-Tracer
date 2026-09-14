@@ -5,6 +5,29 @@ from app import app, get_multiblind_history
 
 
 class HistoryTests(unittest.TestCase):
+    def test_history_index_created_only_when_missing(self):
+        connection = MagicMock()
+        cursor = connection.cursor.return_value
+        cursor.fetchall.return_value = []
+        with patch('app.get_db_connection', return_value=connection):
+            result = app.test_cli_runner().invoke(args=['optimize-history-db'])
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn('CREATE INDEX idx_scrambles_history', cursor.execute.call_args.args[0])
+        cursor.close.assert_called_once()
+        connection.close.assert_called_once()
+
+        cursor.reset_mock()
+        cursor.fetchall.return_value = [
+            dict(Key_name='existing_lookup', Seq_in_index=i, Column_name=column)
+            for i, column in enumerate(
+                ['competition_id', 'event_id', 'round_type_id', 'is_extra', 'scramble_num'], 1)
+        ]
+        with patch('app.get_db_connection', return_value=connection):
+            result = app.test_cli_runner().invoke(args=['optimize-history-db'])
+        self.assertEqual(result.exit_code, 0, result.output)
+        cursor.execute.assert_called_once_with('SHOW INDEX FROM scrambles')
+        self.assertIn('already exists', result.output)
+
     def setUp(self):
         self.client = app.test_client()
         with self.client.session_transaction() as session:
@@ -59,3 +82,50 @@ class HistoryTests(unittest.TestCase):
         with self.client.session_transaction() as session:
             session.clear()
         self.assertEqual(self.client.get('/my-official-solve-history').status_code, 302)
+
+    def test_other_person_lookup_preserves_signed_in_account(self):
+        for event, loader in [('333bf', 'get_3bld_history'), ('333mbf', 'get_multiblind_history')]:
+            with patch('app.' + loader, return_value=[]) as history:
+                response = self.client.get('/my-official-solve-history', query_string={
+                    'view': 'other', 'wca_id': ' 2015cher07 ', 'event': event})
+            self.assertEqual(response.status_code, 200)
+            history.assert_called_once_with('2015CHER07')
+            self.assertIn('Viewing 2015CHER07', response.get_data(as_text=True))
+        with self.client.session_transaction() as session:
+            self.assertEqual(session['wca_user']['wca_id'], '2020TEST01')
+        with patch('app.get_3bld_history', return_value=[]) as history:
+            self.client.get('/my-official-solve-history?view=mine&wca_id=2015CHER07')
+        history.assert_called_once_with('2020TEST01')
+
+    def test_public_lookup_and_invalid_ids(self):
+        with self.client.session_transaction() as session:
+            session.clear()
+        with patch('app.get_3bld_history', return_value=[]) as history:
+            self.assertEqual(self.client.get('/my-official-solve-history?view=other').status_code, 200)
+            for value in ['', 'invalid', "2015CHER07'", '<script>']:
+                response = self.client.get('/my-official-solve-history', query_string={
+                    'view': 'other', 'wca_id': value})
+                self.assertEqual(response.status_code, 400)
+            history.assert_not_called()
+            response = self.client.get('/my-official-solve-history?wca_id=2015CHER07')
+            self.assertEqual(response.status_code, 200)
+            history.assert_called_once_with('2015CHER07')
+
+    def test_competition_cards_keep_all_attempts_and_order(self):
+        base = dict(competition_name='Z Open', competition_id='Z2026', year=2026,
+                    month=9, day=5, round_type_id='1', attempt_number=1, value=-1,
+                    scrambles=[dict(group_id='A', scramble='R U')])
+        rows = [base, dict(base, competition_id='A2026', competition_name='A Open', value=-2),
+                dict(base, attempt_number=2, value=1526),
+                dict(base, attempt_number=3, value=0, scrambles=[])]
+        with patch('app.get_3bld_history', return_value=rows):
+            response = self.client.get('/my-official-solve-history')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertEqual(html.count('class="competition-card"'), 2)
+        self.assertEqual(html.count('class="history-attempt"'), 4)
+        self.assertEqual(html.count('class="import-competition"'), 2)
+        self.assertLess(html.index('Z Open'), html.index('A Open'))
+        self.assertEqual(html.count('value="R U"'), 3)
+        for text in ['15.26', 'DNF', 'DNS', 'Scramble unavailable']:
+            self.assertIn(text, html)

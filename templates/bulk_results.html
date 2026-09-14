@@ -74,12 +74,13 @@
         <button type="submit" form="bulk-query-form">Search / sort</button>
         <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset</a>
     </div>
+    <p>Conjugacy class describes the original scramble: e = edges, c = corners, and ' marks nonzero total cycle orientation. Solved pieces are omitted.</p>
     <p>Showing {{ bulk_results|length }} of {{ bulk_total }} lines. Statistics above describe the full batch.
        Invalid lines have no alg count and appear last when sorting by count.</p>
     {% if not bulk_results %}<p role="status">No scrambles match this algorithm count.</p>{% endif %}
     <div class="bulk-table-scroll">
         <table class="bulk-table">
-            <thead><tr><th scope="col">Line / scramble</th><th scope="col">Edge memo</th><th scope="col">Corner memo</th><th scope="col">Targets<br>Edge / corner</th><th scope="col">Est. algs</th><th scope="col">Parity</th><th scope="col">Buffers<br>Edge / corner</th></tr></thead>
+            <thead><tr><th scope="col">Line / scramble</th><th scope="col">Edge memo</th><th scope="col">Corner memo</th><th scope="col">Conjugacy class</th><th scope="col">Targets<br>Edge / corner</th><th scope="col">Est. algs</th><th scope="col">Parity</th><th scope="col">Buffers<br>Edge / corner</th></tr></thead>
             <tbody>
             {% for row in bulk_results %}
                 <tr>
@@ -98,10 +99,11 @@
                         {% endif %}
                     </td>
                     {% if row.error is defined %}
-                    <td colspan="6" class="error">{{ row.error }}</td>
+                    <td colspan="7" class="error">{{ row.error }}</td>
                     {% else %}
                     <td class="bulk-memo">{{ (row.edge_memo or '—') | highlight_sandwiches }}</td>
                     <td class="bulk-memo">{{ (row.corner_memo or '—') | highlight_sandwiches }}</td>
+                    <td><code class="conjugacy-value">{{ row.conjugacy_class }}</code></td>
                     <td>{{ row.edge_count }} / {{ row.corner_count }}</td>
                     <td>{{ row.alg_count }}</td><td>{{ row.parity }}</td>
                     <td>{{ row.edge_buffers_used }} / {{ row.corner_buffers_used }}</td>

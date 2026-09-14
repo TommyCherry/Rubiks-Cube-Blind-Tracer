@@ -463,6 +463,39 @@ class Cube:
         self.corner_perm = list(range(8))
         self.corner_ori = [0] * 8
 
+    def conjugacy_class(self):
+        """Cycle lengths with nonzero net orientation marked by a prime.
+
+        Use the requested convention: both corner twist directions share a
+        prime. List edges before corners, longest cycles first, with oriented
+        cycles before misoriented cycles of the same length.
+        """
+        groups = []
+        for permutation, orientations, modulus, kind in (
+            (self.edge_perm, self.edge_ori, 2, "e"),
+            (self.corner_perm, self.corner_ori, 3, "c"),
+        ):
+            visited = set()
+            cycles = []
+            for start in range(len(permutation)):
+                if start in visited:
+                    continue
+                position, length, orientation = start, 0, 0
+                while position not in visited:
+                    visited.add(position)
+                    length += 1
+                    orientation += orientations[position]
+                    position = permutation[position]
+                misoriented = orientation % modulus != 0
+                if length > 1 or misoriented:
+                    cycles.append((length, misoriented))
+            cycles.sort(key=lambda cycle: (-cycle[0], cycle[1]))
+            groups.append("".join(
+                str(length) + kind + ("'" if misoriented else "")
+                for length, misoriented in cycles
+            ))
+        return " ".join(group for group in groups if group) or "Solved"
+
     def is_solved(self):
         return (
             self.corner_perm == list(range(8))

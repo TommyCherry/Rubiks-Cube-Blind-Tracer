@@ -279,4 +279,6 @@ Enable **Include T2C when LTCT is not used** to reserve a two-piece corner cycle
 
 ### Official Solve History
 
+After importing the WCA database, run `python3 -m flask --app app optimize-history-db` once. This adds a composite lookup index on `scrambles` so history can find matching competition/event/round/attempt records without scanning the full scramble table. Existing records are preserved, and rerunning the command skips an equivalent existing index. Run it again if a future import recreates the table; building the index on a large database can take a little time.
+
 **My Official Solve History** offers 3x3 blindfolded and 3x3 multiple blindfolded (`333mbf`). The multi-blind view lists every available scramble group (including extras) from competitions where your WCA ID has results in any event. Each multi-blind database record is split on newlines into numbered cube rows, each with its own Trace button. Use **Import attempt to Bulk** to import only that attempt and group. Cube numbers are shown separately from attempt numbers and groups; these are not personal attempt records. Both views support individual tracing and **Import All to Bulk**. The existing WCA `scrambles` columns are sufficient; no database migration is required. The old `/my-3bld-history` URL remains supported.

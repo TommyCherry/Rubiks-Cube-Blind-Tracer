@@ -1,10 +1,10 @@
 <div class="mbld-attempts">
 {% for attempt in history %}
-<section class="mbld-attempt" aria-labelledby="mbld-title-{{ loop.index }}">
+<section class="mbld-attempt" aria-labelledby="mbld-title-{{ competition.id }}-{{ loop.index }}">
     <header class="mbld-attempt-header">
         <div>
-            <h2 id="mbld-title-{{ loop.index }}">{{ attempt.competition_name }}</h2>
-            <p>{{ attempt.year }}-{{ '%02d'|format(attempt.month) }}-{{ '%02d'|format(attempt.day) }} · Round {{ attempt.round_type_id }} · {{ 'Extra set' if attempt.is_extra else 'Attempt' }} {{ attempt.attempt_number }} · Group {{ attempt.group_id }} · {{ attempt.scrambles|length }} cubes</p>
+            <h3 id="mbld-title-{{ competition.id }}-{{ loop.index }}">{{ 'Extra set' if attempt.is_extra else 'Attempt' }} {{ attempt.attempt_number }} · Group {{ attempt.group_id }}</h3>
+            <p>Round {{ attempt.round_type_id }} · {{ attempt.scrambles|length }} cubes</p>
         </div>
         <button type="button" class="import-mbld-attempt" {% if not attempt.scrambles %}disabled{% endif %}>Import {{ 'extra set' if attempt.is_extra else 'attempt' }} to Bulk</button>
     </header>

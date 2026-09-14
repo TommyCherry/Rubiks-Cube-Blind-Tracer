@@ -13,11 +13,18 @@
     >
 </head>
 
-<body>
+<body class="tracer-page">
 
     <form method="POST" id="memo-form">
 
         <header class="tracer-header">
+            <div class="tracer-masthead">
+            <div class="tracer-intro">
+                <p class="tracer-eyebrow">YOUR BLINDFOLDED PRACTICE SPACE</p>
+                <h1>Rubik's Cube Blindfolded Tracer<span aria-hidden="true">.</span></h1>
+                <p>From scramble to memo. Explore your solves, one cycle at a time.</p>
+            </div>
+            <nav class="tracer-account" aria-label="Account and solve history">
             {% if wca_user %}
                 <div class="wca-user">
                     {% if wca_user.avatar_url %}
@@ -50,8 +57,14 @@
                 <a class="wca-sign-in" href="{{ url_for('wca_login') }}">
                     Sign in with WCA
                 </a>
+                <a class="wca-sign-in" href="{{ url_for('my_3bld_history', view='other') }}">
+                    Search official solve history
+                </a>
             {% endif %}
-            <h1>Rubik's Cube Blindfolded Tracer</h1>
+            </nav>
+            </div>
+            <section class="tracer-workspace" aria-labelledby="scramble-heading">
+            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">01</span><div><h2 id="scramble-heading">Start with a scramble</h2><p>Paste a scramble or generate a fresh one, then build your memo.</p></div></div>
 
             <!-- SCRAMBLE -->
 
@@ -76,7 +89,7 @@
                     </button>
                 </div>
             
-                <button type="submit">
+                <button type="submit" class="tracer-primary">
                     Generate Memo
                 </button>
 
@@ -99,6 +112,9 @@
                 </p>
             {% endif %}
         
+            </section>
+            <section class="tracer-configuration" aria-labelledby="tracing-heading">
+            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">02</span><div><h2 id="tracing-heading">Make it your solve</h2><p>Choose your starting buffers and the techniques you use.</p></div></div>
             <!-- BUFFER SELECTORS -->
 
             <div class="buffer-section">
@@ -136,7 +152,8 @@
         
             </div>
             
-            <label class="memo-setting">
+            <div class="technique-grid">
+            <div class="technique-card"><label class="memo-setting">
                 <input
                     type="checkbox"
                     id="include-3twist"
@@ -145,38 +162,42 @@
                     {% if include_3twist %}checked{% endif %}
                 >
                 Include 3-twists
-            </label>  
-            <p class="bulk-definition">
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">
                 On non-parity scrambles with at least two more CW twists than CCW twists,
                 or vice versa, mark the final two twists from the larger group as a 3-twist
                 with the corner buffer. This changes the tracing output only and does not
                 affect the estimated algorithm count.
-            </p>
+            </p></details></div>
 
-            <label class="memo-setting">
+            <div class="technique-card"><label class="memo-setting">
                 <input type="checkbox" id="include-t2c" name="include_t2c" value="on" {% if include_t2c %}checked{% endif %}>
                 Include T2C when LTCT is not used
             </label>
-            <p class="bulk-definition">On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm.
-                [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.</p>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm.
+                [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.</p></details></div>
             
-            <label class="memo-setting">
+            <div class="technique-card"><label class="memo-setting">
                 <input type="checkbox" id="include-ltct" name="include_ltct" value="on" {% if include_ltct %}checked{% endif %}>
                 Include LTCT (U-layer corner buffers)
             </label>
-            <p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
                 LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
-                Balanced twist counts and non-parity scrambles are unchanged.</p>
+                Balanced twist counts and non-parity scrambles are unchanged.</p></details></div>
             
-            <label class="memo-setting">
+            <div class="technique-card"><label class="memo-setting">
                 <input type="checkbox" name="include_basic_sandwiching"
                        {% if include_basic_sandwiching %}checked{% endif %}>
                 Include basic sandwiching
             </label>
-            <p class="bulk-definition">AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE.
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE.
                 Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged.
-                Patterns are matched within each buffer’s memo, without overlapping.</p>
+                Patterns are matched within each buffer’s memo, without overlapping.</p></details></div>
 
+            </div>
+            </section>
+            <section class="tracer-advanced" aria-labelledby="advanced-heading">
+            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div><h2 id="advanced-heading">Fine-tune your tracing</h2><p>Adjust cycle breaks and parity to match your approach.</p></div></div>
             {% include 'cycle_break_settings.html' %}
             {% include 'parity_settings.html' %}
             <!-- PSEUDOSWAP SELECTORS -->
@@ -240,6 +261,7 @@
         
             </div>
 
+            </section>
         </header>
 
         <!-- FLOATING SETTINGS -->
@@ -946,6 +968,12 @@
         {% if edge_memo is not none %}
 
             <hr>
+
+            <section class="conjugacy-summary" aria-label="Scramble conjugacy class">
+                <strong>Conjugacy class</strong>
+                <code>{{ conjugacy_class }}</code>
+                <p>Original scramble cycles: e = edges, c = corners, ' = nonzero total cycle orientation. Solved pieces are omitted.</p>
+            </section>
 
             <div class="memo-section">
 

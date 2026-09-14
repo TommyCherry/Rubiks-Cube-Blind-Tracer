@@ -97,6 +97,28 @@ def get_db_connection():
         database="wca_results"
     )
 
+
+@app.cli.command("optimize-history-db")
+def optimize_history_db():
+    """Add the scramble lookup index needed by official history queries."""
+    columns = ("competition_id", "event_id", "round_type_id", "is_extra", "scramble_num")
+    with closing(get_db_connection()) as connection:
+        with closing(connection.cursor(dictionary=True)) as cursor:
+            cursor.execute("SHOW INDEX FROM scrambles")
+            indexes = {}
+            for row in cursor.fetchall():
+                indexes.setdefault(row["Key_name"], {})[row["Seq_in_index"]] = row["Column_name"]
+            for parts in indexes.values():
+                if tuple(parts.get(i) for i in range(1, len(columns) + 1)) == columns:
+                    print("Official history lookup index already exists.")
+                    return
+            cursor.execute("""
+                CREATE INDEX idx_scrambles_history ON scrambles
+                    (competition_id, event_id, round_type_id, is_extra, scramble_num)
+            """)
+    print("Created official history lookup index.")
+
+
 def bulk_connection():
     path = app.config["BULK_DATABASE"]
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -179,6 +201,12 @@ def query_bulk(batch_id):
             "SELECT DISTINCT alg_count FROM bulk_scrambles WHERE batch_id = ? AND alg_count IS NOT NULL ORDER BY alg_count",
             (batch_id,))]
     results = [json.loads(row["result"]) for row in rows]
+    # Older saved batches predate cycle classification; derive it without retracing.
+    for result in results:
+        if "error" not in result and "conjugacy_class" not in result:
+            cube = Cube()
+            cube.apply_scramble(result["scramble"])
+            result["conjugacy_class"] = cube.conjugacy_class()
     history_warning = annotate_bulk_history(results)
     return render_template("bulk_page.html", **json.loads(batch["metadata"]),
                            bulk_results=results, bulk_history_warning=history_warning,
@@ -246,6 +274,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     """Shared tracing and memo formatting for individual and bulk input."""
     cube = Cube()
     cube.apply_scramble(scramble)
+    conjugacy_class = cube.conjugacy_class()
 
     ltct_positions = {
         orientation: [position for position, value in enumerate(cube.corner_ori)
@@ -530,6 +559,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
 
     return dict(
         parity_case=parity_case,
+        conjugacy_class=conjugacy_class,
         technique_buffer=technique_buffer,
         effective_pseudoswap_edges=[pseudoswap_edge_1, pseudoswap_edge_2],
         t2c_active=bool(t2c_targets),
@@ -747,8 +777,8 @@ def home():
                          enumerate(bulk_scrambles.splitlines(), 1) if line.strip()]
                 if not lines:
                     raise ValueError("Enter at least one scramble, one per line.")
-                if len(lines) > 1000:
-                    raise ValueError("Please enter at most 1,000 scrambles per batch.")
+                if len(lines) > 10000:
+                    raise ValueError("Please enter at most 3,000 scrambles per batch.")
                 for number, line in lines:
                     # Strip pasted list labels, not digits within move notation.
                     line = re.sub(r"^\d+[.)]\s*", "", line).strip()
@@ -1063,29 +1093,52 @@ def get_multiblind_history(wca_id):
 def my_3bld_history():
     wca_user = session.get("wca_user")
 
-    if not wca_user:
+    lookup_id = request.args.get("wca_id", "").strip().upper()
+    history_view = request.args.get("view", "other" if lookup_id else "mine")
+    if history_view not in ("mine", "other"):
+        abort(400, description="Unsupported history view.")
+    if history_view == "mine" and not wca_user:
         return redirect(url_for("wca_login"))
-
-    wca_id = wca_user.get("wca_id")
-
-    if not wca_id:
-        return "Your WCA account does not have a WCA ID yet.", 400
+    wca_id = (wca_user or {}).get("wca_id") if history_view == "mine" else lookup_id
     event = request.args.get("event", "333bf")
     if event not in ("333bf", "333mbf"):
         abort(400, description="Unsupported history event.")
     history_error = None
-    try:
-        history = get_multiblind_history(wca_id) if event == "333mbf" else get_3bld_history(wca_id)
-    except mysql.connector.Error:
-        app.logger.warning("Official history database unavailable", exc_info=True)
-        history = []
-        history_error = "Official solve history is temporarily unavailable. Please try again later."
+    history = []
+    status = 200
+    if history_view == "mine" and not wca_id:
+        history_error = "Your WCA account does not have a WCA ID yet. You can search another person's history below."
+        status = 400
+    elif history_view == "other" and not lookup_id:
+        if "wca_id" in request.args:
+            history_error = "Enter a WCA ID to search for someone's history."
+            status = 400
+    elif history_view == "other" and not re.fullmatch(r"[0-9]{4}[A-Z]{4}[0-9]{2}", lookup_id):
+        history_error = "Enter a valid WCA ID, such as 2015CHER07 (4 digits, 4 letters, 2 digits)."
+        status = 400
+    else:
+        try:
+            history = get_multiblind_history(wca_id) if event == "333mbf" else get_3bld_history(wca_id)
+        except mysql.connector.Error:
+            app.logger.warning("Official history database unavailable", exc_info=True)
+            history_error = "Official solve history is temporarily unavailable. Please try again later."
+
+    # Preserve the query's newest-first order, even when competitions share a date.
+    competitions = {}
+    for attempt in history:
+        competition = competitions.setdefault(attempt["competition_id"], {
+            "id": attempt["competition_id"], "name": attempt["competition_name"],
+            "year": attempt["year"], "month": attempt["month"], "day": attempt["day"],
+            "attempts": [],
+        })
+        competition["attempts"].append(attempt)
 
     return render_template(
         "history.html",
-        wca_user=wca_user,
+        wca_user=wca_user, competitions=list(competitions.values()),
         history=history, event=event, history_error=history_error,
-    )
+        history_view=history_view, lookup_id=lookup_id, viewed_wca_id=wca_id,
+    ), status
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
