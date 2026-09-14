@@ -96,6 +96,18 @@
             </div>
 
 
+            <details class="conjugacy-practice" {% if request.form.get('practice_class') %}open{% endif %}>
+                <summary>Practice a conjugacy class</summary>
+                <p id="conjugacy-help">Choose exact cycles, such as <code>3e3e'1e' 3c</code>. Use e for edges, c for corners, and ' for a misoriented cycle. Unlisted pieces stay solved.</p>
+                <div class="conjugacy-practice-controls">
+                    <label for="conjugacy-input">Conjugacy class
+                        <input type="text" id="conjugacy-input" name="practice_class" value="{{ request.form.get('practice_class', '')[:200] }}" maxlength="200" placeholder="3e3e'1e' 3c" aria-describedby="conjugacy-help conjugacy-status" autocomplete="off" spellcheck="false">
+                    </label>
+                    <button type="button" id="generate-conjugacy">Generate practice scramble</button>
+                </div>
+                <p id="conjugacy-status" role="status" aria-live="polite"></p>
+            </details>
+
             <details class="bulk-input" {% if bulk_scrambles or bulk_results %}open{% endif %}>
                 <summary>Bulk scramble analysis</summary>
                 <p id="bulk-help">Enter one scramble per line. Leading list numbers such as <code>1.</code> or <code>1)</code> are removed; blank lines are ignored. Uses your selected buffers, edge and corner floating settings, pseudoswap, and letter scheme.</p>
@@ -1007,7 +1019,7 @@
 
                     </div>
 
-                    <p class="bulk-definition">Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets.
+                    <p class="bulk-definition">Each two-letter pair in [Flips: …] or [2Flip: …] identifies one flipped edge, not two targets. A [2Flip: … …] is one algorithm performed at a floating boundary.
                         Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up.
                         The selected edge buffer is excluded from the flip list and count.</p>
 
@@ -1166,5 +1178,6 @@
     {% endif %}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
+<script src="{{ url_for('static', filename='conjugacy_practice.js') }}"></script>
 </body>
 </html>

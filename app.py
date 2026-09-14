@@ -7,8 +7,10 @@ import secrets
 from urllib.parse import urlencode
 import requests
 import mysql.connector
+from itsdangerous import URLSafeTimedSerializer, BadData
+from conjugacy import generate_state, to_facelets
 
-from flask import abort, Flask, render_template, request, redirect, session, url_for
+from flask import jsonify, abort, Flask, render_template, request, redirect, session, url_for
 
 from Cube import (
     Cube,
@@ -270,7 +272,7 @@ def trace_scramble(scramble, **settings):
 
 def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
+                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
     """Shared tracing and memo formatting for individual and bulk input."""
     cube = Cube()
     cube.apply_scramble(scramble)
@@ -311,12 +313,19 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             pseudoswap_edge_2=pseudoswap_edge_2,
             floating_buffers=floating_buffers,
             auto_standalone=True,
+            deferred_flips=flip_positions,
+            flip_order=edge_flip_order,
             even_cycle_break_order=edge_even_cycle_break_order,
             odd_cycle_break_order=edge_odd_cycle_break_order,
             odd_cycle_break_overrides=edge_odd_cycle_break_overrides
         )
     finally:
         cube.edge_ori = original_edge_ori
+
+    two_flips = [item["two_flip"] for item in edge_floating if "two_flip" in item]
+    consumed_flips = {p for pair in two_flips for p in pair}
+    consumed_flips.update(item["flipped_buffer"] for item in edge_floating if "flipped_buffer" in item)
+    flip_positions = [p for p in flip_positions if p not in consumed_flips]
 
     twist_positions = {
         orientation: [position for position, value in enumerate(cube.corner_ori)
@@ -409,7 +418,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     edge_buffers_used = int(bool(edge_trace))
     corner_buffers_used = int(bool(corner_trace))
     used_buffers = {edge_buffer} if edge_trace else set()
-    switches = [item for item in edge_floating if "to_buffer" in item]
+    switches = [item for item in edge_floating if "to_buffer" in item or "two_flip" in item]
     if switches:
         edge_sandwiches = 0
         parts = []
@@ -429,8 +438,12 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                     label = letter_scheme[EDGE_BUFFER_OPTIONS[position]]
                     segment = f"[Buffer {label}] {segment}"
                 parts.append(segment)
+            if "two_flip" in switch:
+                pairs = ["".join(convert_to_letters(format_edge_trace([(p, 0), (p, 1)]), letter_scheme))
+                         for p in switch["two_flip"]]
+                parts.append("[2Flip: " + " ".join(pairs) + "]")
             start = offset
-            position = switch["to_buffer"]
+            position = switch.get("to_buffer", position)
         edge_memo = " ".join(parts)
         edge_buffers_used = len(used_buffers)
     flip_pairs = [
@@ -439,7 +452,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     ]
     if flip_pairs:
         edge_memo = (edge_memo + " [Flips: " + " ".join(flip_pairs) + "]").strip()
-    flip_alg_count = (len(flip_positions) + 1) // 2
+    flip_alg_count = len(two_flips) + (len(flip_positions) + 1) // 2
     corner_used_buffers = {corner_buffer} if corner_trace else set()
     # The final odd corner target is executed by LTCT, so show it there.
     corner_display_letters = corner_letters.copy()
@@ -587,7 +600,8 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
         edge_cycle_breaks=edge_cycle_break_names,
         corner_cycle_breaks=corner_cycle_break_names,
         target_count=edge_count + corner_count,
-        flip_count=len(flip_positions),
+        two_flip_count=len(two_flips),
+        flip_count=len(flip_positions) + 2 * len(two_flips),
         flip_alg_count=flip_alg_count,
         cw_twist_count=cw_twist_count,
         ccw_twist_count=ccw_twist_count,
@@ -767,6 +781,7 @@ def home():
                 pseudoswap_edge_1=pseudoswap_edge_1,
                 pseudoswap_edge_2=pseudoswap_edge_2,
                 floating_buffers=floating_buffers, letter_scheme=letter_scheme,
+                edge_flip_order=[EDGE_BUFFER_OPTIONS.index(name) for name in edge_floating_order],
                 corner_floating_buffers=[
                     CORNER_BUFFER_OPTIONS.index(name) for name in corner_floating_order
                     if name in enabled_corner_floating
@@ -1086,6 +1101,46 @@ def get_multiblind_history(wca_id):
             for number, scramble in enumerate(cubes, 1)
         ]))
     return attempts
+
+
+@app.post("/api/conjugacy-state")
+def conjugacy_state():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="Enter a conjugacy class."), 400
+    try:
+        cube = generate_state(data.get("conjugacy_class"))
+        if cube.is_solved():
+            raise ValueError("This class describes a solved cube. Include at least one unsolved cycle for practice.")
+    except ValueError as error:
+        return jsonify(error=str(error)), 400
+    facelets = to_facelets(cube)
+    classification = cube.conjugacy_class()
+    token = URLSafeTimedSerializer(app.secret_key, salt="conjugacy-practice").dumps(
+        {"facelets": facelets, "class": classification})
+    return jsonify(facelets=facelets, conjugacy_class=classification, token=token)
+
+
+@app.post("/api/conjugacy-verify")
+def conjugacy_verify():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="Missing generated scramble."), 400
+    scramble, token = data.get("scramble"), data.get("token")
+    if not isinstance(scramble, str) or len(scramble) > 1000 or not isinstance(token, str) or len(token) > 2000:
+        return jsonify(error="Invalid scramble verification request."), 400
+    try:
+        expected = URLSafeTimedSerializer(app.secret_key, salt="conjugacy-practice").loads(token, max_age=300)
+    except BadData:
+        return jsonify(error="This generation request expired. Please generate another scramble."), 400
+    try:
+        cube = Cube()
+        cube.apply_scramble(scramble)
+    except ValueError:
+        return jsonify(error="The solver returned invalid moves. Please try again."), 400
+    if to_facelets(cube) != expected["facelets"] or cube.conjugacy_class() != expected["class"]:
+        return jsonify(error="The scramble did not match the requested state. Please try again."), 400
+    return jsonify(scramble=scramble, conjugacy_class=expected["class"])
 
 
 @app.route("/my-3bld-history")

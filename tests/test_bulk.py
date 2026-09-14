@@ -170,21 +170,25 @@ class BulkTests(unittest.TestCase):
             edge_floating_buffers=['UF', 'UB', 'UR', 'UL', 'FR', 'FL', 'DF', 'DB', 'DR', 'DL', 'BR', 'BL'],
             corner_floating_buffers=CORNER_BUFFER_OPTIONS))
         row = context['bulk_results'][0]
-        self.assertEqual(row['alg_count'], 8)
-        self.assertEqual(row['edge_floating'], [])
-        self.assertEqual(row['edge_buffers_used'], 1)
+        self.assertEqual(row['alg_count'], 7)
+        self.assertEqual(row['edge_memo'], 'MH [Buffer A] SL DP VE')
+        self.assertTrue(row['edge_floating'][0]['standalone'])
+        self.assertTrue(row['edge_floating'][1]['standalone_return'])
+        self.assertEqual(row['edge_floating'][1]['to_buffer'], UF)
+        self.assertEqual(row['edge_buffers_used'], 2)
 
-    def test_standalone_cycle_cannot_abandon_flipped_buffer(self):
+    def test_standalone_cycle_preserves_flipped_buffer(self):
         scramble = "F L2 F2 R2 U2 B2 U2 R' B2 D2 U' R' B' D2 U R' U2 R"
         context, _ = self.post(dict(action='bulk', bulk_scrambles=scramble, edge_floating_buffers='DR'))
         row = context['bulk_results'][0]
-        self.assertEqual(row['edge_memo'], 'PS QH FD UE VT XV [Flips: BM]')
+        self.assertEqual(row['edge_memo'], 'PS QH FD UE [Buffer V] TX [Flips: BM]')
         for enabled in ([], ['BR']):
             disabled, _ = self.post(dict(action='bulk', bulk_scrambles=scramble, edge_floating_buffers=enabled))
             self.assertEqual(disabled['bulk_results'][0]['edge_memo'], 'PS QH FD UE VT XV [Flips: BM]')
-        self.assertEqual(row['edge_count'], 12)
-        self.assertEqual(row['edge_buffers_used'], 1)
-        self.assertFalse(any('to_buffer' in item for item in row['edge_floating']))
+        self.assertEqual(row['edge_count'], 10)
+        self.assertEqual(row['edge_buffers_used'], 2)
+        self.assertTrue(row['edge_floating'][-1]['standalone_return'])
+        self.assertEqual(row['edge_floating'][-1]['to_buffer'], UF)
 
     def test_real_scramble_sandwich_reaches_bulk_form_and_statistics(self):
         scramble = "L U2 U D B U2 R R2 D' U2 B2 L' B' U L2 D U2 B' L' U2 B2 D"

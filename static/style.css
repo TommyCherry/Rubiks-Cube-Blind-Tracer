@@ -1218,3 +1218,13 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 .conjugacy-summary > code { display: inline-block; margin: 8px 0 8px 16px; padding: 8px 12px; background: #e8f3f0; border-radius: 6px; color: #18786d; overflow-wrap: anywhere; }
 .conjugacy-summary p { margin: 8px 0 0; color: #687785; font-size: 12px; line-height: 1.6; }
 .conjugacy-value { overflow-wrap: anywhere; }
+
+.conjugacy-practice { margin-top: 20px; padding: 16px; background: #f4faf8; border: 1px solid #d5e9e3; border-radius: 10px; }
+.conjugacy-practice summary { cursor: pointer; color: #18786d; font-size: 13px; font-weight: 650; }
+.conjugacy-practice p { font-size: 12px; line-height: 1.7; color: #687785; }
+.conjugacy-practice-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.conjugacy-practice-controls label { display: grid; gap: 8px; flex: 1 1 240px; font-size: 12px; font-weight: 600; }
+.conjugacy-practice-controls input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #d6dfe5; border-radius: 8px; font-family: monospace; font-size: 14px; }
+#conjugacy-status:empty { display: none; }
+.conjugacy-practice #conjugacy-status.error { color: #a13434; }
+.tracer-page button:disabled { opacity: .6; cursor: wait; }

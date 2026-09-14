@@ -588,6 +588,8 @@ class Cube:
         pseudoswap_edge_2=None,
         floating_buffers=None,
         auto_standalone=False,
+        deferred_flips=None,
+        flip_order=None,
         even_cycle_break_order=None,
         odd_cycle_break_order=None,
         odd_cycle_break_overrides=None
@@ -608,6 +610,9 @@ class Cube:
         for target, order in odd_cycle_break_overrides.items():
             if target not in format_edge_trace([(p, o) for p in range(12) for o in range(2)]) or len(order) != 12 or set(order) != set(range(12)):
                 raise ValueError('Invalid edge target-specific cycle-break order.')
+        pending_flips = set(deferred_flips or [])
+        flip_order = list(flip_order or floating_buffers or [])
+        flip_order += [p for p in range(12) if p not in flip_order]
         floating_buffers = list(floating_buffers or [])
         opportunity_recorded = False
         if any(type(position) is not int or position not in range(12)
@@ -663,8 +668,6 @@ class Cube:
                 order=even_cycle_break_order if len(trace) % 2 == 0 else odd_cycle_break_overrides.get(format_edge_trace([trace[-1]])[0], odd_cycle_break_order)
             )
 
-            if cycle_break is None:
-                break
 
             # Check before consuming the next cycle: a solved buffer can
             # float at a pair boundary, including before the first target.
@@ -672,6 +675,7 @@ class Cube:
                 buffer_solved_at is not None
                 and buffer_solved_at % 2 == 0
                 and not opportunity_recorded
+                and (cycle_break is not None or any(p in pending_flips for p in floating_buffers))
             ):
                 opportunity_recorded = True
                 floating_opportunities.append({
@@ -684,8 +688,25 @@ class Cube:
                     and (
                         self.edge_perm[position] != target_perm[position]
                         or self.edge_ori[position] != 0
+                        or position in pending_flips
                     )
                 ), None)
+
+                if next_buffer in pending_flips:
+                    index = flip_order.index(next_buffer)
+                    partner_order = flip_order[index + 1:] + flip_order[:index]
+                    partner = next((p for p in partner_order if p in pending_flips), None)
+                    if partner is not None:
+                        floating_opportunities[-1].update({
+                            "two_flip": [next_buffer, partner],
+                        })
+                        pending_flips.difference_update((next_buffer, partner))
+                        visited.update((next_buffer, partner))
+                        # Keep intervening buffers eligible; the partner will
+                        # be skipped because it has already been solved.
+                        floating_buffers = floating_buffers[floating_buffers.index(next_buffer) + 1:]
+                        opportunity_recorded = False
+                        continue
 
                 if next_buffer is not None:
                     floating_opportunities[-1].update({
@@ -699,6 +720,10 @@ class Cube:
                     targets, cycle_visited, buffer_ori = self.trace_edge_cycle(
                         buffer, target_perm
                     )
+                    if buffer in pending_flips:
+                        pending_flips.remove(buffer)
+                        buffer_ori = 1
+                        floating_opportunities[-1]["flipped_buffer"] = buffer
                     # A buffer's own cycle needs no cycle-break bookends.
                     trace.extend(targets)
                     visited.update(cycle_visited)
@@ -713,10 +738,13 @@ class Cube:
                     opportunity_recorded = False
                     continue
 
+            if cycle_break is None:
+                break
+
             # A complete even cycle at a pair boundary can use its own
             # opening sticker as buffer, omitting both cycle-break targets.
             if (auto_standalone and cycle_break in floating_buffers
-                    and buffer_ori == 0 and len(trace) % 2 == 0):
+                    and len(trace) % 2 == 0):
                 standalone_targets, standalone_visited, closing_ori = self.trace_edge_cycle(cycle_break, target_perm)
                 if standalone_targets and len(standalone_targets) % 2 == 0 and closing_ori == 0:
                     floating_opportunities.append({
@@ -725,13 +753,20 @@ class Cube:
                         "to_buffer": cycle_break,
                         "standalone": True,
                     })
-                    buffer = cycle_break
+                    # Solve this independent cycle without discarding the
+                    # active buffer's outstanding flip. Resume that buffer
+                    # afterwards so later misoriented cycles still resolve it.
                     trace.extend(standalone_targets)
                     cycles.append(standalone_targets.copy())
                     visited.update(standalone_visited)
-                    buffer_ori = 0
+                    floating_opportunities.append({
+                        "after_target": len(trace),
+                        "from_buffer": cycle_break,
+                        "to_buffer": buffer,
+                        "standalone_return": True,
+                    })
                     buffer_target_count = len(trace)
-                    buffer_solved_at = buffer_target_count
+                    buffer_solved_at = buffer_target_count if buffer_ori == 0 else None
                     opportunity_recorded = False
                     continue
 

@@ -16,6 +16,55 @@ class EdgeFloatingTests(unittest.TestCase):
         cube.edge_perm[UL], cube.edge_perm[FR], cube.edge_perm[FL] = FR, FL, UL
         return cube
 
+    def test_standalone_with_unresolved_buffer_flip_and_longer_cycles(self):
+        for members in ([UL, FR, FL], [UL, FR, FL, DF, DB]):
+            cube = Cube()
+            cube.edge_perm[UF], cube.edge_perm[UB], cube.edge_perm[UR] = UB, UR, UF
+            cube.edge_ori[UF] = 1
+            for position, following in zip(members, members[1:] + members[:1]):
+                cube.edge_perm[position] = following
+            cube.edge_ori[DR] = 1
+            before = cube.get_state()
+            trace, breaks, cycles, switches = self.trace(
+                cube, floating_buffers=list(range(12)), auto_standalone=True,
+                return_cycle_breaks=True, return_cycles=True)
+            self.assertEqual(trace[2:2 + len(members) - 1], [(p, 0) for p in members[1:]])
+            self.assertNotIn(UL, breaks)
+            self.assertEqual(breaks, [DR])
+            self.assertEqual(trace[-2:], [(DR, 0), (DR, 1)])
+            standalone = [item for item in switches if item.get('standalone')]
+            self.assertEqual(standalone, [dict(after_target=2, from_buffer=UF, to_buffer=UL, standalone=True)])
+            self.assertIn(dict(after_target=len(members) + 1, from_buffer=UL,
+                               to_buffer=UF, standalone_return=True), switches)
+            self.assertEqual(cube.get_state(), before)
+
+    def test_standalone_requires_even_boundary_enabled_buffer_and_oriented_cycle(self):
+        for variant in ('odd', 'disabled', 'misoriented'):
+            cube = self.two_cycles()
+            cube.edge_ori[UF] = 1
+            buffers = list(range(12))
+            if variant == 'odd':
+                cube.edge_perm[UF], cube.edge_perm[UB], cube.edge_perm[UR] = UB, UF, UR
+            elif variant == 'disabled':
+                buffers.remove(UL)
+            else:
+                cube.edge_ori[UL] = 1
+            _, switches = self.trace(cube, floating_buffers=buffers, auto_standalone=True)
+            self.assertFalse(any(item.get('standalone') for item in switches))
+
+    def test_reported_scramble_memo(self):
+        from app import trace_scramble
+        from Cube import UFR, SPEFFZ
+        result = trace_scramble(
+            "B2 U' R2 U L2 F2 D2 L2 U' R2 U' R2 L' B2 L B' R' U2 R' B2 U",
+            edge_buffer=UF, corner_buffer=UFR, use_pseudoswap=False,
+            pseudoswap_edge_1=UF, pseudoswap_edge_2=UB,
+            floating_buffers=list(range(12)), corner_floating_buffers=list(range(8)),
+            letter_scheme=SPEFFZ)
+        self.assertEqual(result['edge_memo'], "[Buffer A] OK [Buffer D] HN [Flips: BM]")
+        self.assertEqual(result['edge_count'], 4)
+        self.assertEqual(result['edge_buffers_used'], 2)
+
     def test_switch_uses_priority_and_omits_cycle_break_bookends(self):
         cube = self.two_cycles()
         before = cube.get_state()
