@@ -9,6 +9,7 @@ import requests
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
 from conjugacy import generate_state, to_facelets
+from blddb import dataset, edge_example, POSITION_CODES
 
 from flask import jsonify, abort, Flask, render_template, request, redirect, session, url_for
 
@@ -31,6 +32,7 @@ from Cube import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["PRESET_DATABASE"] = os.environ.get("PRESET_DATABASE", os.path.join(app.instance_path, "presets.sqlite3"))
 app.config["BULK_DATABASE"] = os.environ.get("BULK_DATABASE", os.path.join(app.instance_path, "bulk.sqlite3"))
 WCA_REDIRECT_URI = os.environ.get(
     "WCA_REDIRECT_URI", "http://localhost:5001/auth/wca/callback"
@@ -446,6 +448,17 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             position = switch.get("to_buffer", position)
         edge_memo = " ".join(parts)
         edge_buffers_used = len(used_buffers)
+    # Pair within each floating-buffer segment, never across a buffer change.
+    solution_cases = []
+    start, position = 0, edge_buffer
+    for switch in switches + [{"after_target": len(edge_target_names)}]:
+        end = switch["after_target"]
+        for index in range(start, end, 2):
+            targets = edge_target_names[index:min(index + 2, end)]
+            solution_cases.append(dict(positions=[EDGE_BUFFER_OPTIONS[position]] + targets,
+                                       memo="".join(edge_letters[index:min(index + 2, end)])))
+        start = end
+        position = switch.get("to_buffer", position)
     flip_pairs = [
         "".join(convert_to_letters(format_edge_trace([(position, 0), (position, 1)]), letter_scheme))
         for position in flip_positions
@@ -579,6 +592,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
         ltct_active=ltct_active,
         ltct_direction=ltct_direction,
         ltct_corner=CORNER_BUFFER_OPTIONS[ltct_position] if ltct_active else None,
+        solution_cases=solution_cases,
         edge_memo=edge_memo,
         corner_memo=corner_memo,
         edge_count=edge_count,
@@ -612,8 +626,100 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     )
 
 
+@app.post("/api/solution-examples")
+def solution_examples():
+    data = request.get_json(silent=True)
+    cases = data.get("cases") if isinstance(data, dict) else None
+    if not isinstance(cases, list) or len(cases) > 100:
+        return jsonify(error="Provide up to 100 edge cases."), 400
+    for case in cases:
+        if (not isinstance(case, list) or len(case) != 3
+                or any(not isinstance(position, str) or position not in POSITION_CODES for position in case)
+                or len({frozenset(position) for position in case}) != 3):
+            return jsonify(error="Each case must contain three distinct edge pieces."), 400
+    if not cases:
+        return jsonify(examples=[])
+    try:
+        cache = os.path.join(app.instance_path, "blddb")
+        algorithms = dataset(cache, "edgeAlgToInfoManmade.json")
+        standard = dataset(cache, "edgeAlgToStandard.json")
+        return jsonify(examples=[edge_example(case, algorithms, standard) for case in cases])
+    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError, OSError):
+        app.logger.warning("BLDDB example lookup unavailable", exc_info=True)
+        return jsonify(error="BLDDB examples are temporarily unavailable. Your trace is still available."), 503
+
+
+def preset_connection():
+    path = app.config["PRESET_DATABASE"]
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    connection.execute("""CREATE TABLE IF NOT EXISTS settings_presets (
+        id INTEGER PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
+        settings TEXT NOT NULL, UNIQUE(user_id, name))""")
+    return connection
+
+
+@app.route("/api/settings-presets", methods=["GET", "POST"])
+def settings_presets():
+    user = session.get("wca_user") or {}
+    if not user.get("id"):
+        return jsonify(error="Sign in with WCA to use profile presets."), 401
+    user_id = str(user["id"])
+    if request.method == "GET":
+        with closing(preset_connection()) as connection:
+            rows = connection.execute("SELECT id, name, settings FROM settings_presets WHERE user_id = ? ORDER BY name", (user_id,)).fetchall()
+        return jsonify(presets=[dict(id=row["id"], name=row["name"], settings=json.loads(row["settings"])) for row in rows])
+    token = request.headers.get("X-Preset-CSRF", "")
+    if not token or not secrets.compare_digest(token, session.get("preset_csrf", "")):
+        return jsonify(error="Refresh the page before saving your preset."), 403
+    if request.content_length and request.content_length > 200000:
+        return jsonify(error="Settings preset is too large."), 400
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="Enter a preset name and settings."), 400
+    name, settings = data.get("name"), data.get("settings")
+    if not isinstance(name, str) or not 1 <= len(name.strip()) <= 80:
+        return jsonify(error="Use a preset name between 1 and 80 characters."), 400
+    if (not isinstance(settings, dict) or settings.get("mode") not in ("beginner", "expert")
+            or not isinstance(settings.get("fields"), dict)
+            or not isinstance(settings.get("orders"), dict)):
+        return jsonify(error="Invalid settings preset."), 400
+    for key, values in {**settings["fields"], **settings["orders"]}.items():
+        if (len(key) > 100 or not isinstance(values, list) or len(values) > 100
+                or any(not isinstance(value, str) or len(value) > 100 for value in values)):
+            return jsonify(error="Invalid settings values."), 400
+    for key in ("colors", "orientation"):
+        colors = settings.get(key)
+        if (not isinstance(colors, dict) or set(colors) != set("UFRBLD")
+                or any(not isinstance(value, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", value) for value in colors.values())):
+            return jsonify(error="Invalid cube colors."), 400
+    with closing(preset_connection()) as connection, connection:
+        if connection.execute("SELECT count(*) FROM settings_presets WHERE user_id = ?", (user_id,)).fetchone()[0] >= 30:
+            return jsonify(error="Your profile can hold up to 30 presets."), 400
+        try:
+            cursor = connection.execute("INSERT INTO settings_presets (user_id, name, settings) VALUES (?, ?, ?)",
+                                        (user_id, name.strip(), json.dumps(settings)))
+        except sqlite3.IntegrityError:
+            return jsonify(error="That preset name already exists. Choose a new name."), 409
+    return jsonify(id=cursor.lastrowid, name=name.strip(), settings=settings), 201
+
+
+@app.route("/beginner", methods=["GET", "POST"], endpoint="beginner", defaults={"beginner": True})
+@app.route("/expert", methods=["GET", "POST"], endpoint="expert")
 @app.route("/", methods=["GET", "POST"])
-def home():
+def home(beginner=False):
+    session.setdefault("preset_csrf", secrets.token_urlsafe(32))
+    form = request.form
+    if beginner:
+        # Only settings offered on this page may affect beginner solves.
+        allowed = {"scramble", "bulk_scrambles", "action", "edge_buffer", "corner_buffer",
+                   "use_pseudoswap", "pseudoswap_edge_1", "pseudoswap_edge_2", "beginner_method"}
+        allowed.update(f"letter_{target}" for target in EDGE_TARGETS + CORNER_TARGETS)
+        form = form.copy()
+        for key in list(form):
+            if key not in allowed:
+                del form[key]
     edge_buffer = 0
     corner_buffer = 0
     edge_floating_order = EDGE_BUFFER_OPTIONS.copy()
@@ -648,20 +754,25 @@ def home():
     parity = None
 
     use_pseudoswap = False
-    pseudoswap_edge_1 = UF
-    pseudoswap_edge_2 = UR
+    pseudoswap_edge_1 = UB if beginner else UF
+    pseudoswap_edge_2 = UL if beginner else UR
 
     scramble = ""
-    bulk_scrambles = request.form.get("bulk_scrambles", "")
+    bulk_scrambles = form.get("bulk_scrambles", "")
     bulk_results = []
-    include_t2c = request.form.get("include_t2c") == "on"
-    include_ltct = request.form.get("include_ltct") == "on"
-    include_basic_sandwiching = request.form.get("include_basic_sandwiching") == "on"
-    include_3twist = request.form.get("include_3twist") == "on"
+    include_t2c = form.get("include_t2c") == "on"
+    include_ltct = form.get("include_ltct") == "on"
+    include_basic_sandwiching = form.get("include_basic_sandwiching") == "on"
+    include_3twist = form.get("include_3twist") == "on"
     bulk_stats = None
     edge_break_order = [EDGE_BUFFER_OPTIONS[i] for i in EDGE_BUFFER_ORDER]
     corner_break_order = [CORNER_BUFFER_OPTIONS[i] for i in CORNER_BUFFER_ORDER]
     odd_break_overrides = dict(edge={}, corner={})
+    beginner_method = form.get("beginner_method", "custom") if beginner else "custom"
+    if beginner_method not in ("custom", "op_op", "m2_op"):
+        beginner_method = "custom"
+    if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
+        edge_break_order = ["UB"] + [name for name in edge_break_order if name != "UB"]
     odd_break_orders = dict(edge=edge_break_order.copy(), corner=corner_break_order.copy())
     parity_pseudoswaps = {}
     trace_result = {}
@@ -672,31 +783,31 @@ def home():
     letter_scheme = SPEFFZ.copy()
 
     if request.method == "POST":
-        scramble = request.form.get("scramble", "").strip()
+        scramble = form.get("scramble", "").strip()
 
         # Get selected buffers from form
         edge_buffer = int(
-            request.form.get("edge_buffer", 0)
+            form.get("edge_buffer", 0)
         )
 
         corner_buffer = int(
-            request.form.get("corner_buffer", 0)
+            form.get("corner_buffer", 0)
         )
 
         # Get pseudoswap settings from form
-        use_pseudoswap = request.form.get("use_pseudoswap") == "on"
+        use_pseudoswap = form.get("use_pseudoswap") == "on"
 
         pseudoswap_edge_1 = int(
-            request.form.get("pseudoswap_edge_1", UF)
+            form.get("pseudoswap_edge_1", pseudoswap_edge_1)
         )
 
         pseudoswap_edge_2 = int(
-            request.form.get("pseudoswap_edge_2", UR)
+            form.get("pseudoswap_edge_2", pseudoswap_edge_2)
         )
 
         # Read the user's custom letters
         for target in EDGE_TARGETS + CORNER_TARGETS:
-            letter = request.form.get(
+            letter = form.get(
                 f"letter_{target}",
                 SPEFFZ[target]
             ).strip().upper()
@@ -705,7 +816,7 @@ def home():
 
         try:
             for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
-                submitted = request.form.getlist(f"{kind}_even_cycle_break_order")
+                submitted = form.getlist(f"{kind}_even_cycle_break_order")
                 if submitted:
                     if len(submitted) != len(options) or set(submitted) != set(options):
                         raise ValueError(f"Invalid {kind} even cycle-break order.")
@@ -714,46 +825,46 @@ def home():
                     else:
                         corner_break_order = submitted
             for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
-                submitted = request.form.getlist(f"{kind}_odd_cycle_break_order")
+                submitted = form.getlist(f"{kind}_odd_cycle_break_order")
                 if submitted:
                     if len(submitted) != len(options) or set(submitted) != set(options):
                         raise ValueError(f"Invalid {kind} odd cycle-break order.")
                     odd_break_orders[kind] = submitted
             for kind, targets, options in (("edge", EDGE_TARGETS, EDGE_BUFFER_OPTIONS), ("corner", CORNER_TARGETS, CORNER_BUFFER_OPTIONS)):
                 for target in targets:
-                    if request.form.get(f"{kind}_odd_override_{target}_enabled") != "on":
+                    if form.get(f"{kind}_odd_override_{target}_enabled") != "on":
                         continue
-                    order = request.form.getlist(f"{kind}_odd_override_{target}")
+                    order = form.getlist(f"{kind}_odd_override_{target}")
                     if len(order) != len(options) or set(order) != set(options):
                         raise ValueError(f"Invalid {kind} cycle-break order for {target}.")
                     odd_break_overrides[kind][target] = order
             for key in PARITY_CASE_KEYS:
-                first = request.form.get(f"parity_{key}_first", "")
-                second = request.form.get(f"parity_{key}_second", "")
+                first = form.get(f"parity_{key}_first", "")
+                second = form.get(f"parity_{key}_second", "")
                 if first or second:
                     if (first not in [str(i) for i in range(12)]
                             or second not in [str(i) for i in range(12)] or first == second):
                         raise ValueError(f"Select two different edges for parity case {key}, or leave both as Default.")
                     parity_pseudoswaps[key] = [int(first), int(second)]
-            submitted_corner_order = request.form.getlist("corner_floating_order")
+            submitted_corner_order = form.getlist("corner_floating_order")
             if submitted_corner_order:
                 if (len(submitted_corner_order) != len(CORNER_BUFFER_OPTIONS)
                         or set(submitted_corner_order) != set(CORNER_BUFFER_OPTIONS)):
                     raise ValueError("Invalid corner floating buffer order.")
                 corner_floating_order = submitted_corner_order
-            enabled_corner_floating = request.form.getlist("corner_floating_buffers")
+            enabled_corner_floating = form.getlist("corner_floating_buffers")
             if any(name not in CORNER_BUFFER_OPTIONS for name in enabled_corner_floating):
                 raise ValueError("Invalid corner floating buffer.")
             enabled_corner_floating = list(dict.fromkeys(
                 enabled_corner_floating + [CORNER_BUFFER_OPTIONS[corner_buffer]]
             ))
-            submitted_order = request.form.getlist("edge_floating_order")
+            submitted_order = form.getlist("edge_floating_order")
             if submitted_order:
                 if (len(submitted_order) != len(EDGE_BUFFER_OPTIONS)
                         or set(submitted_order) != set(EDGE_BUFFER_OPTIONS)):
                     raise ValueError("Invalid edge floating buffer order.")
                 edge_floating_order = submitted_order
-            enabled_edge_floating = request.form.getlist("edge_floating_buffers")
+            enabled_edge_floating = form.getlist("edge_floating_buffers")
             if any(name not in EDGE_BUFFER_OPTIONS for name in enabled_edge_floating):
                 raise ValueError("Invalid edge floating buffer.")
             # The primary checkbox is disabled in the UI, but still marks
@@ -787,7 +898,7 @@ def home():
                     if name in enabled_corner_floating
                 ],
             )
-            if request.form.get("action") == "bulk":
+            if form.get("action") == "bulk":
                 lines = [(number, line.strip()) for number, line in
                          enumerate(bulk_scrambles.splitlines(), 1) if line.strip()]
                 if not lines:
@@ -904,7 +1015,7 @@ def home():
                        bulk_alg_counts=sorted({row["alg_count"] for row in bulk_results if "error" not in row}),
                        bulk_alg_filter="", bulk_sort="original")
     context["bulk_history_warning"] = annotate_bulk_history(bulk_results)
-    return render_template("index.html", **context, bulk_scrambles=bulk_scrambles,
+    return render_template("index.html", beginner=beginner, beginner_method=beginner_method, **context, bulk_scrambles=bulk_scrambles,
                            bulk_results=bulk_results, bulk_stats=bulk_stats)
 
 @app.route("/auth/wca")

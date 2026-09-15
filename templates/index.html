@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Rubik's Cube Blindfolded Tracer</title>
+    <title>{{ 'Beginner' if beginner else 'Expert' }} · Rubik's Cube Blindfolded Tracer</title>
 
     <link
         rel="stylesheet"
@@ -46,7 +46,7 @@
                             <a href="{{ url_for('my_3bld_history') }}">
                                 My Official Solve History
                             </a>
-                    
+
                             <a href="{{ url_for('logout') }}">
                                 Log out
                             </a>
@@ -63,8 +63,28 @@
             {% endif %}
             </nav>
             </div>
+            <nav class="tracer-mode-nav" aria-label="Tracer mode">
+                <a href="{{ url_for('beginner') }}" {% if beginner %}aria-current="page"{% endif %}>Beginner</a>
+                <a href="{{ url_for('expert') }}" {% if not beginner %}aria-current="page"{% endif %}>Expert</a>
+            </nav>
+        <section class="tracer-configuration preset-section" aria-labelledby="presets-heading"
+                 data-mode="{{ 'beginner' if beginner else 'expert' }}" data-csrf="{{ session.get('preset_csrf', '') }}">
+            <div class="tracer-section-heading"><div><h2 id="presets-heading">Save settings</h2>
+                <p>Keep named presets on your profile, including letters, colors, buffers, and all solving options on this page.</p></div></div>
+            {% if wca_user %}
+            <div class="preset-controls">
+                <label for="preset-name">Preset name<input id="preset-name" maxlength="80" placeholder="e.g. My competition setup"></label>
+                <button type="button" id="save-preset">Save new preset</button>
+                <label for="preset-list">Your presets<select id="preset-list"><option value="">Choose a preset</option></select></label>
+                <button type="button" id="load-preset" disabled>Load preset</button>
+            </div>
+            <p id="preset-status" role="status" aria-live="polite"></p>
+            {% else %}
+            <a class="wca-sign-in" href="{{ url_for('wca_login') }}">Sign in with WCA to save settings to your profile</a>
+            {% endif %}
+        </section>
             <section class="tracer-workspace" aria-labelledby="scramble-heading">
-            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">01</span><div><h2 id="scramble-heading">Start with a scramble</h2><p>Paste a scramble or generate a fresh one, then build your memo.</p></div></div>
+            <div class="tracer-section-heading"><div><h2 id="scramble-heading">Start with a scramble</h2><p>Paste a scramble or generate a fresh one, then build your memo.</p></div></div>
 
             <!-- SCRAMBLE -->
 
@@ -83,12 +103,12 @@
                         value="{{ scramble }}"
                         placeholder="Enter a custom scramble..."
                     >
-            
+
                     <button type="button" id="generateScrambleButton">
                         Generate Random Scramble
                     </button>
                 </div>
-            
+
                 <button type="submit" class="tracer-primary">
                     Generate Memo
                 </button>
@@ -96,6 +116,7 @@
             </div>
 
 
+            {% if not beginner %}
             <details class="conjugacy-practice" {% if request.form.get('practice_class') %}open{% endif %}>
                 <summary>Practice a conjugacy class</summary>
                 <p id="conjugacy-help">Choose exact cycles, such as <code>3e3e'1e' 3c</code>. Use e for edges, c for corners, and ' for a misoriented cycle. Unlisted pieces stay solved.</p>
@@ -103,14 +124,19 @@
                     <label for="conjugacy-input">Conjugacy class
                         <input type="text" id="conjugacy-input" name="practice_class" value="{{ request.form.get('practice_class', '')[:200] }}" maxlength="200" placeholder="3e3e'1e' 3c" aria-describedby="conjugacy-help conjugacy-status" autocomplete="off" spellcheck="false">
                     </label>
+                    <label class="conjugacy-count" for="conjugacy-count">Scrambles (1–100)
+                        <input type="number" id="conjugacy-count" min="1" max="100" step="1" value="1" required aria-describedby="conjugacy-count-help">
+                    </label>
                     <button type="button" id="generate-conjugacy">Generate practice scramble</button>
                 </div>
+                <p id="conjugacy-count-help">Choose 1 for a single memo, or 2–100 to fill the bulk scramble analysis below.</p>
                 <p id="conjugacy-status" role="status" aria-live="polite"></p>
             </details>
 
+            {% endif %}
             <details class="bulk-input" {% if bulk_scrambles or bulk_results %}open{% endif %}>
                 <summary>Bulk scramble analysis</summary>
-                <p id="bulk-help">Enter one scramble per line. Leading list numbers such as <code>1.</code> or <code>1)</code> are removed; blank lines are ignored. Uses your selected buffers, edge and corner floating settings, pseudoswap, and letter scheme.</p>
+                <p id="bulk-help">Enter one scramble per line. Leading list numbers such as <code>1.</code> or <code>1)</code> are removed; blank lines are ignored. Uses your selected buffers, {% if not beginner %}edge and corner floating settings, {% endif %}pseudoswap, and letter scheme.</p>
                 <label for="bulk-scrambles">Scrambles (up to 1,000)</label>
                 <textarea id="bulk-scrambles" name="bulk_scrambles" rows="7"
                           aria-describedby="bulk-help" spellcheck="false"
@@ -123,421 +149,15 @@
                     <strong>Error:</strong> {{ error }}
                 </p>
             {% endif %}
-        
-            </section>
-            <section class="tracer-configuration" aria-labelledby="tracing-heading">
-            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">02</span><div><h2 id="tracing-heading">Make it your solve</h2><p>Choose your starting buffers and the techniques you use.</p></div></div>
-            <!-- BUFFER SELECTORS -->
-
-            <div class="buffer-section">
-
-                <label for="edge-buffer">
-                    <strong>Edge Buffer:</strong>
-                </label>
-        
-                <select id="edge-buffer" name="edge_buffer">
-                    {% for buffer in edge_buffer_options %}
-                        <option
-                            value="{{ loop.index0 }}"
-                            {% if loop.index0 == edge_buffer %}selected{% endif %}
-                        >
-                            {{ buffer }}
-                        </option>
-                    {% endfor %}
-                </select>
-        
-        
-                <label for="corner-buffer">
-                    <strong>Corner Buffer:</strong>
-                </label>
-        
-                <select id="corner-buffer" name="corner_buffer">
-                    {% for buffer in corner_buffer_options %}
-                        <option
-                            value="{{ loop.index0 }}"
-                            {% if loop.index0 == corner_buffer %}selected{% endif %}
-                        >
-                            {{ buffer }}
-                        </option>
-                    {% endfor %}
-                </select>
-        
-            </div>
-            
-            <div class="technique-grid">
-            <div class="technique-card"><label class="memo-setting">
-                <input
-                    type="checkbox"
-                    id="include-3twist"
-                    name="include_3twist"
-                    value="on"
-                    {% if include_3twist %}checked{% endif %}
-                >
-                Include 3-twists
-            </label>
-<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">
-                On non-parity scrambles with at least two more CW twists than CCW twists,
-                or vice versa, mark the final two twists from the larger group as a 3-twist
-                with the corner buffer. This changes the tracing output only and does not
-                affect the estimated algorithm count.
-            </p></details></div>
-
-            <div class="technique-card"><label class="memo-setting">
-                <input type="checkbox" id="include-t2c" name="include_t2c" value="on" {% if include_t2c %}checked{% endif %}>
-                Include T2C when LTCT is not used
-            </label>
-<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm.
-                [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.</p></details></div>
-            
-            <div class="technique-card"><label class="memo-setting">
-                <input type="checkbox" id="include-ltct" name="include_ltct" value="on" {% if include_ltct %}checked{% endif %}>
-                Include LTCT (U-layer corner buffers)
-            </label>
-<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
-                LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
-                Balanced twist counts and non-parity scrambles are unchanged.</p></details></div>
-            
-            <div class="technique-card"><label class="memo-setting">
-                <input type="checkbox" name="include_basic_sandwiching"
-                       {% if include_basic_sandwiching %}checked{% endif %}>
-                Include basic sandwiching
-            </label>
-<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE.
-                Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged.
-                Patterns are matched within each buffer’s memo, without overlapping.</p></details></div>
-
-            </div>
-            </section>
-            <section class="tracer-advanced" aria-labelledby="advanced-heading">
-            <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div><h2 id="advanced-heading">Fine-tune your tracing</h2><p>Adjust cycle breaks and parity to match your approach.</p></div></div>
-            {% include 'cycle_break_settings.html' %}
-            {% include 'parity_settings.html' %}
-            <!-- PSEUDOSWAP SELECTORS -->
-
-            <div class="pseudo-swap-settings">
-
-                <label>
-                    <input
-                        type="checkbox"
-                        id="usePseudoswap"
-                        name="use_pseudoswap"
-                        {% if use_pseudoswap %}checked{% endif %}
-                    >
-                    Use Pseudoswap
-                </label>
-        
-                <div
-                    id="pseudoswapEdgeSelection"
-                    {% if not use_pseudoswap %}hidden{% endif %}
-                >
-        
-                    <label for="pseudoswapEdge1">
-                        First Edge
-                    </label>
-        
-                    <select id="pseudoswapEdge1" name="pseudoswap_edge_1">
-                        <option value="0" {% if pseudoswap_edge_1 == 0 %}selected{% endif %}>UF</option>
-                        <option value="1" {% if pseudoswap_edge_1 == 1 %}selected{% endif %}>UB</option>
-                        <option value="2" {% if pseudoswap_edge_1 == 2 %}selected{% endif %}>UR</option>
-                        <option value="3" {% if pseudoswap_edge_1 == 3 %}selected{% endif %}>UL</option>
-                        <option value="4" {% if pseudoswap_edge_1 == 4 %}selected{% endif %}>FR</option>
-                        <option value="5" {% if pseudoswap_edge_1 == 5 %}selected{% endif %}>FL</option>
-                        <option value="6" {% if pseudoswap_edge_1 == 6 %}selected{% endif %}>DF</option>
-                        <option value="7" {% if pseudoswap_edge_1 == 7 %}selected{% endif %}>DB</option>
-                        <option value="8" {% if pseudoswap_edge_1 == 8 %}selected{% endif %}>DR</option>
-                        <option value="9" {% if pseudoswap_edge_1 == 9 %}selected{% endif %}>DL</option>
-                        <option value="10" {% if pseudoswap_edge_1 == 10 %}selected{% endif %}>BR</option>
-                        <option value="11" {% if pseudoswap_edge_1 == 11 %}selected{% endif %}>BL</option>
-                    </select>
-        
-                    <label for="pseudoswapEdge2">
-                        Second Edge
-                    </label>
-        
-                    <select id="pseudoswapEdge2" name="pseudoswap_edge_2">
-                        <option value="0" {% if pseudoswap_edge_2 == 0 %}selected{% endif %}>UF</option>
-                        <option value="1" {% if pseudoswap_edge_2 == 1 %}selected{% endif %}>UB</option>
-                        <option value="2" {% if pseudoswap_edge_2 == 2 %}selected{% endif %}>UR</option>
-                        <option value="3" {% if pseudoswap_edge_2 == 3 %}selected{% endif %}>UL</option>
-                        <option value="4" {% if pseudoswap_edge_2 == 4 %}selected{% endif %}>FR</option>
-                        <option value="5" {% if pseudoswap_edge_2 == 5 %}selected{% endif %}>FL</option>
-                        <option value="6" {% if pseudoswap_edge_2 == 6 %}selected{% endif %}>DF</option>
-                        <option value="7" {% if pseudoswap_edge_2 == 7 %}selected{% endif %}>DB</option>
-                        <option value="8" {% if pseudoswap_edge_2 == 8 %}selected{% endif %}>DR</option>
-                        <option value="9" {% if pseudoswap_edge_2 == 9 %}selected{% endif %}>DL</option>
-                        <option value="10" {% if pseudoswap_edge_2 == 10 %}selected{% endif %}>BR</option>
-                        <option value="11" {% if pseudoswap_edge_2 == 11 %}selected{% endif %}>BL</option>
-                    </select>
-        
-                </div>
-        
-            </div>
 
             </section>
         </header>
-
-        <!-- FLOATING SETTINGS -->
-
-        <div class="floating-settings-panel">
-
-            <div class="floating-settings-header">
-                <div>
-                    <h2>Floating Settings</h2>
-                    <p>
-                        Choose which buffers can be used for floating and drag them to set priority. Standalone cycles float only when their opening buffer is enabled in the remaining priority order: they start at a pair boundary, have even length, and open and close on the same sticker.
-                    </p>
-                </div>
-            </div>
-        
-            <!-- Edge Floating Buffers -->
-            <div class="floating-buffer-section">
-        
-                <div class="floating-section-header">
-                    <h3>Edge Buffers</h3>
-                    <div class="floating-selection-actions">
-                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="all">Select all</button>
-                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="none">Select none</button>
-                    </div>
-                    <span class="floating-hint">
-                        Highest priority → Lowest priority
-                    </span>
-                </div>
-        
-                <div id="edgeFloatingOrder" class="floating-buffer-list"
-                     data-order='{{ edge_floating_order | tojson }}'
-                     data-enabled='{{ enabled_edge_floating | tojson }}'>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UF">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UF"
-                        >
-                        <span>UF</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UB">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UB"
-                        >
-                        <span>UB</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UR"
-                        >
-                        <span>UR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UL"
-                        >
-                        <span>UL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="FR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="FR"
-                        >
-                        <span>FR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="FL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="FL"
-                        >
-                        <span>FL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DF">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DF"
-                        >
-                        <span>DF</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DB">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DB"
-                        >
-                        <span>DB</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DR"
-                        >
-                        <span>DR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DL"
-                        >
-                        <span>DL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="BR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="BR"
-                        >
-                        <span>BR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="BL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="BL"
-                        >
-                        <span>BL</span>
-                    </div>
-        
-                </div>
-            </div>
-        
-        
-            <!-- Corner Floating Buffers -->
-            <div class="floating-buffer-section">
-        
-                <div class="floating-section-header">
-                    <h3>Corner Buffers</h3>
-                    <div class="floating-selection-actions">
-                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="all">Select all</button>
-                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="none">Select none</button>
-                    </div>
-                    <span class="floating-hint">
-                        Highest priority → Lowest priority
-                    </span>
-                </div>
-        
-                <div id="cornerFloatingOrder" class="floating-buffer-list"
-                     data-order='{{ corner_floating_order | tojson }}'
-                     data-enabled='{{ enabled_corner_floating | tojson }}'>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UFR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UFR"
-                        >
-                        <span>UFR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UFL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UFL"
-                        >
-                        <span>UFL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UBR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UBR"
-                        >
-                        <span>UBR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UBL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UBL"
-                        >
-                        <span>UBL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DFR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DFR"
-                        >
-                        <span>DFR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DFL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DFL"
-                        >
-                        <span>DFL</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DBR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DBR"
-                        >
-                        <span>DBR</span>
-                    </div>
-        
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DBL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DBL"
-                        >
-                        <span>DBL</span>
-                    </div>
-        
-                </div>
-            </div>
-        
-        </div>
-
-        <!-- LETTER SCHEME -->
-
-        <section class="settings-panel" aria-labelledby="letter-scheme-heading">
-            <h2 id="letter-scheme-heading">Letter Scheme</h2>
+        <div class="solve-settings">
+<section class="tracer-configuration scheme-section" aria-labelledby="letter-scheme-heading">
+<div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">01</span><div><h2 id="letter-scheme-heading">Letter scheme & cube map</h2><p>Set your sticker letters, colors, and cube orientation.</p></div></div>
+<div class="scheme-layout">
+        <div class="scheme-controls settings-panel">
+            <h3>Your sticker letters</h3>
 
             <p>
                 Speffz is loaded by default. Click any sticker to change its letter.
@@ -547,7 +167,7 @@
                 <button type="button" id="reset-speffz">
                     Reset to Speffz
                 </button>
-        
+
                 <button type="button" id="reset-all-settings">
                     Reset All Settings
                 </button>
@@ -558,41 +178,41 @@
             <div class="color-scheme-section">
 
                 <h3>Color Scheme</h3>
-        
+
                 <div class="color-selectors">
-        
+
                     <label>
                         U
                         <input type="color" id="color-u" value="#ffffff">
                     </label>
-        
+
                     <label>
                         F
                         <input type="color" id="color-f" value="#20a84a">
                     </label>
-        
+
                     <label>
                         R
                         <input type="color" id="color-r" value="#e53935">
                     </label>
-        
+
                     <label>
                         B
                         <input type="color" id="color-b" value="#2468d8">
                     </label>
-        
+
                     <label>
                         L
                         <input type="color" id="color-l" value="#ff8c00">
                     </label>
-        
+
                     <label>
                         D
                         <input type="color" id="color-d" value="#ffd92f">
                     </label>
-        
+
                 </div>
-        
+
             </div>
 
             <div class="orientation-section">
@@ -610,368 +230,786 @@
                 <button type="button" id="rotate-z-prime">z'</button>
                 <button type="button" id="rotate-z2">z2</button>
             </div>
-        </section>
+        </div>
 
-        <!-- CUBE NET GRAPHIC -->
-
-        <section class="settings-panel cube-net-panel" aria-label="Editable cube net">
+        <section class="cube-net-panel" aria-label="Editable cube net">
             <div class="cube-net">
 
                 <!-- ================= U FACE ================= -->
-        
+
                 <div class="face face-u">
-        
+
                     <input class="sticker corner u-color"
-                           name="letter_UBL"
+                           name="letter_UBL" aria-label="UBL sticker letter"
                            value="{{ letter_scheme['UBL'] }}"
                            data-speffz="{{ SPEFFZ['UBL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge u-color"
-                           name="letter_UB"
+                           name="letter_UB" aria-label="UB sticker letter"
                            value="{{ letter_scheme['UB'] }}"
                            data-speffz="{{ SPEFFZ['UB'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner u-color"
-                           name="letter_UBR"
+                           name="letter_UBR" aria-label="UBR sticker letter"
                            value="{{ letter_scheme['UBR'] }}"
                            data-speffz="{{ SPEFFZ['UBR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge u-color"
-                           name="letter_UL"
+                           name="letter_UL" aria-label="UL sticker letter"
                            value="{{ letter_scheme['UL'] }}"
                            data-speffz="{{ SPEFFZ['UL'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center u-color">U</div>
-        
+
                     <input class="sticker edge u-color"
-                           name="letter_UR"
+                           name="letter_UR" aria-label="UR sticker letter"
                            value="{{ letter_scheme['UR'] }}"
                            data-speffz="{{ SPEFFZ['UR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner u-color"
-                           name="letter_UFL"
+                           name="letter_UFL" aria-label="UFL sticker letter"
                            value="{{ letter_scheme['UFL'] }}"
                            data-speffz="{{ SPEFFZ['UFL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge u-color"
-                           name="letter_UF"
+                           name="letter_UF" aria-label="UF sticker letter"
                            value="{{ letter_scheme['UF'] }}"
                            data-speffz="{{ SPEFFZ['UF'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner u-color"
-                           name="letter_UFR"
+                           name="letter_UFR" aria-label="UFR sticker letter"
                            value="{{ letter_scheme['UFR'] }}"
                            data-speffz="{{ SPEFFZ['UFR'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
-        
+
+
                 <!-- ================= L FACE ================= -->
-        
+
                 <div class="face face-l">
-        
+
                     <input class="sticker corner l-color"
-                           name="letter_LUB"
+                           name="letter_LUB" aria-label="LUB sticker letter"
                            value="{{ letter_scheme['LUB'] }}"
                            data-speffz="{{ SPEFFZ['LUB'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge l-color"
-                           name="letter_LU"
+                           name="letter_LU" aria-label="LU sticker letter"
                            value="{{ letter_scheme['LU'] }}"
                            data-speffz="{{ SPEFFZ['LU'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner l-color"
-                           name="letter_LUF"
+                           name="letter_LUF" aria-label="LUF sticker letter"
                            value="{{ letter_scheme['LUF'] }}"
                            data-speffz="{{ SPEFFZ['LUF'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge l-color"
-                           name="letter_LB"
+                           name="letter_LB" aria-label="LB sticker letter"
                            value="{{ letter_scheme['LB'] }}"
                            data-speffz="{{ SPEFFZ['LB'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center l-color">L</div>
-        
+
                     <input class="sticker edge l-color"
-                           name="letter_LF"
+                           name="letter_LF" aria-label="LF sticker letter"
                            value="{{ letter_scheme['LF'] }}"
                            data-speffz="{{ SPEFFZ['LF'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner l-color"
-                           name="letter_LDB"
+                           name="letter_LDB" aria-label="LDB sticker letter"
                            value="{{ letter_scheme['LDB'] }}"
                            data-speffz="{{ SPEFFZ['LDB'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge l-color"
-                           name="letter_LD"
+                           name="letter_LD" aria-label="LD sticker letter"
                            value="{{ letter_scheme['LD'] }}"
                            data-speffz="{{ SPEFFZ['LD'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner l-color"
-                           name="letter_LDF"
+                           name="letter_LDF" aria-label="LDF sticker letter"
                            value="{{ letter_scheme['LDF'] }}"
                            data-speffz="{{ SPEFFZ['LDF'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
-        
+
+
                 <!-- ================= F FACE ================= -->
-        
+
                 <div class="face face-f">
-        
+
                     <input class="sticker corner f-color"
-                           name="letter_FUL"
+                           name="letter_FUL" aria-label="FUL sticker letter"
                            value="{{ letter_scheme['FUL'] }}"
                            data-speffz="{{ SPEFFZ['FUL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge f-color"
-                           name="letter_FU"
+                           name="letter_FU" aria-label="FU sticker letter"
                            value="{{ letter_scheme['FU'] }}"
                            data-speffz="{{ SPEFFZ['FU'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner f-color"
-                           name="letter_FUR"
+                           name="letter_FUR" aria-label="FUR sticker letter"
                            value="{{ letter_scheme['FUR'] }}"
                            data-speffz="{{ SPEFFZ['FUR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge f-color"
-                           name="letter_FL"
+                           name="letter_FL" aria-label="FL sticker letter"
                            value="{{ letter_scheme['FL'] }}"
                            data-speffz="{{ SPEFFZ['FL'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center f-color">F</div>
-        
+
                     <input class="sticker edge f-color"
-                           name="letter_FR"
+                           name="letter_FR" aria-label="FR sticker letter"
                            value="{{ letter_scheme['FR'] }}"
                            data-speffz="{{ SPEFFZ['FR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner f-color"
-                           name="letter_FDL"
+                           name="letter_FDL" aria-label="FDL sticker letter"
                            value="{{ letter_scheme['FDL'] }}"
                            data-speffz="{{ SPEFFZ['FDL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge f-color"
-                           name="letter_FD"
+                           name="letter_FD" aria-label="FD sticker letter"
                            value="{{ letter_scheme['FD'] }}"
                            data-speffz="{{ SPEFFZ['FD'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner f-color"
-                           name="letter_FDR"
+                           name="letter_FDR" aria-label="FDR sticker letter"
                            value="{{ letter_scheme['FDR'] }}"
                            data-speffz="{{ SPEFFZ['FDR'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
-        
+
+
                 <!-- ================= R FACE ================= -->
-        
+
                 <div class="face face-r">
-        
+
                     <input class="sticker corner r-color"
-                           name="letter_RUF"
+                           name="letter_RUF" aria-label="RUF sticker letter"
                            value="{{ letter_scheme['RUF'] }}"
                            data-speffz="{{ SPEFFZ['RUF'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge r-color"
-                           name="letter_RU"
+                           name="letter_RU" aria-label="RU sticker letter"
                            value="{{ letter_scheme['RU'] }}"
                            data-speffz="{{ SPEFFZ['RU'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner r-color"
-                           name="letter_RUB"
+                           name="letter_RUB" aria-label="RUB sticker letter"
                            value="{{ letter_scheme['RUB'] }}"
                            data-speffz="{{ SPEFFZ['RUB'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge r-color"
-                           name="letter_RF"
+                           name="letter_RF" aria-label="RF sticker letter"
                            value="{{ letter_scheme['RF'] }}"
                            data-speffz="{{ SPEFFZ['RF'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center r-color">R</div>
-        
+
                     <input class="sticker edge r-color"
-                           name="letter_RB"
+                           name="letter_RB" aria-label="RB sticker letter"
                            value="{{ letter_scheme['RB'] }}"
                            data-speffz="{{ SPEFFZ['RB'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner r-color"
-                           name="letter_RDF"
+                           name="letter_RDF" aria-label="RDF sticker letter"
                            value="{{ letter_scheme['RDF'] }}"
                            data-speffz="{{ SPEFFZ['RDF'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge r-color"
-                           name="letter_RD"
+                           name="letter_RD" aria-label="RD sticker letter"
                            value="{{ letter_scheme['RD'] }}"
                            data-speffz="{{ SPEFFZ['RD'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner r-color"
-                           name="letter_RDB"
+                           name="letter_RDB" aria-label="RDB sticker letter"
                            value="{{ letter_scheme['RDB'] }}"
                            data-speffz="{{ SPEFFZ['RDB'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
-        
+
+
                 <!-- ================= B FACE ================= -->
-        
+
                 <div class="face face-b">
-        
+
                     <input class="sticker corner b-color"
-                           name="letter_BUR"
+                           name="letter_BUR" aria-label="BUR sticker letter"
                            value="{{ letter_scheme['BUR'] }}"
                            data-speffz="{{ SPEFFZ['BUR'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge b-color"
-                           name="letter_BU"
+                           name="letter_BU" aria-label="BU sticker letter"
                            value="{{ letter_scheme['BU'] }}"
                            data-speffz="{{ SPEFFZ['BU'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner b-color"
-                           name="letter_BUL"
+                           name="letter_BUL" aria-label="BUL sticker letter"
                            value="{{ letter_scheme['BUL'] }}"
                            data-speffz="{{ SPEFFZ['BUL'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge b-color"
-                           name="letter_BR"
+                           name="letter_BR" aria-label="BR sticker letter"
                            value="{{ letter_scheme['BR'] }}"
                            data-speffz="{{ SPEFFZ['BR'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center b-color">B</div>
-        
+
                     <input class="sticker edge b-color"
-                           name="letter_BL"
+                           name="letter_BL" aria-label="BL sticker letter"
                            value="{{ letter_scheme['BL'] }}"
                            data-speffz="{{ SPEFFZ['BL'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner b-color"
-                           name="letter_BDR"
+                           name="letter_BDR" aria-label="BDR sticker letter"
                            value="{{ letter_scheme['BDR'] }}"
                            data-speffz="{{ SPEFFZ['BDR'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge b-color"
-                           name="letter_BD"
+                           name="letter_BD" aria-label="BD sticker letter"
                            value="{{ letter_scheme['BD'] }}"
                            data-speffz="{{ SPEFFZ['BD'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner b-color"
-                           name="letter_BDL"
+                           name="letter_BDL" aria-label="BDL sticker letter"
                            value="{{ letter_scheme['BDL'] }}"
                            data-speffz="{{ SPEFFZ['BDL'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
-        
+
+
                 <!-- ================= D FACE ================= -->
-        
+
                 <div class="face face-d">
-        
+
                     <input class="sticker corner d-color"
-                           name="letter_DFL"
+                           name="letter_DFL" aria-label="DFL sticker letter"
                            value="{{ letter_scheme['DFL'] }}"
                            data-speffz="{{ SPEFFZ['DFL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge d-color"
-                           name="letter_DF"
+                           name="letter_DF" aria-label="DF sticker letter"
                            value="{{ letter_scheme['DF'] }}"
                            data-speffz="{{ SPEFFZ['DF'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner d-color"
-                           name="letter_DFR"
+                           name="letter_DFR" aria-label="DFR sticker letter"
                            value="{{ letter_scheme['DFR'] }}"
                            data-speffz="{{ SPEFFZ['DFR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker edge d-color"
-                           name="letter_DL"
+                           name="letter_DL" aria-label="DL sticker letter"
                            value="{{ letter_scheme['DL'] }}"
                            data-speffz="{{ SPEFFZ['DL'] }}"
                            maxlength="1">
-        
+
                     <div class="sticker center d-color">D</div>
-        
+
                     <input class="sticker edge d-color"
-                           name="letter_DR"
+                           name="letter_DR" aria-label="DR sticker letter"
                            value="{{ letter_scheme['DR'] }}"
                            data-speffz="{{ SPEFFZ['DR'] }}"
                            maxlength="1">
-        
-        
+
+
                     <input class="sticker corner d-color"
-                           name="letter_DBL"
+                           name="letter_DBL" aria-label="DBL sticker letter"
                            value="{{ letter_scheme['DBL'] }}"
                            data-speffz="{{ SPEFFZ['DBL'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker edge d-color"
-                           name="letter_DB"
+                           name="letter_DB" aria-label="DB sticker letter"
                            value="{{ letter_scheme['DB'] }}"
                            data-speffz="{{ SPEFFZ['DB'] }}"
                            maxlength="1">
-        
+
                     <input class="sticker corner d-color"
-                           name="letter_DBR"
+                           name="letter_DBR" aria-label="DBR sticker letter"
                            value="{{ letter_scheme['DBR'] }}"
                            data-speffz="{{ SPEFFZ['DBR'] }}"
                            maxlength="1">
-        
+
                 </div>
-        
+
             </div>
         </section>
+
+</div>
+</section>
+<section class="tracer-configuration{% if beginner %} parity-section{% endif %}" aria-labelledby="buffers-heading">
+<div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">02</span><div><h2 id="buffers-heading">{{ "Solving settings" if beginner else "Buffers" }}</h2><p>{{ "Choose your primary buffers and whether to use pseudoswap." if beginner else "Choose your starting buffers, then set your floating priorities." }}</p></div></div>
+            {% if beginner %}
+            <div class="beginner-method-section">
+                <label for="beginner-method"><strong>Method preset</strong></label>
+                <select id="beginner-method" name="beginner_method" aria-describedby="beginner-method-help">
+                    <option value="custom" {% if beginner_method == 'custom' %}selected{% endif %}>Custom</option>
+                    <option value="op_op" {% if beginner_method == 'op_op' %}selected{% endif %}>OP/OP — UR edges, UBL corners</option>
+                    <option value="m2_op" {% if beginner_method == 'm2_op' %}selected{% endif %}>M2/OP — DF edges, UBL corners</option>
+                </select>
+                <p id="beginner-method-help" class="bulk-definition">Both presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.</p>
+            </div>
+            {% endif %}
+            <div class="buffer-section">
+
+                <label for="edge-buffer">
+                    <strong>Edge Buffer:</strong>
+                </label>
+
+                <select id="edge-buffer" name="edge_buffer">
+                    {% for buffer in edge_buffer_options %}
+                        <option
+                            value="{{ loop.index0 }}"
+                            {% if loop.index0 == edge_buffer %}selected{% endif %}
+                        >
+                            {{ buffer }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+
+                <label for="corner-buffer">
+                    <strong>Corner Buffer:</strong>
+                </label>
+
+                <select id="corner-buffer" name="corner_buffer">
+                    {% for buffer in corner_buffer_options %}
+                        <option
+                            value="{{ loop.index0 }}"
+                            {% if loop.index0 == corner_buffer %}selected{% endif %}
+                        >
+                            {{ buffer }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        {% if not beginner %}
+        <div class="floating-settings-panel">
+
+            <div class="floating-settings-header">
+                <div>
+                    <h3>Floating buffers <span class="settings-optional">Optional</span></h3>
+                    <p>
+                        Choose which buffers can be used for floating and drag them to set priority. Standalone cycles float only when their opening buffer is enabled in the remaining priority order: they start at a pair boundary, have even length, and open and close on the same sticker.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Edge Floating Buffers -->
+            <div class="floating-buffer-section">
+
+                <div class="floating-section-header">
+                    <h3>Edge Buffers</h3>
+                    <div class="floating-selection-actions">
+                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="all">Select all</button>
+                        <button type="button" data-list="edgeFloatingOrder" data-floating-select="none">Select none</button>
+                    </div>
+                    <span class="floating-hint">
+                        Highest priority → Lowest priority
+                    </span>
+                </div>
+
+                <div id="edgeFloatingOrder" class="floating-buffer-list"
+                     data-order='{{ edge_floating_order | tojson }}'
+                     data-enabled='{{ enabled_edge_floating | tojson }}'>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UF">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UF"
+                        >
+                        <span>UF</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UB">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UB"
+                        >
+                        <span>UB</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UR"
+                        >
+                        <span>UR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="UL"
+                        >
+                        <span>UL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="FR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="FR"
+                        >
+                        <span>FR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="FL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="FL"
+                        >
+                        <span>FL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DF">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DF"
+                        >
+                        <span>DF</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DB">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DB"
+                        >
+                        <span>DB</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DR"
+                        >
+                        <span>DR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="DL"
+                        >
+                        <span>DL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="BR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="BR"
+                        >
+                        <span>BR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="BL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="edge_floating_buffers"
+                            value="BL"
+                        >
+                        <span>BL</span>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Corner Floating Buffers -->
+            <div class="floating-buffer-section">
+
+                <div class="floating-section-header">
+                    <h3>Corner Buffers</h3>
+                    <div class="floating-selection-actions">
+                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="all">Select all</button>
+                        <button type="button" data-list="cornerFloatingOrder" data-floating-select="none">Select none</button>
+                    </div>
+                    <span class="floating-hint">
+                        Highest priority → Lowest priority
+                    </span>
+                </div>
+
+                <div id="cornerFloatingOrder" class="floating-buffer-list"
+                     data-order='{{ corner_floating_order | tojson }}'
+                     data-enabled='{{ enabled_corner_floating | tojson }}'>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UFR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UFR"
+                        >
+                        <span>UFR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UFL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UFL"
+                        >
+                        <span>UFL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UBR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UBR"
+                        >
+                        <span>UBR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="UBL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="UBL"
+                        >
+                        <span>UBL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DFR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DFR"
+                        >
+                        <span>DFR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DFL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DFL"
+                        >
+                        <span>DFL</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DBR">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DBR"
+                        >
+                        <span>DBR</span>
+                    </div>
+
+                    <div class="floating-buffer-item" draggable="true" data-buffer="DBL">
+                        <span class="drag-handle">☰</span>
+                        <input
+                            type="checkbox"
+                            name="corner_floating_buffers"
+                            value="DBL"
+                        >
+                        <span>DBL</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+</section>
+<section class="tracer-configuration parity-section" aria-labelledby="parity-heading">
+<div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div><h2 id="parity-heading">Parity</h2><p>Choose whether to pseudoswap, then add your corner parity techniques.</p></div></div>
+            {% endif %}
+            <div class="pseudo-swap-settings">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        id="usePseudoswap"
+                        name="use_pseudoswap"
+                        {% if use_pseudoswap %}checked{% endif %}
+                    >
+                    Use Pseudoswap
+                </label>
+
+                <div
+                    id="pseudoswapEdgeSelection"
+                    {% if not use_pseudoswap %}hidden{% endif %}
+                >
+
+                    <label for="pseudoswapEdge1">
+                        First Edge
+                    </label>
+
+                    <select id="pseudoswapEdge1" name="pseudoswap_edge_1">
+                        <option value="0" {% if pseudoswap_edge_1 == 0 %}selected{% endif %}>UF</option>
+                        <option value="1" {% if pseudoswap_edge_1 == 1 %}selected{% endif %}>UB</option>
+                        <option value="2" {% if pseudoswap_edge_1 == 2 %}selected{% endif %}>UR</option>
+                        <option value="3" {% if pseudoswap_edge_1 == 3 %}selected{% endif %}>UL</option>
+                        <option value="4" {% if pseudoswap_edge_1 == 4 %}selected{% endif %}>FR</option>
+                        <option value="5" {% if pseudoswap_edge_1 == 5 %}selected{% endif %}>FL</option>
+                        <option value="6" {% if pseudoswap_edge_1 == 6 %}selected{% endif %}>DF</option>
+                        <option value="7" {% if pseudoswap_edge_1 == 7 %}selected{% endif %}>DB</option>
+                        <option value="8" {% if pseudoswap_edge_1 == 8 %}selected{% endif %}>DR</option>
+                        <option value="9" {% if pseudoswap_edge_1 == 9 %}selected{% endif %}>DL</option>
+                        <option value="10" {% if pseudoswap_edge_1 == 10 %}selected{% endif %}>BR</option>
+                        <option value="11" {% if pseudoswap_edge_1 == 11 %}selected{% endif %}>BL</option>
+                    </select>
+
+                    <label for="pseudoswapEdge2">
+                        Second Edge
+                    </label>
+
+                    <select id="pseudoswapEdge2" name="pseudoswap_edge_2">
+                        <option value="0" {% if pseudoswap_edge_2 == 0 %}selected{% endif %}>UF</option>
+                        <option value="1" {% if pseudoswap_edge_2 == 1 %}selected{% endif %}>UB</option>
+                        <option value="2" {% if pseudoswap_edge_2 == 2 %}selected{% endif %}>UR</option>
+                        <option value="3" {% if pseudoswap_edge_2 == 3 %}selected{% endif %}>UL</option>
+                        <option value="4" {% if pseudoswap_edge_2 == 4 %}selected{% endif %}>FR</option>
+                        <option value="5" {% if pseudoswap_edge_2 == 5 %}selected{% endif %}>FL</option>
+                        <option value="6" {% if pseudoswap_edge_2 == 6 %}selected{% endif %}>DF</option>
+                        <option value="7" {% if pseudoswap_edge_2 == 7 %}selected{% endif %}>DB</option>
+                        <option value="8" {% if pseudoswap_edge_2 == 8 %}selected{% endif %}>DR</option>
+                        <option value="9" {% if pseudoswap_edge_2 == 9 %}selected{% endif %}>DL</option>
+                        <option value="10" {% if pseudoswap_edge_2 == 10 %}selected{% endif %}>BR</option>
+                        <option value="11" {% if pseudoswap_edge_2 == 11 %}selected{% endif %}>BL</option>
+                    </select>
+
+                </div>
+
+            </div>
+{% if beginner %}
+</section>
+{% else %}
+<div class="technique-grid">
+<div class="technique-card"><label class="memo-setting">
+                <input type="checkbox" id="include-ltct" name="include_ltct" value="on" {% if include_ltct %}checked{% endif %}>
+                Include LTCT (U-layer corner buffers)
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
+                LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
+                Balanced twist counts and non-parity scrambles are unchanged.</p></details></div><div class="technique-card"><label class="memo-setting">
+                <input type="checkbox" id="include-t2c" name="include_t2c" value="on" {% if include_t2c %}checked{% endif %}>
+                Include T2C when LTCT is not used
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm.
+                [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.</p></details></div></div>
+</section>
+<section class="tracer-advanced" aria-labelledby="advanced-heading">
+<div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">04</span><div><h2 id="advanced-heading">Miscellaneous</h2><p>Fine-tune techniques, cycle breaks, and individual corner parity cases.</p></div></div>
+<div class="technique-grid">
+<div class="technique-card"><label class="memo-setting">
+                <input type="checkbox" name="include_basic_sandwiching"
+                       {% if include_basic_sandwiching %}checked{% endif %}>
+                Include basic sandwiching
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE.
+                Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged.
+                Patterns are matched within each buffer’s memo, without overlapping.</p></details></div><div class="technique-card"><label class="memo-setting">
+                <input
+                    type="checkbox"
+                    id="include-3twist"
+                    name="include_3twist"
+                    value="on"
+                    {% if include_3twist %}checked{% endif %}
+                >
+                Include 3-twists
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">
+                On non-parity scrambles with at least two more CW twists than CCW twists,
+                or vice versa, mark the final two twists from the larger group as a 3-twist
+                with the corner buffer. This changes the tracing output only and does not
+                affect the estimated algorithm count.
+            </p></details></div></div>
+            {% include 'cycle_break_settings.html' %}
+            {% include 'parity_settings.html' %}
+        </section>
+        {% endif %}
+        </div>
+
+
 
         {% include "bulk_results.html" %}
 
@@ -981,10 +1019,22 @@
 
             <hr>
 
+            {% if not beginner %}
             <section class="conjugacy-summary" aria-label="Scramble conjugacy class">
                 <strong>Conjugacy class</strong>
                 <code>{{ conjugacy_class }}</code>
                 <p>Original scramble cycles: e = edges, c = corners, ' = nonzero total cycle orientation. Solved pieces are omitted.</p>
+            </section>
+
+            {% endif %}
+            <section class="tracer-configuration solution-section" aria-labelledby="solution-heading">
+                <div class="tracer-section-heading"><div><h2 id="solution-heading">Solution examples</h2>
+                <p>Example moves for each ordinary 3-style edge pair, in tracing order.</p></div></div>
+                <p class="bulk-definition">Uses the first manmade algorithm from <a href="https://blddb.net/edge.html" target="_blank" rel="noopener">BLDDB</a>, checked against its sticker cycle. Floating buffer changes are respected. These are individual edge examples, not a complete solve: corners, parity, flips, and combined techniques need separate algorithms. Sandwiches are shown as their original 3-style pairs.</p>
+                <button type="button" id="load-solution-examples">Show example moves</button>
+                <p id="solution-status" role="status" aria-live="polite"></p>
+                <ol id="solution-examples" class="solution-examples"></ol>
+                <script type="application/json" id="solution-cases">{{ solution_cases | default([]) | tojson }}</script>
             </section>
 
             <div class="memo-section">
@@ -1071,7 +1121,7 @@
 
                         <div class="trace-group">
                             <h3>Edge Targets</h3>
-                        
+
                             {% for cycle in edge_cycles %}
                                 <p class="trace">
                                     <strong>Cycle {{ loop.index }}:</strong>
@@ -1082,7 +1132,7 @@
 
                         <div class="trace-group">
                             <h3>Corner Targets</h3>
-                        
+
                             {% for cycle in corner_cycles %}
                                 <p class="trace">
                                     <strong>Cycle {{ loop.index }}:</strong>
@@ -1178,6 +1228,11 @@
     {% endif %}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
+{% if not beginner %}
 <script src="{{ url_for('static', filename='conjugacy_practice.js') }}"></script>
+{% endif %}
+<script src="{{ url_for('static', filename='settings_presets.js') }}"></script>
+<script src="{{ url_for('static', filename='solution_examples.js') }}"></script>
+<script src="{{ url_for('static', filename='beginner_methods.js') }}"></script>
 </body>
 </html>

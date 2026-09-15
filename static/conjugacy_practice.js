@@ -1,6 +1,8 @@
 (() => {
     const button = document.getElementById('generate-conjugacy');
     const input = document.getElementById('conjugacy-input');
+    const countInput = document.getElementById('conjugacy-count');
+    const bulkInput = document.getElementById('bulk-scrambles');
     const status = document.getElementById('conjugacy-status');
     const randomButton = document.getElementById('generateScrambleButton');
     const scrambleInput = document.getElementById('scramble');
@@ -15,14 +17,12 @@
         return result;
     }
 
-    function solve(facelets) {
+    function solve(worker, facelets) {
         return new Promise((resolve, reject) => {
-            // A dedicated worker can be terminated on timeout without interrupting
-            // ordinary random scrambling or leaving an old solve in its queue.
-            const worker = new Worker('/static/cstimer_module.js');
+            // Reuse the solver tables across this batch; terminate it when done.
             const finish = (error, result) => {
                 clearTimeout(timer);
-                worker.terminate();
+                worker.onmessage = worker.onerror = null;
                 if (error) reject(error); else resolve(result);
             };
             const timer = setTimeout(() => finish(new Error('The solver timed out. Please try again.')), 45000);
@@ -44,31 +44,57 @@
 
     button.addEventListener('click', async () => {
         if (button.disabled) return;
-        button.disabled = randomButton.disabled = true;
+        const count = Number(countInput.value);
+        if (!Number.isInteger(count) || count < 1 || count > 100) {
+            countInput.reportValidity();
+            return;
+        }
+        const requestedClass = input.value;
+        button.disabled = randomButton.disabled = input.disabled = countInput.disabled = true;
         input.removeAttribute('aria-invalid');
         status.classList.remove('error');
         status.textContent = 'Checking your class…';
+        let worker;
+        const scrambles = [];
         try {
-            const target = await post('/api/conjugacy-state', {conjugacy_class: input.value});
-            status.textContent = `Generating ${target.conjugacy_class}… The first solve may take a few seconds.`;
-            const scramble = await solve(target.facelets);
-            status.textContent = 'Verifying the scramble…';
-            const verified = await post('/api/conjugacy-verify', {scramble, token: target.token});
-            scrambleInput.value = verified.scramble;
-            scrambleInput.dispatchEvent(new Event('input', {bubbles: true}));
-            status.textContent = `Ready: ${verified.conjugacy_class}. Scramble inserted above—select Generate Memo to analyze it.`;
+            let classification;
+            for (let i = 0; i < count; i++) {
+                // Request each signed state just before solving so large batches
+                // do not expire while waiting for earlier solves.
+                const target = await post('/api/conjugacy-state', {conjugacy_class: requestedClass});
+                classification = target.conjugacy_class;
+                status.textContent = `Generating scramble ${i + 1} of ${count} for ${classification}… The first solve may take a few seconds.`;
+                worker ||= new Worker('/static/cstimer_module.js');
+                const scramble = await solve(worker, target.facelets);
+                const verified = await post('/api/conjugacy-verify', {scramble, token: target.token});
+                scrambles.push(verified.scramble);
+            }
+            if (count === 1) {
+                scrambleInput.value = scrambles[0];
+                scrambleInput.dispatchEvent(new Event('input', {bubbles: true}));
+                status.textContent = `Ready: ${classification}. Scramble inserted above—select Generate Memo to analyze it.`;
+            } else {
+                bulkInput.value = scrambles.join('\n');
+                bulkInput.closest('details').open = true;
+                bulkInput.dispatchEvent(new Event('input', {bubbles: true}));
+                status.textContent = `Ready: ${count} scrambles for ${classification}. Select Trace scramble set below to analyze them.`;
+            }
         } catch (error) {
             status.classList.add('error');
             status.textContent = error.name === 'TimeoutError'
                 ? 'The request timed out. Please try again.' : error.message;
         } finally {
-            button.disabled = randomButton.disabled = false;
+            worker?.terminate();
+            button.disabled = randomButton.disabled = input.disabled = countInput.disabled = false;
         }
     });
-    input.addEventListener('keydown', event => {
+    countInput.addEventListener('input', () => {
+        button.textContent = Number(countInput.value) > 1 ? 'Generate practice scrambles' : 'Generate practice scramble';
+    });
+    [input, countInput].forEach(control => control.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
             event.preventDefault();
             button.click();
         }
-    });
+    }));
 })();

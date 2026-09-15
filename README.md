@@ -294,3 +294,19 @@ The parser accepts concatenated or whitespace-separated edge (`e`) and corner (`
 The local `static/cstimer_module.js` bundle has a small integration patch: its exported API adds `solveFacelets(facelets)` using the internal `Wb.Search` (depth 21, probe limit 1,000,000), and its worker dispatcher accepts `solve-facelets`. Preserve these additions when updating the vendor bundle. `tests/test_conjugacy_practice.py` runs the real bundled solver under Node to verify facelet conversion and scramble round trips, as well as testing the parser, sampler, and API validation.
 
 When edge floating reaches an in-place flipped edge at an even target boundary, it becomes the buffer if it is the only pending isolated flip; tracing then uses the configured cycle-break order. If another isolated flip remains, `[2Flip: … …]` pairs it with the next flipped piece in the full floating order (wrapping if necessary). Only the initiating buffer needs floating enabled; its partner is solved as part of the flip algorithm. Each pair costs one algorithm and contributes no memo targets. Intervening unsolved floating buffers remain eligible. Paired flips and flips absorbed into a buffer are excluded from the trailing `[Flips: …]` list. Fixed-buffer tracing and corner tracing are unchanged.
+
+### Solution examples
+
+After generating a memo, select **Show example moves** to see the first manmade
+3-style edge algorithm for each ordinary target pair. Examples respect floating
+buffer boundaries and use sticker positions independently of your letter scheme.
+Each algorithm is checked against the exact cube state before display. These are
+edge examples, not a complete solution: corner algorithms, parity, flips, and
+combined techniques are not yet covered; sandwiches use their original pairs.
+
+Data comes from [BLDDB](https://blddb.net/edge.html) and its
+[public repository](https://github.com/nbwzx/blddb), whose license is
+[GPL-3.0](https://github.com/nbwzx/blddb/blob/main/LICENSE). The app fetches data
+on demand, caches it under `instance/blddb` for 24 hours, and uses cached data if
+refresh fails. Algorithm contributors and a case link appear beside each example.
+The data is not bundled with the application source.

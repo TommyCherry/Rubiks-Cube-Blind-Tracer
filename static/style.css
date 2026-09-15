@@ -1228,3 +1228,65 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 #conjugacy-status:empty { display: none; }
 .conjugacy-practice #conjugacy-status.error { color: #a13434; }
 .tracer-page button:disabled { opacity: .6; cursor: wait; }
+
+/* Solve setup follows the order in which a solver configures their method. */
+.solve-settings .tracer-section-heading { padding-bottom: 18px; border-bottom: 1px solid #e7ecef; }
+.solve-settings .technique-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.scheme-layout { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.4fr); gap: 32px; align-items: center; }
+.tracer-page .scheme-controls.settings-panel { margin: 0; padding: 0; border: 0; border-radius: 0; }
+.scheme-controls > p { font-size: 13px; line-height: 1.7; }
+.scheme-layout .cube-net-panel { padding: 20px; border: 1px solid #e7ecef; border-radius: 12px; background: #f7f9fa; }
+.scheme-layout .cube-net { width: 100%; max-width: 580px; margin: 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); gap: 6px; }
+.scheme-layout .face { width: 100%; height: auto; aspect-ratio: 1; }
+.scheme-layout .sticker { font-size: clamp(12px, 1.5vw, 20px); padding: 0; }
+.tracer-page .solve-settings .floating-settings-panel { padding: 0; margin: 0; border: 0; border-radius: 0; }
+.solve-settings .floating-settings-header h3 { font-size: 14px; margin: 0 0 8px; }
+.settings-optional { display: inline-block; margin-left: 8px; padding: 4px 7px; border-radius: 5px; background: #eef3f5; color: #687785; font-size: 10px; font-weight: 500; vertical-align: middle; }
+.solve-settings .floating-settings-header p { max-width: 850px; }
+.solve-settings .floating-section-header h3 { font-size: 13px; }
+.solve-settings .floating-hint { font-size: 12px; }
+.solve-settings .floating-buffer-item { padding: 9px 12px; gap: 9px; font-size: 14px; border-color: #dce4e9; border-radius: 8px; }
+.solve-settings .floating-buffer-item:has(input:checked) { background: #eff8f5; border-color: #9bcac5; }
+.tracer-page .parity-section .pseudo-swap-settings { margin: 0 0 16px; padding: 16px; background: #f7f9fa; border: 1px solid #e7ecef; border-radius: 10px; }
+.parity-section .pseudo-swap-settings > label { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+.parity-section #pseudoswapEdgeSelection:not([hidden]) { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.solve-settings select { padding: 8px 12px; border: 1px solid #d6dfe5; border-radius: 8px; background: #fff; }
+.solve-settings .tracer-advanced .technique-grid { margin-bottom: 20px; }
+@media (max-width: 900px) {
+    .scheme-layout { grid-template-columns: 1fr; gap: 24px; }
+}
+@media (max-width: 600px) {
+    .solve-settings .technique-grid { grid-template-columns: 1fr; }
+    .scheme-layout .cube-net-panel { padding: 10px; }
+    .scheme-layout .cube-net { gap: 3px; }
+    .scheme-layout .face { gap: 1px; padding: 1px; }
+    .scheme-layout .sticker { font-size: 12px; }
+    .solve-settings .floating-section-header { gap: 10px; }
+}
+
+.conjugacy-practice-controls .conjugacy-count { flex: 0 1 140px; }
+
+.tracer-mode-nav { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 20px; border: 1px solid #dce4e9; border-radius: 10px; background: #eaf0f2; }
+.tracer-mode-nav a { padding: 10px 22px; border-radius: 7px; color: #526474; text-decoration: none; font-size: 13px; font-weight: 600; }
+.tracer-mode-nav a[aria-current="page"] { background: #fff; color: #087e79; box-shadow: 0 1px 4px #23354812; }
+.tracer-mode-nav a:hover { color: #087e79; }
+
+.preset-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.preset-controls label { display: grid; gap: 8px; flex: 1 1 220px; font-size: 12px; font-weight: 600; }
+.preset-controls :is(input, select, button) { min-height: 40px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d6dfe5; border-radius: 8px; background: #fff; color: #243342; font: inherit; }
+.preset-controls button { cursor: pointer; font-size: 13px; }
+#save-preset { background: #087e79; border-color: #087e79; color: #fff; }
+#preset-status { font-size: 13px; }
+#preset-status:empty { display: none; }
+
+.solution-section > button { padding: 10px 16px; border: 1px solid #087e79; border-radius: 8px; background: #087e79; color: white; cursor: pointer; }
+.solution-examples { padding-left: 24px; }
+.solution-examples li { padding: 16px; margin: 12px 0; border: 1px solid #dce4e9; border-radius: 10px; background: #f7f9fa; }
+.solution-examples code { display: block; margin: 12px 0; font-size: 15px; line-height: 1.8; overflow-wrap: anywhere; }
+.solution-examples a, .solution-examples details { font-size: 12px; color: #087e79; }
+.solution-examples details { margin-top: 12px; }
+#solution-status { font-size: 13px; }
+
+.beginner-method-section { margin-bottom: 20px; }
+.beginner-method-section > label { display: block; margin-bottom: 8px; font-size: 13px; }
+.beginner-method-section select { max-width: 100%; }

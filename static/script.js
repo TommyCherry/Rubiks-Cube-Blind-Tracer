@@ -122,6 +122,7 @@ function updatePrimaryFloatingBuffer(
 // Restore and submit both lists, including their disabled primary checkboxes.
 for (const kind of ["edge", "corner"]) {
     const list = document.getElementById(`${kind}FloatingOrder`);
+    if (!list) continue;
     const enabled = JSON.parse(list.dataset.enabled);
     JSON.parse(list.dataset.order).forEach(function (name) {
         const item = [...list.children].find(item => item.dataset.buffer === name);
@@ -474,6 +475,7 @@ function resetAllSettings() {
 
 function enableBufferDragging(listId) {
     const list = document.getElementById(listId);
+    if (!list) return;
 
     let draggedItem = null;
 
