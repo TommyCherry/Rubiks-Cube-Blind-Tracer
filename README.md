@@ -1,6 +1,5 @@
 # Rubik's Cube Blindfolded Memo Tracer
 ### DEVELOPER'S NOTE -- ideas for future development:
-#### Clicking on a button next to the scramble to see what comp it was from (or none if it's not from your comp history)
 #### Being able to search other people's WCA IDs and their history
 #### Weakswap implementation for MBLD tracing
 #### Interface for users to query the WCA DB for scrambles with certain properties without coding (filter selection)
