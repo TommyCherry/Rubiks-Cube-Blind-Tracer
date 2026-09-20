@@ -2,3 +2,4 @@ Flask
 requests
 mysql-connector-python
 itsdangerous
+psycopg[binary]>=3.2,<4

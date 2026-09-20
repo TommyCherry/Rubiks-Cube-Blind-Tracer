@@ -20,7 +20,7 @@ The application takes a scramble, simulates the resulting cube state, and traces
 
 Open **Bulk scramble analysis**, paste one scramble per line, and select **Trace scramble set**. Batches support up to 1,000 scrambles and use the same primary buffers, edge and corner floating priorities, pseudoswap settings, and custom letters as individual tracing. Blank lines are ignored; invalid lines are reported individually and excluded from statistics.
 
-Bulk batches are saved automatically in SQLite (`instance/bulk.sqlite3`; override with `BULK_DATABASE`). Use **Exact estimated alg count** to type or select a count, then **Search / sort** to filter or order results low-to-high or high-to-low. Reset restores all lines. Queries reuse saved traces and their original settings; summary statistics always cover the full batch. Bookmark the results URL to return to a batch. Anyone with that URL can view it. SQLite uses Python’s standard library and requires no additional database service.
+Bulk batches are saved automatically in PostgreSQL when `DATABASE_URL` is configured, or locally in SQLite (`instance/bulk.sqlite3`; override with `BULK_DATABASE`). Use **Exact estimated alg count** to type or select a count, then **Search / sort** to filter or order results low-to-high or high-to-low. Reset restores all lines. Queries reuse saved traces and their original settings; summary statistics always cover the full batch. Bookmark the results URL to return to a batch. Anyone with that URL can view it. The local SQLite fallback uses Python’s standard library. Vercel requires PostgreSQL; see the [Phase 1 setup and migration guide](docs/postgres-phase1.md).
 
 When signed in with a WCA ID, matching bulk scrambles show expandable competition details: competition, round ID, solve number, and scramble group. Matches use your 3BLD history in the local WCA database, ignoring whitespace differences. All matching groups are shown; the WCA results data does not identify your personal group assignment. Details follow the currently logged-in profile, including when viewing saved batches.
 
@@ -167,7 +167,7 @@ npm install
 Install the Python dependencies:
 
 ```bash
-pip install flask
+pip install -r requirements.txt
 ```
 
 Run the Flask application:
@@ -177,6 +177,27 @@ python app.py
 ```
 
 Then open the local address displayed by Flask in your browser.
+
+### Production persistence
+
+See the [Neon setup, schema initialization, SQLite import, and verification guide](docs/postgres-phase1.md). Presets and saved bulk results use `DATABASE_URL` when set; local development keeps SQLite when it is absent. Vercel/production requires `DATABASE_URL`. WCA history still uses MySQL.
+
+### WCA OAuth redirect configuration
+
+The authorization request and token exchange both use `WCA_REDIRECT_URI`.
+When this environment variable is unset, it defaults to
+`http://localhost:5001/auth/wca/callback` for local development.
+
+For production on Vercel, set `WCA_REDIRECT_URI` to the production callback
+URL (no trailing slash):
+
+```text
+WCA_REDIRECT_URI=https://rubiks-cube-blind-tracer.vercel.app/auth/wca/callback
+```
+
+Register that exact same production callback URL as a redirect URI in your
+WCA OAuth application. Keep `http://localhost:5001/auth/wca/callback`
+registered as well for local development.
 
 ## Project Structure
 

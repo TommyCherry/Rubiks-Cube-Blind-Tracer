@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+from persistence import postgres_connection, insert_preset, UNIQUE_ERRORS, preset_database_errors
 from contextlib import closing
 import re
 import secrets
@@ -32,6 +33,7 @@ from Cube import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["DATABASE_URL"] = os.environ.get("DATABASE_URL")
 app.config["PRESET_DATABASE"] = os.environ.get("PRESET_DATABASE", os.path.join(app.instance_path, "presets.sqlite3"))
 app.config["BULK_DATABASE"] = os.environ.get("BULK_DATABASE", os.path.join(app.instance_path, "bulk.sqlite3"))
 WCA_REDIRECT_URI = os.environ.get(
@@ -124,6 +126,9 @@ def optimize_history_db():
 
 
 def bulk_connection():
+    postgres = postgres_connection(app.config)
+    if postgres is not None:
+        return postgres
     path = app.config["BULK_DATABASE"]
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     connection = sqlite3.connect(path)
@@ -146,9 +151,9 @@ def bulk_connection():
 def save_bulk_batch(results, metadata):
     batch_id = secrets.token_urlsafe(24)
     with closing(bulk_connection()) as connection, connection:
-        connection.execute("INSERT INTO bulk_batches VALUES (?, ?)",
+        connection.execute("INSERT INTO bulk_batches (id, metadata) VALUES (?, ?)",
                            (batch_id, json.dumps(metadata)))
-        connection.executemany("INSERT INTO bulk_scrambles VALUES (?, ?, ?, ?)",
+        connection.executemany("INSERT INTO bulk_scrambles (batch_id, line_number, alg_count, result) VALUES (?, ?, ?, ?)",
                                [(batch_id, row["line_number"], row.get("alg_count"),
                                  json.dumps(row)) for row in results])
     return batch_id
@@ -201,7 +206,7 @@ def query_bulk(batch_id):
             parameters.append(int(count))
         rows = connection.execute(
             f"SELECT result FROM bulk_scrambles WHERE {where} ORDER BY {orders[sort]}", parameters).fetchall()
-        counts = [row[0] for row in connection.execute(
+        counts = [row["alg_count"] for row in connection.execute(
             "SELECT DISTINCT alg_count FROM bulk_scrambles WHERE batch_id = ? AND alg_count IS NOT NULL ORDER BY alg_count",
             (batch_id,))]
     results = [json.loads(row["result"]) for row in rows]
@@ -668,6 +673,9 @@ def solution_examples():
 
 
 def preset_connection():
+    postgres = postgres_connection(app.config)
+    if postgres is not None:
+        return postgres
     path = app.config["PRESET_DATABASE"]
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     connection = sqlite3.connect(path)
@@ -679,6 +687,7 @@ def preset_connection():
 
 
 @app.route("/api/settings-presets", methods=["GET", "POST"])
+@preset_database_errors
 def settings_presets():
     user = session.get("wca_user") or {}
     if not user.get("id"):
@@ -713,14 +722,14 @@ def settings_presets():
                 or any(not isinstance(value, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", value) for value in colors.values())):
             return jsonify(error="Invalid cube colors."), 400
     with closing(preset_connection()) as connection, connection:
-        if connection.execute("SELECT count(*) FROM settings_presets WHERE user_id = ?", (user_id,)).fetchone()[0] >= 30:
+        if connection.execute("SELECT count(*) AS count FROM settings_presets WHERE user_id = ?", (user_id,)).fetchone()["count"] >= 30:
             return jsonify(error="Your profile can hold up to 30 presets."), 400
         try:
-            cursor = connection.execute("INSERT INTO settings_presets (user_id, name, settings) VALUES (?, ?, ?)",
-                                        (user_id, name.strip(), json.dumps(settings)))
-        except sqlite3.IntegrityError:
+            preset_id = insert_preset(connection, user_id, name.strip(), json.dumps(settings))
+        except UNIQUE_ERRORS:
+            connection.rollback()
             return jsonify(error="That preset name already exists. Choose a new name."), 409
-    return jsonify(id=cursor.lastrowid, name=name.strip(), settings=settings), 201
+    return jsonify(id=preset_id, name=name.strip(), settings=settings), 201
 
 
 @app.route("/beginner", methods=["GET", "POST"], endpoint="beginner", defaults={"beginner": True})
