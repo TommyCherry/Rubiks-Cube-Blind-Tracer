@@ -971,6 +971,10 @@
 <details class="technique-help"><summary>How it works</summary><p class="bulk-definition">On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group.
                 LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm.
                 Balanced twist counts and non-parity scrambles are unchanged.</p></details></div><div class="technique-card"><label class="memo-setting">
+                <input type="checkbox" id="include-parity-3twist" name="include_parity_3twist" value="on" {% if include_parity_3twist %}checked{% endif %}>
+                Execute Parity + 3twist as Comm + LTCT
+            </label>
+<details class="technique-help"><summary>How it works</summary><p class="bulk-definition">Requires Include LTCT. When LTCT leaves an unpaired standalone twist, pair the parity target with a cycle break into that twisted corner, following the odd-target cycle-break order. Use its closing sticker as the new LTCT target. Opposite-direction 2-twists stay paired.</p></details></div><div class="technique-card"><label class="memo-setting">
                 <input type="checkbox" id="include-t2c" name="include_t2c" value="on" {% if include_t2c %}checked{% endif %}>
                 Include T2C when LTCT is not used
             </label>

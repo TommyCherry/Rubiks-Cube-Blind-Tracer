@@ -1201,7 +1201,19 @@ class Cube:
         face_map["L"] = old["D"]
 
     def apply_scramble(self, scramble):
-        moves = scramble.split()
+        # Expand slices before processing so their wide turns update the
+        # reference frame for all following moves in the same scramble.
+        slice_moves = {
+            "E": "Uw' U", "E'": "Uw U'",
+            "M": "Rw' R", "M'": "Rw R'",
+            "S": "Fw F'", "S'": "Fw' F",
+        }
+        moves = []
+        for move in scramble.split():
+            if move in {"E2", "M2", "S2"}:
+                moves.extend(slice_moves[move[0]].split() * 2)
+            else:
+                moves.extend(slice_moves.get(move, move).split())
 
         valid_faces = {"U", "R", "F", "D", "L", "B"}
 

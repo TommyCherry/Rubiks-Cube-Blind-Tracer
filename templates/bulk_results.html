@@ -50,7 +50,8 @@
     <p class="bulk-definition">Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets.
         Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.</p>
     <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner.
-        Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts.</p>
+        Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts.
+        With Execute Parity + 3twist as Comm + LTCT, the twist traced through a cycle break contributes two targets and is removed from standalone twist counts.</p>
     <p class="bulk-definition">Estimated algorithms = ceil(edge targets ÷ 2) + ceil(corner targets ÷ 2) + ceil(flipped edges ÷ 2) + min(CW twists, CCW twists) + |CW twists − CCW twists|.
         A marked T2C cycle counts as one final algorithm; its three targets are excluded from ordinary target-pair algorithm estimates. Each applied LTCT subtracts one algorithm for the twist combined with parity. CW/CCW counts include the corner marked LTCT. When basic sandwiching is enabled, each highlighted sandwich subtracts one algorithm. Target counts stay unchanged.
         Buffers count only those used for targets, with edges and corners counted separately.

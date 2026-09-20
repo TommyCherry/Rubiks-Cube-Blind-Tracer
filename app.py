@@ -274,7 +274,7 @@ def trace_scramble(scramble, **settings):
 
 def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
+                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
     """Shared tracing and memo formatting for individual and bulk input."""
     cube = Cube()
     cube.apply_scramble(scramble)
@@ -368,6 +368,24 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     finally:
         cube.corner_ori = original_corner_ori
         cube.corner_perm = original_corner_perm
+
+    # Extend the final parity target through one unpaired twist, leaving
+    # its closing sticker for LTCT. Opposite-direction twist pairs stay intact.
+    if (include_parity_3twist and ltct_active and len(corner_trace) % 2
+            and len(twist_positions[ltct_direction])
+            - len(twist_positions[3 - ltct_direction]) >= 2):
+        parity_target = format_corner_trace([corner_trace[-1]])[0]
+        order = (corner_odd_cycle_break_overrides or {}).get(
+            parity_target, corner_odd_cycle_break_order)
+        if order is None:
+            order = CORNER_BUFFER_ORDER
+        position = next(p for p in order
+                        if p in twist_positions[ltct_direction] and p != ltct_position)
+        cycle = [(position, 0), (position, (-ltct_direction) % 3)]
+        corner_trace.extend(cycle)
+        corner_cycles.append(cycle)
+        corner_cycle_breaks.append(position)
+        twist_positions[ltct_direction].remove(position)
 
     # Convert each cycle to readable sticker targets
     edge_cycle_targets = [
@@ -762,6 +780,7 @@ def home(beginner=False):
     bulk_results = []
     include_t2c = form.get("include_t2c") == "on"
     include_ltct = form.get("include_ltct") == "on"
+    include_parity_3twist = form.get("include_parity_3twist") == "on"
     include_basic_sandwiching = form.get("include_basic_sandwiching") == "on"
     include_3twist = form.get("include_3twist") == "on"
     bulk_stats = None
@@ -886,6 +905,7 @@ def home(beginner=False):
                 include_3twist=include_3twist,
                 include_t2c=include_t2c,
                 include_ltct=include_ltct,
+                include_parity_3twist=include_parity_3twist,
                 include_basic_sandwiching=include_basic_sandwiching,
                 edge_buffer=edge_buffer, corner_buffer=corner_buffer,
                 use_pseudoswap=use_pseudoswap,
@@ -955,6 +975,7 @@ def home(beginner=False):
         include_3twist=include_3twist,
         include_t2c=include_t2c,
         include_ltct=include_ltct,
+        include_parity_3twist=include_parity_3twist,
         include_basic_sandwiching=include_basic_sandwiching,
         scramble=scramble,
 
@@ -1009,7 +1030,8 @@ def home(beginner=False):
     if bulk_results:
         metadata = dict(bulk_stats=bulk_stats, bulk_total=len(bulk_results),
                         include_basic_sandwiching=include_basic_sandwiching,
-                        include_ltct=include_ltct, include_t2c=include_t2c)
+                        include_ltct=include_ltct,
+                        include_parity_3twist=include_parity_3twist, include_t2c=include_t2c)
         context.update(bulk_batch_id=save_bulk_batch(bulk_results, metadata),
                        bulk_total=len(bulk_results),
                        bulk_alg_counts=sorted({row["alg_count"] for row in bulk_results if "error" not in row}),
