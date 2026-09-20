@@ -1,3 +1,4 @@
 Flask
 requests
 mysql-connector-python
+itsdangerous
