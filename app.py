@@ -1,7 +1,10 @@
 import os
 import json
 import sqlite3
-from persistence import postgres_connection, insert_preset, UNIQUE_ERRORS, preset_database_errors
+from persistence import (postgres_connection, insert_preset, UNIQUE_ERRORS,
+                         preset_database_errors, PostgresConnection, StorageConfigurationError)
+import psycopg
+from history_queries import THREE_BLIND_SQL, multiblind_sql
 from contextlib import closing
 import re
 import secrets
@@ -96,11 +99,19 @@ PARITY_CASE_KEYS = {case["key"] for group in parity_case_groups(CORNER_BUFFER_OP
                     for case in group["cases"]}
 
 
+HISTORY_DATABASE_ERRORS = (mysql.connector.Error, psycopg.Error, StorageConfigurationError)
+
+
 def get_db_connection():
+    postgres = postgres_connection(app.config)
+    if postgres is not None:
+        return postgres
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        database="wca_results"
+        host=os.environ.get("WCA_MYSQL_HOST", "localhost"),
+        port=int(os.environ.get("WCA_MYSQL_PORT", "3306")),
+        user=os.environ.get("WCA_MYSQL_USER", "root"),
+        password=os.environ.get("WCA_MYSQL_PASSWORD", ""),
+        database=os.environ.get("WCA_MYSQL_DATABASE", "wca_results")
     )
 
 
@@ -109,6 +120,12 @@ def optimize_history_db():
     """Add the scramble lookup index needed by official history queries."""
     columns = ("competition_id", "event_id", "round_type_id", "is_extra", "scramble_num")
     with closing(get_db_connection()) as connection:
+        if isinstance(connection, PostgresConnection):
+            with connection:
+                connection.execute("""CREATE INDEX IF NOT EXISTS idx_scrambles_history
+                    ON scrambles (competition_id, event_id, round_type_id, is_extra, scramble_num)""")
+            print("Official history lookup index is ready.")
+            return
         with closing(connection.cursor(dictionary=True)) as cursor:
             cursor.execute("SHOW INDEX FROM scrambles")
             indexes = {}
@@ -166,8 +183,8 @@ def annotate_bulk_history(results):
         return None
     try:
         history = get_3bld_history(wca_id)
-    except mysql.connector.Error:
-        app.logger.warning("WCA history lookup unavailable for bulk results", exc_info=True)
+    except HISTORY_DATABASE_ERRORS:
+        app.logger.warning("WCA history lookup unavailable for bulk results")
         return "Competition details are temporarily unavailable. Your bulk traces are still available."
     matches = {}
     for attempt in history:
@@ -1132,50 +1149,10 @@ def logout():
     return redirect("/")
 
 def get_3bld_history(wca_id):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    query = """
-        SELECT
-            c.name AS competition_name,
-            r.competition_id,
-            c.year,
-            c.month,
-            c.day,
-            r.round_type_id,
-            ra.attempt_number,
-            ra.value,
-            s.group_id,
-            s.scramble
-        FROM results r
-
-        JOIN result_attempts ra
-            ON ra.result_id = r.id
-
-        JOIN competitions c
-            ON c.id = r.competition_id
-
-        LEFT JOIN scrambles s
-            ON s.competition_id = r.competition_id
-            AND s.event_id = r.event_id
-            AND s.round_type_id = r.round_type_id
-            AND s.is_extra = 0
-            AND s.scramble_num = ra.attempt_number
-
-        WHERE r.person_id = %s
-            AND r.event_id = '333bf'
-
-        ORDER BY
-            c.year DESC,
-            c.month DESC,
-            c.day DESC,
-            r.round_type_id,
-            ra.attempt_number,
-            s.group_id
-    """
-
-    cursor.execute(query, (wca_id,))
-    history = cursor.fetchall()
+    with closing(get_db_connection()) as connection:
+        with closing(connection.cursor(dictionary=True)) as cursor:
+            cursor.execute(THREE_BLIND_SQL, (wca_id,))
+            history = cursor.fetchall()
 
     grouped_history = []
 
@@ -1209,9 +1186,6 @@ def get_3bld_history(wca_id):
                 "scramble": row["scramble"]
             })
 
-    cursor.close()
-    connection.close()
-
     return grouped_history
 
 def get_multiblind_history(wca_id):
@@ -1219,21 +1193,7 @@ def get_multiblind_history(wca_id):
     # Each scramble record is an attempt containing newline-separated cubes.
     with closing(get_db_connection()) as connection:
         with closing(connection.cursor(dictionary=True)) as cursor:
-            cursor.execute("""
-                SELECT c.name AS competition_name, s.competition_id,
-                       c.year, c.month, c.day, s.round_type_id,
-                       s.group_id, s.scramble_num, s.is_extra, s.scramble
-                FROM scrambles s
-                JOIN competitions c ON c.id = s.competition_id
-                WHERE s.event_id = %s
-                  AND EXISTS (
-                      SELECT 1 FROM results r
-                      WHERE r.competition_id = s.competition_id AND r.person_id = %s
-                  )
-                ORDER BY c.year DESC, c.month DESC, c.day DESC,
-                         s.competition_id, s.round_type_id, s.group_id,
-                         s.is_extra, s.scramble_num
-            """, ("333mbf", wca_id))
+            cursor.execute(multiblind_sql(isinstance(connection, PostgresConnection)), ("333mbf", wca_id))
             rows = cursor.fetchall()
     attempts = []
     for row in rows:
@@ -1316,8 +1276,8 @@ def my_3bld_history():
     else:
         try:
             history = get_multiblind_history(wca_id) if event == "333mbf" else get_3bld_history(wca_id)
-        except mysql.connector.Error:
-            app.logger.warning("Official history database unavailable", exc_info=True)
+        except HISTORY_DATABASE_ERRORS:
+            app.logger.warning("Official history database unavailable")
             history_error = "Official solve history is temporarily unavailable. Please try again later."
 
     # Preserve the query's newest-first order, even when competitions share a date.

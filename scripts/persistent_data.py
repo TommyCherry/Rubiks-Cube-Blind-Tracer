@@ -1,4 +1,7 @@
-"""Initialize, import, or verify Phase 1 storage; never touches WCA MySQL.
+"""Initialize versioned schemas; import or verify Phase 1 SQLite storage.
+
+Schema initialization applies all versions; SQLite import/verification only
+touches Phase 1 tables. This tool never connects to WCA MySQL.
 
 Connection credentials are read only from DATABASE_URL_DIRECT or DATABASE_URL.
 """

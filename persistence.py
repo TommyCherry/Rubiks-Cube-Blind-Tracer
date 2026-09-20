@@ -1,4 +1,4 @@
-"""Backend selection for presets and saved bulk results only."""
+"""PostgreSQL backend selection and Phase 1 compatibility helpers."""
 import os
 import sqlite3
 from functools import wraps
@@ -46,6 +46,9 @@ class PostgresConnection:
     def executemany(self, sql, parameters):
         with self.connection.cursor() as cursor:
             cursor.executemany(sql.replace('?', '%s'), parameters)
+
+    def cursor(self, dictionary=False):
+        return self.connection.cursor(row_factory=dict_row if dictionary else None)
 
     def rollback(self):
         self.connection.rollback()

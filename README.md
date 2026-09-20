@@ -180,7 +180,7 @@ Then open the local address displayed by Flask in your browser.
 
 ### Production persistence
 
-See the [Neon setup, schema initialization, SQLite import, and verification guide](docs/postgres-phase1.md). Presets and saved bulk results use `DATABASE_URL` when set; local development keeps SQLite when it is absent. Vercel/production requires `DATABASE_URL`. WCA history still uses MySQL.
+See the [Neon setup, schema initialization, SQLite import, and verification guide](docs/postgres-phase1.md). Presets and saved bulk results use `DATABASE_URL` when set; local development keeps SQLite when it is absent. Vercel/production requires `DATABASE_URL`. Official history also uses PostgreSQL when configured, with local MySQL fallback. See the [Phase 2 reduced WCA import and deployment guide](docs/postgres-phase2.md).
 
 ### WCA OAuth redirect configuration
 
