@@ -1,11 +1,9 @@
 # Rubik's Cube Blindfolded Memo Tracer
-### DEVELOPER'S NOTE:
-#### Future steps include 3-twist management including niche cases such as comm + LTCT when we have 2 same-direction twisted corners and parity
+### DEVELOPER'S NOTE -- ideas for future development:
 #### Clicking on a button next to the scramble to see what comp it was from (or none if it's not from your comp history)
 #### Being able to search other people's WCA IDs and their history
 #### Weakswap implementation for MBLD tracing
-#### Importing MBLD scrambles from comps
-#### Querying the WCA DB for scrambles with certain properties
+#### Interface for users to query the WCA DB for scrambles with certain properties without coding (filter selection)
 
 A web-based tool for generating blindfolded (BLD) memo traces for 3×3 Rubik's Cube scrambles.
 
