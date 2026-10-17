@@ -1,0 +1,64 @@
+<section class="tracer-configuration beginner-cycle-breaks" aria-labelledby="beginner-cycle-break-heading">
+    <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div>
+        <h2 id="beginner-cycle-break-heading">Cycle-break letter order</h2>
+        <p>Choose which piece to visit first when a new cycle is needed. Choose piece mode to group letters, or sticker mode to order individual letters. The active buffer and solved pieces are skipped.</p>
+    </div></div>
+    <label for="beginner-cycle-order-mode">Order by
+        <select id="beginner-cycle-order-mode" name="beginner_cycle_order_mode">
+            <option value="piece" {% if beginner_cycle_order_mode == 'piece' %}selected{% endif %}>Piece</option>
+            <option value="sticker" {% if beginner_cycle_order_mode == 'sticker' %}selected{% endif %}>Sticker</option>
+        </select>
+    </label>
+    <label class="memo-setting">
+        <input type="checkbox" id="beginner-prioritize-helpers" name="beginner_prioritize_helpers" {% if beginner_prioritize_helpers %}checked{% endif %}>
+        Prioritize helpers first
+    </label>
+    <details class="beginner-helper-settings">
+        <summary>Choose helpers</summary>
+        <p>Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.</p>
+        {% for kind, targets in [('edge', edge_targets), ('corner', corner_targets)] %}
+        <fieldset>
+            <legend>{{ 'Edge helpers' if kind == 'edge' else 'Corner helpers' }}</legend>
+            <div class="beginner-helper-grid">
+            {% for target in targets %}
+                <label>
+                    <input type="checkbox" name="beginner_{{ kind }}_helpers" value="{{ target }}" data-beginner-helper="{{ kind }}" {% if target in beginner_helpers[kind] %}checked{% endif %}>
+                    <strong data-cycle-letter="{{ target }}" data-no-translate>{{ letter_scheme[target] or '—' }}</strong>
+                    <small data-no-translate>{{ target }}</small>
+                </label>
+            {% endfor %}
+            </div>
+        </fieldset>
+        {% endfor %}
+    </details>
+    <p>Sticker mode lets you prioritize each letter separately and choose the sticker that opens a new cycle. Other stickers on an already visited piece are skipped.</p>
+    <p>Drag tiles or use the arrow buttons. The same priority applies throughout the solve.</p>
+    <p class="floating-hint">Highest priority → Lowest priority</p>
+    <div class="cycle-break-groups">
+    {% for kind, order, targets, default_order in [('edge', edge_break_order, edge_targets, default_edge_break_order), ('corner', corner_break_order, corner_targets, default_corner_break_order)] %}
+        <div>
+            <h3 id="beginner-{{ kind }}-order-heading">{{ kind|capitalize }} cycle-break order</h3>
+            <p class="beginner-effective-order"><span>Effective order:</span> <span data-helper-order-preview="{{ kind }}" data-no-translate></span></p>
+            {% for representation in ['piece', 'sticker'] %}
+            {% set visible_order = order if representation == 'piece' else sticker_orders[kind] %}
+            <ol data-order-mode="{{ representation }}" {% if representation != beginner_cycle_order_mode %}hidden{% endif %} data-cycle-break-order="{{ kind }}" data-count-parity="even" data-storage-scope="{{ 'beginner-' if representation == 'piece' else 'beginner-sticker-' }}"
+                data-default-order='{{ (default_order if representation == 'piece' else default_sticker_orders[kind]) | tojson }}' aria-labelledby="beginner-{{ kind }}-order-heading">
+            {% for name in visible_order %}
+                <li data-piece="{{ name }}" draggable="true">
+                    <span class="cycle-drag-handle" aria-hidden="true">≡</span>
+                    <input type="hidden" name="{{ kind }}_{{ 'even' if representation == 'piece' else 'sticker' }}_cycle_break_order" value="{{ name }}">
+                    <div class="beginner-cycle-piece">
+                        <strong class="beginner-cycle-letters" data-no-translate><span data-cycle-letter="{{ name }}">{{ letter_scheme[name] or '—' }}</span>{% for target in targets %}{% if representation == 'piece' and target != name and target|sort == name|sort %}<span aria-hidden="true"> / </span><span data-cycle-letter="{{ target }}">{{ letter_scheme[target] or '—' }}</span>{% endif %}{% endfor %}</strong>
+                        <small data-no-translate>{{ name }}</small>
+                    </div>
+                    <button type="button" data-move="up" aria-label="Move {{ name }} earlier">‹</button>
+                    <button type="button" data-move="down" aria-label="Move {{ name }} later">›</button>
+                </li>
+            {% endfor %}
+            </ol>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    </div>
+    <button type="button" id="reset-beginner-cycle-order">Reset cycle-break order</button>
+</section>

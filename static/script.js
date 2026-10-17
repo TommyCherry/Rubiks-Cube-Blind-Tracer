@@ -209,6 +209,7 @@ function saveLetterScheme() {
         STORAGE_KEY,
         JSON.stringify(scheme)
     );
+    document.dispatchEvent(new Event('letter-scheme-change'));
 }
 
 
@@ -735,7 +736,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Hidden inputs move with their panels, preserving submission order.
 document.querySelectorAll('[data-cycle-break-order]').forEach(list => {
-    const key = `${list.dataset.countParity || "even"}CycleBreakOrder-${list.dataset.cycleBreakOrder}${list.dataset.startingTarget ? '-' + list.dataset.startingTarget : ''}`;
+    const key = `${list.dataset.storageScope || ''}${list.dataset.countParity || "even"}CycleBreakOrder-${list.dataset.cycleBreakOrder}${list.dataset.startingTarget ? '-' + list.dataset.startingTarget : ''}`;
     const toggle = list.closest('[data-odd-override]')?.querySelector('[data-override-enabled]');
     if (toggle) {
         try {
@@ -755,7 +756,9 @@ document.querySelectorAll('[data-cycle-break-order]').forEach(list => {
     }
     const save = () => {
         try { localStorage.setItem(key, JSON.stringify([...list.children].map(c => c.dataset.piece))); } catch (_) {}
+        document.dispatchEvent(new Event('cycle-break-order-updated'));
     };
+    list.addEventListener('cycle-break-order-change', save);
     try {
         const saved = JSON.parse(localStorage.getItem(key) || 'null');
         const items = [...list.children];

@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const values = settings.fields[control.name];
             if (!values) {
                 if (control.id === 'beginner-method') control.value = 'custom';
+                if (control.id === 'beginner-cycle-order-mode') control.value = 'piece';
+                if (control.name.startsWith('beginner_') && control.type === 'checkbox') control.checked = false;
                 return;
             }
             if (control.type === 'checkbox') control.checked = values.includes(control.value);
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (child) element.appendChild(child);
             });
             if (element.dataset.cycleBreakOrder) {
-                const key = `${element.dataset.countParity || 'even'}CycleBreakOrder-${element.dataset.cycleBreakOrder}${element.dataset.startingTarget ? '-' + element.dataset.startingTarget : ''}`;
+                const key = `${element.dataset.storageScope || ''}${element.dataset.countParity || 'even'}CycleBreakOrder-${element.dataset.cycleBreakOrder}${element.dataset.startingTarget ? '-' + element.dataset.startingTarget : ''}`;
                 localStorage.setItem(key, JSON.stringify([...element.children].map(piece)));
             }
         });

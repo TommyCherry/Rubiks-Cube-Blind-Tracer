@@ -296,7 +296,7 @@ def trace_scramble(scramble, **settings):
 
 def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None):
+                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None, edge_sticker_cycle_break_order=None, corner_sticker_cycle_break_order=None):
     """Shared tracing and memo formatting for individual and bulk input."""
     cube = Cube()
     cube.apply_scramble(scramble)
@@ -341,7 +341,8 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             flip_order=edge_flip_order,
             even_cycle_break_order=edge_even_cycle_break_order,
             odd_cycle_break_order=edge_odd_cycle_break_order,
-            odd_cycle_break_overrides=edge_odd_cycle_break_overrides
+            odd_cycle_break_overrides=edge_odd_cycle_break_overrides,
+            sticker_cycle_break_order=edge_sticker_cycle_break_order
         )
     finally:
         cube.edge_ori = original_edge_ori
@@ -385,7 +386,8 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
             auto_standalone=True,
             even_cycle_break_order=corner_even_cycle_break_order,
             odd_cycle_break_order=corner_odd_cycle_break_order,
-            odd_cycle_break_overrides=corner_odd_cycle_break_overrides
+            odd_cycle_break_overrides=corner_odd_cycle_break_overrides,
+            sticker_cycle_break_order=corner_sticker_cycle_break_order
         )
     finally:
         cube.corner_ori = original_corner_ori
@@ -760,6 +762,9 @@ def home(beginner=False):
         allowed = {"scramble", "bulk_scrambles", "action", "edge_buffer", "corner_buffer",
                    "use_pseudoswap", "pseudoswap_edge_1", "pseudoswap_edge_2", "beginner_method"}
         allowed.update(f"letter_{target}" for target in EDGE_TARGETS + CORNER_TARGETS)
+        allowed.update(f"{kind}_even_cycle_break_order" for kind in ("edge", "corner"))
+        allowed.update({"beginner_cycle_order_mode", "edge_sticker_cycle_break_order", "corner_sticker_cycle_break_order",
+                        "beginner_edge_helpers", "beginner_corner_helpers", "beginner_prioritize_helpers"})
         form = form.copy()
         for key in list(form):
             if key not in allowed:
@@ -819,6 +824,18 @@ def home(beginner=False):
     if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
         edge_break_order = ["UB"] + [name for name in edge_break_order if name != "UB"]
     odd_break_orders = dict(edge=edge_break_order.copy(), corner=corner_break_order.copy())
+    beginner_cycle_order_mode = form.get("beginner_cycle_order_mode", "piece") if beginner else "piece"
+    beginner_helpers = {kind: form.getlist(f"beginner_{kind}_helpers") if beginner else []
+                        for kind in ("edge", "corner")}
+    beginner_prioritize_helpers = beginner and form.get("beginner_prioritize_helpers") == "on"
+    default_sticker_orders = {
+        "edge": format_edge_trace([(p, o) for p in EDGE_BUFFER_ORDER for o in range(2)]),
+        "corner": format_corner_trace([(p, o) for p in CORNER_BUFFER_ORDER for o in range(3)]),
+    }
+    sticker_orders = {kind: order.copy() for kind, order in default_sticker_orders.items()}
+    if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
+        sticker_orders["edge"].remove("UB")
+        sticker_orders["edge"].insert(0, "UB")
     parity_pseudoswaps = {}
     trace_result = {}
 
@@ -860,6 +877,18 @@ def home(beginner=False):
             letter_scheme[target] = letter
 
         try:
+            for kind, targets in (("edge", EDGE_TARGETS), ("corner", CORNER_TARGETS)):
+                if any(target not in targets for target in beginner_helpers[kind]):
+                    raise ValueError(f"Invalid {kind} helper sticker.")
+            if beginner_cycle_order_mode not in ("piece", "sticker"):
+                raise ValueError("Invalid cycle-break ordering mode.")
+            if beginner and beginner_cycle_order_mode == "sticker":
+                for kind, targets in (("edge", EDGE_TARGETS), ("corner", CORNER_TARGETS)):
+                    submitted = form.getlist(f"{kind}_sticker_cycle_break_order")
+                    if submitted:
+                        if len(submitted) != len(targets) or set(submitted) != set(targets):
+                            raise ValueError(f"Invalid {kind} sticker cycle-break order.")
+                        sticker_orders[kind] = submitted
             for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
                 submitted = form.getlist(f"{kind}_even_cycle_break_order")
                 if submitted:
@@ -869,6 +898,9 @@ def home(beginner=False):
                         edge_break_order = submitted
                     else:
                         corner_break_order = submitted
+            if beginner:
+                # Beginners choose one piece priority for the entire solve.
+                odd_break_orders = dict(edge=edge_break_order.copy(), corner=corner_break_order.copy())
             for kind, options in (("edge", EDGE_BUFFER_OPTIONS), ("corner", CORNER_BUFFER_OPTIONS)):
                 submitted = form.getlist(f"{kind}_odd_cycle_break_order")
                 if submitted:
@@ -920,13 +952,25 @@ def home(beginner=False):
                 EDGE_BUFFER_OPTIONS.index(name) for name in edge_floating_order
                 if name in enabled_edge_floating
             ]
+            def helper_priority(order, kind, sticker_mode=False):
+                if not beginner_prioritize_helpers:
+                    return order
+                # Stable partition: keep the user's order within both groups.
+                helpers = set(beginner_helpers[kind])
+                if not sticker_mode:
+                    helpers = {"".join(sorted(target)) for target in helpers}
+                return sorted(order, key=lambda target: (
+                    target if sticker_mode else "".join(sorted(target))) not in helpers)
+
             settings = dict(
+                edge_sticker_cycle_break_order=helper_priority(sticker_orders["edge"], "edge", True) if beginner_cycle_order_mode == "sticker" else None,
+                corner_sticker_cycle_break_order=helper_priority(sticker_orders["corner"], "corner", True) if beginner_cycle_order_mode == "sticker" else None,
                 edge_odd_cycle_break_overrides={target: [EDGE_BUFFER_OPTIONS.index(name) for name in order] for target, order in odd_break_overrides["edge"].items()},
                 corner_odd_cycle_break_overrides={target: [CORNER_BUFFER_OPTIONS.index(name) for name in order] for target, order in odd_break_overrides["corner"].items()},
-                edge_odd_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in odd_break_orders["edge"]],
-                corner_odd_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in odd_break_orders["corner"]],
-                edge_even_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in edge_break_order],
-                corner_even_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in corner_break_order],
+                edge_odd_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in helper_priority(odd_break_orders["edge"], "edge")],
+                corner_odd_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in helper_priority(odd_break_orders["corner"], "corner")],
+                edge_even_cycle_break_order=[EDGE_BUFFER_OPTIONS.index(name) for name in helper_priority(edge_break_order, "edge")],
+                corner_even_cycle_break_order=[CORNER_BUFFER_OPTIONS.index(name) for name in helper_priority(corner_break_order, "corner")],
                 parity_pseudoswaps=parity_pseudoswaps,
                 include_3twist=include_3twist,
                 include_t2c=include_t2c,
@@ -997,6 +1041,11 @@ def home(beginner=False):
         odd_break_overrides=odd_break_overrides,
         odd_break_orders=odd_break_orders,
         edge_break_order=edge_break_order, corner_break_order=corner_break_order,
+        beginner_helpers=beginner_helpers, beginner_prioritize_helpers=beginner_prioritize_helpers,
+        beginner_cycle_order_mode=beginner_cycle_order_mode,
+        sticker_orders=sticker_orders, default_sticker_orders=default_sticker_orders,
+        default_edge_break_order=[EDGE_BUFFER_OPTIONS[i] for i in EDGE_BUFFER_ORDER],
+        default_corner_break_order=[CORNER_BUFFER_OPTIONS[i] for i in CORNER_BUFFER_ORDER],
         parity_cases=parity_case_groups(corner_floating_order, CORNER_BUFFER_OPTIONS[corner_buffer], include_hidden=True), parity_pseudoswaps=parity_pseudoswaps,
         include_3twist=include_3twist,
         include_t2c=include_t2c,

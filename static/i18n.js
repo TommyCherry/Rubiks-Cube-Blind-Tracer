@@ -14,6 +14,26 @@
     }
     // Numbered placeholders preserve names, counts, and cube notation verbatim.
     const catalog = `
+Prioritize helpers first|优先使用辅助目标
+Choose helpers|选择辅助目标
+Edge helpers|棱块辅助目标
+Corner helpers|角块辅助目标
+Effective order:|实际优先顺序：
+Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.|选择你使用的辅助目标字母。在块模式下，选择任意贴纸即可优先处理整个块。在贴纸模式下，仅所选贴纸获得优先级。关闭优先功能后恢复原来的顺序。
+Invalid edge helper sticker.|无效的棱块辅助贴纸。
+Invalid corner helper sticker.|无效的角块辅助贴纸。
+Order by|排序单位
+Piece|块
+Sticker|贴纸
+Sticker mode lets you prioritize each letter separately and choose the sticker that opens a new cycle. Other stickers on an already visited piece are skipped.|贴纸模式允许单独设置每个字母的优先级，并选择新循环的起始贴纸。已访问块上的其他贴纸会被跳过。
+Choose which piece to visit first when a new cycle is needed. Choose piece mode to group letters, or sticker mode to order individual letters. The active buffer and solved pieces are skipped.|需要新循环时，选择优先访问的块。块模式将同一块的字母分组，贴纸模式则单独排列每个字母。当前缓冲块和已复原的块会被跳过。
+Invalid cycle-break ordering mode.|无效的断环排序模式。
+Invalid edge sticker cycle-break order.|无效的棱块贴纸断环顺序。
+Invalid corner sticker cycle-break order.|无效的角块贴纸断环顺序。
+Cycle-break letter order|断环字母顺序
+Choose which piece to visit first when a new cycle is needed. Each tile shows the letters on one piece, using your letter scheme. The active buffer and solved pieces are skipped.|需要开始新循环时，选择优先访问的块。每个方块显示该块在你的编码方案中的字母。当前缓冲块和已复原的块会被跳过。
+Drag tiles or use the arrow buttons. The same priority applies throughout the solve.|拖动方块或使用箭头按钮调整顺序。整个还原过程使用同一优先级。
+Reset cycle-break order|重置断环顺序
 Language|语言
 YOUR BLINDFOLDED PRACTICE SPACE|你的盲拧练习空间
 Rubik's Cube Blindfolded Tracer|魔方盲拧编码追踪器

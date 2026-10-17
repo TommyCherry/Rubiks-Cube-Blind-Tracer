@@ -73,3 +73,42 @@ class TracerModeTests(unittest.TestCase):
     def test_method_presets_are_beginner_only(self):
         self.assertIn('id="beginner-method"', app.test_client().get('/beginner').get_data(as_text=True))
         self.assertNotIn('id="beginner-method"', app.test_client().get('/expert').get_data(as_text=True))
+
+    def test_beginner_letter_orders_apply_to_both_target_parities(self):
+        from app import EDGE_BUFFER_OPTIONS, CORNER_BUFFER_OPTIONS
+        from werkzeug.datastructures import MultiDict
+        edges = list(reversed(EDGE_BUFFER_OPTIONS))
+        corners = list(reversed(CORNER_BUFFER_OPTIONS))
+        data = MultiDict({'scramble': 'R U', 'letter_BL': 'Z', 'letter_LB': 'Y',
+                          'beginner_method': 'm2_op', 'edge_buffer': '6'})
+        data.setlist('edge_even_cycle_break_order', edges)
+        data.setlist('corner_even_cycle_break_order', corners)
+        # Hidden expert controls must not override the beginner's single order.
+        data.setlist('edge_odd_cycle_break_order', EDGE_BUFFER_OPTIONS)
+        with patch('app._trace_scramble', wraps=_trace_scramble) as trace, contextlib.redirect_stdout(io.StringIO()):
+            response = app.test_client().post('/beginner', data=data)
+        settings = trace.call_args.kwargs
+        for parity in ('even', 'odd'):
+            self.assertEqual(settings[f'edge_{parity}_cycle_break_order'],
+                             [EDGE_BUFFER_OPTIONS.index(name) for name in edges])
+            self.assertEqual(settings[f'corner_{parity}_cycle_break_order'],
+                             [CORNER_BUFFER_OPTIONS.index(name) for name in corners])
+        html = response.get_data(as_text=True)
+        self.assertIn('data-cycle-letter="BL">Z</span>', html)
+        self.assertIn('data-cycle-letter="LB">Y</span>', html)
+        self.assertIn('data-storage-scope="beginner-"', html)
+        self.assertEqual(html.count('name="edge_even_cycle_break_order"'), 12)
+        self.assertEqual(html.count('name="corner_even_cycle_break_order"'), 8)
+        self.assertNotIn('name="edge_odd_cycle_break_order"', html)
+
+    def test_beginner_rejects_incomplete_or_duplicate_cycle_orders(self):
+        from app import EDGE_BUFFER_OPTIONS, CORNER_BUFFER_OPTIONS
+        from werkzeug.datastructures import MultiDict
+        for kind, options in [('edge', EDGE_BUFFER_OPTIONS), ('corner', CORNER_BUFFER_OPTIONS)]:
+            for invalid in [options[:-1], [options[0]] * len(options)]:
+                data = MultiDict({'scramble': 'R U'})
+                data.setlist(f'{kind}_even_cycle_break_order', invalid)
+                with patch('app._trace_scramble') as trace:
+                    response = app.test_client().post('/beginner', data=data)
+                trace.assert_not_called()
+                self.assertIn(f'Invalid {kind} even cycle-break order.', response.get_data(as_text=True))

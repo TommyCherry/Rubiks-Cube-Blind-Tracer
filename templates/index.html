@@ -964,6 +964,7 @@
             </div>
 {% if beginner %}
 </section>
+{% include 'beginner_cycle_break_settings.html' %}
 {% else %}
 <div class="technique-grid">
 <div class="technique-card"><label class="memo-setting">
@@ -1240,5 +1241,6 @@
 <script src="{{ url_for('static', filename='settings_presets.js') }}"></script>
 <script src="{{ url_for('static', filename='solution_examples.js') }}"></script>
 <script src="{{ url_for('static', filename='beginner_methods.js') }}"></script>
+{% if beginner %}<script src="{{ url_for('static', filename='beginner_helpers.js') }}"></script>{% endif %}
 </body>
 </html>

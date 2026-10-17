@@ -592,7 +592,8 @@ class Cube:
         flip_order=None,
         even_cycle_break_order=None,
         odd_cycle_break_order=None,
-        odd_cycle_break_overrides=None
+        odd_cycle_break_overrides=None,
+        sticker_cycle_break_order=None
     ):
         """Trace edges, optionally switching through enabled floating buffers.
 
@@ -606,6 +607,19 @@ class Cube:
             raise ValueError('Invalid even edge cycle-break order.')
         if odd_cycle_break_order is not None and (len(odd_cycle_break_order) != 12 or set(odd_cycle_break_order) != set(range(12))):
             raise ValueError('Invalid odd edge cycle-break order.')
+        # Sticker priority chooses both the piece and its opening orientation.
+        sticker_order = None
+        opening_orientations = {}
+        if sticker_cycle_break_order is not None:
+            stickers = {format_edge_trace([(p, o)])[0]: (p, o)
+                        for p in range(12) for o in range(2)}
+            if (len(sticker_cycle_break_order) != len(stickers)
+                    or set(sticker_cycle_break_order) != set(stickers)):
+                raise ValueError('Invalid edge sticker cycle-break order.')
+            for sticker in sticker_cycle_break_order:
+                position, orientation = stickers[sticker]
+                opening_orientations.setdefault(position, orientation)
+            sticker_order = list(opening_orientations)
         odd_cycle_break_overrides = odd_cycle_break_overrides or {}
         for target, order in odd_cycle_break_overrides.items():
             if target not in format_edge_trace([(p, o) for p in range(12) for o in range(2)]) or len(order) != 12 or set(order) != set(range(12)):
@@ -665,7 +679,7 @@ class Cube:
                 visited,
                 buffer,
                 target_perm,
-                order=even_cycle_break_order if len(trace) % 2 == 0 else odd_cycle_break_overrides.get(format_edge_trace([trace[-1]])[0], odd_cycle_break_order)
+                order=sticker_order if sticker_order is not None else (even_cycle_break_order if len(trace) % 2 == 0 else odd_cycle_break_overrides.get(format_edge_trace([trace[-1]])[0], odd_cycle_break_order))
             )
 
 
@@ -772,22 +786,25 @@ class Cube:
 
             cycle_breaks.append(cycle_break)
 
-            # Opening cycle-break target always has orientation 0.
-            cycle = [(cycle_break, 0)]
-            trace.append((cycle_break, 0))
+            # Start at the selected sticker; visited tracking remains per piece.
+            opening_ori = opening_orientations.get(cycle_break, 0)
+            cycle = [(cycle_break, opening_ori)]
+            trace.append((cycle_break, opening_ori))
 
             targets, cycle_visited, closing_ori = (
                 self.trace_edge_cycle(cycle_break, target_perm)
             )
 
+            targets = [(position, (orientation + opening_ori) % 2)
+                       for position, orientation in targets]
             trace.extend(targets)
             cycle.extend(targets)
 
             visited.update(cycle_visited)
 
             # Explicitly close the cycle on the cycle-break piece.
-            trace.append((cycle_break, closing_ori))
-            cycle.append((cycle_break, closing_ori))
+            trace.append((cycle_break, (closing_ori + opening_ori) % 2))
+            cycle.append((cycle_break, (closing_ori + opening_ori) % 2))
 
             cycles.append(cycle)
 
@@ -881,7 +898,8 @@ class Cube:
         auto_standalone=False,
         even_cycle_break_order=None,
         odd_cycle_break_order=None,
-        odd_cycle_break_overrides=None
+        odd_cycle_break_overrides=None,
+        sticker_cycle_break_order=None
     ):
         """Trace corners, switching to enabled buffers after solved pairs.
 
@@ -892,6 +910,19 @@ class Cube:
             raise ValueError('Invalid even corner cycle-break order.')
         if odd_cycle_break_order is not None and (len(odd_cycle_break_order) != 8 or set(odd_cycle_break_order) != set(range(8))):
             raise ValueError('Invalid odd corner cycle-break order.')
+        # Sticker priority chooses both the piece and its opening orientation.
+        sticker_order = None
+        opening_orientations = {}
+        if sticker_cycle_break_order is not None:
+            stickers = {format_corner_trace([(p, o)])[0]: (p, o)
+                        for p in range(8) for o in range(3)}
+            if (len(sticker_cycle_break_order) != len(stickers)
+                    or set(sticker_cycle_break_order) != set(stickers)):
+                raise ValueError('Invalid corner sticker cycle-break order.')
+            for sticker in sticker_cycle_break_order:
+                position, orientation = stickers[sticker]
+                opening_orientations.setdefault(position, orientation)
+            sticker_order = list(opening_orientations)
         odd_cycle_break_overrides = odd_cycle_break_overrides or {}
         for target, order in odd_cycle_break_overrides.items():
             if target not in format_corner_trace([(p, o) for p in range(8) for o in range(3)]) or len(order) != 8 or set(order) != set(range(8)):
@@ -979,7 +1010,7 @@ class Cube:
             cycle_break = self.find_corner_cycle_break(
                 visited,
                 buffer,
-                order=even_cycle_break_order if len(trace) % 2 == 0 else odd_cycle_break_overrides.get(format_corner_trace([trace[-1]])[0], odd_cycle_break_order)
+                order=sticker_order if sticker_order is not None else (even_cycle_break_order if len(trace) % 2 == 0 else odd_cycle_break_overrides.get(format_corner_trace([trace[-1]])[0], odd_cycle_break_order))
             )
 
             if cycle_break is None:
@@ -1064,22 +1095,25 @@ class Cube:
 
             cycle_breaks.append(cycle_break)
 
-            # Opening cycle-break target always has orientation 0.
-            cycle = [(cycle_break, 0)]
-            trace.append((cycle_break, 0))
+            # Start at the selected sticker; visited tracking remains per piece.
+            opening_ori = opening_orientations.get(cycle_break, 0)
+            cycle = [(cycle_break, opening_ori)]
+            trace.append((cycle_break, opening_ori))
 
             targets, cycle_visited, closing_ori = (
                 self.trace_corner_cycle(cycle_break)
             )
 
+            targets = [(position, (orientation + opening_ori) % 3)
+                       for position, orientation in targets]
             trace.extend(targets)
             cycle.extend(targets)
 
             visited.update(cycle_visited)
 
             # Explicitly close the cycle on the cycle-break piece.
-            trace.append((cycle_break, closing_ori))
-            cycle.append((cycle_break, closing_ori))
+            trace.append((cycle_break, (closing_ori + opening_ori) % 3))
+            cycle.append((cycle_break, (closing_ori + opening_ori) % 3))
 
             cycles.append(cycle)
 
