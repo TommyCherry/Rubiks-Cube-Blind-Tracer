@@ -97,6 +97,20 @@ Color Scheme|配色方案
 Orientation|朝向
 Editable cube net|可编辑的魔方展开图
 {0} sticker letter|{0} 贴纸字母
+Solving order|还原顺序
+Choose what to memorize first and what to execute first. Memo cards and solution examples follow your choices.|选择先记忆哪一部分，以及先还原哪一部分。记忆编码卡片和还原示例将按你的选择排列。
+Order preset|顺序预设
+CEEC — Recommended|CEEC — 推荐
+Memo order|记忆顺序
+Execution order|执行顺序
+Corners first|角块优先
+Edges first|棱块优先
+CEEC: memorize corners → memorize edges → solve edges → solve corners.|CEEC：记忆角块 → 记忆棱块 → 还原棱块 → 还原角块。
+Selected solving order|所选还原顺序
+Memo corners|记忆角块
+Memo edges|记忆棱块
+Solve corners|还原角块
+Solve edges|还原棱块
 Solving settings|还原设置
 Buffers|缓冲块
 Choose your primary buffers and whether to use pseudoswap.|选择主缓冲块以及是否使用伪交换。
@@ -159,6 +173,11 @@ Original scramble cycles: e = edges, c = corners, ' = nonzero total cycle orient
 Old Pochmann algorithms for each sticker target, in tracing order.|按追踪顺序展示每个贴纸目标的 Old Pochmann 公式。
 Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
 These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标。奇偶处理、翻棱和原地扭角需要单独的公式。
+These examples cover traced targets and supported parity cases. Flipped edges and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标和受支持的奇偶情况。翻棱和原地扭角需要单独的公式。
+Parity algorithm|奇偶公式
+Execute once between the edge and corner stages when parity is present.|存在奇偶情况时，在棱块与角块两个阶段之间执行一次。
+Execute parity algorithm|执行奇偶公式
+OP parity · UR / UBL|OP 奇偶 · UR / UBL
 OP edge examples|OP 棱块示例
 OP corner examples|OP 角块示例
 UR buffer; UB, UF, and UL helpers.|缓冲块为 UR；辅助目标为 UB、UF 和 UL。

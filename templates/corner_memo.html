@@ -1,0 +1,33 @@
+                <div class="memo-card" data-memo-kind="corner">
+
+                    <div class="memo-header">
+
+                        <h2>Corner Memo</h2>
+
+                        <span class="target-count">
+                            {{ corner_count }} targets
+                        </span>
+
+                    </div>
+
+                    <div class="memo-content">
+
+                        <p class="memo" id="corner-memo">
+                            {{ corner_memo | highlight_sandwiches }}
+                        </p>
+
+                        <button
+                            type="button"
+                            class="copy-button"
+                            data-copy-target="corner-memo"
+                        >
+                            Copy
+                        </button>
+
+                    </div>
+
+                    <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts.
+                        The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.</p>
+
+                </div>
+

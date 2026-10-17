@@ -619,6 +619,7 @@
                 </select>
                 <p id="beginner-method-help" class="bulk-definition">All presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.</p>
             </div>
+            {% include 'beginner_solving_order.html' %}
             {% endif %}
             <div class="buffer-section">
 
@@ -1063,77 +1064,9 @@
 
             <div class="memo-section">
 
-                <!-- EDGE MEMO -->
-
-                <div class="memo-card">
-
-                    <div class="memo-header">
-
-                        <h2>Edge Memo</h2>
-
-                        <span class="target-count">
-                            {{ edge_count }} targets
-                        </span>
-
-                    </div>
-
-                    <div class="memo-content">
-
-                        <p class="memo" id="edge-memo">
-                            {{ edge_memo | highlight_sandwiches }}
-                        </p>
-
-                        <button
-                            type="button"
-                            class="copy-button"
-                            data-copy-target="edge-memo"
-                        >
-                            Copy
-                        </button>
-
-                    </div>
-
-                    <p class="bulk-definition">Each two-letter pair in [Flips: …] or [2Flip: …] identifies one flipped edge, not two targets. A [2Flip: … …] is one algorithm performed at a floating boundary.
-                        Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up.
-                        The selected edge buffer is excluded from the flip list and count.</p>
-
-                </div>
-
-
-                <!-- CORNER MEMO -->
-
-                <div class="memo-card">
-
-                    <div class="memo-header">
-
-                        <h2>Corner Memo</h2>
-
-                        <span class="target-count">
-                            {{ corner_count }} targets
-                        </span>
-
-                    </div>
-
-                    <div class="memo-content">
-
-                        <p class="memo" id="corner-memo">
-                            {{ corner_memo | highlight_sandwiches }}
-                        </p>
-
-                        <button
-                            type="button"
-                            class="copy-button"
-                            data-copy-target="corner-memo"
-                        >
-                            Copy
-                        </button>
-
-                    </div>
-
-                    <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts.
-                        The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.</p>
-
-                </div>
+                {% for kind in (['corner', 'edge'] if beginner and beginner_memo_order == 'corners' else ['edge', 'corner']) %}
+                    {% include kind ~ '_memo.html' %}
+                {% endfor %}
 
                 <!-- TRACE DETAILS -->
 
@@ -1259,6 +1192,9 @@
 <script src="{{ url_for('static', filename='settings_presets.js') }}"></script>
 <script src="{{ url_for('static', filename='solution_examples.js') }}"></script>
 <script src="{{ url_for('static', filename='beginner_methods.js') }}"></script>
-{% if beginner %}<script src="{{ url_for('static', filename='beginner_helpers.js') }}"></script>{% endif %}
+{% if beginner %}
+<script src="{{ url_for('static', filename='beginner_helpers.js') }}"></script>
+<script src="{{ url_for('static', filename='beginner_solving_order.js') }}"></script>
+{% endif %}
 </body>
 </html>

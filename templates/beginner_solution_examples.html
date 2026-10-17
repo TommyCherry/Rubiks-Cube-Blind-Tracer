@@ -3,11 +3,15 @@
         <p>Old Pochmann algorithms for each sticker target, in tracing order.</p>
     </div></div>
     <p class="bulk-definition">Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.</p>
-    <p class="bulk-definition">These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.</p>
+    <p class="bulk-definition">These examples cover traced targets and supported parity cases. Flipped edges and in-place corner twists need separate algorithms.</p>
     {% if beginner_op_supported or beginner_corner_op_supported %}
     <button type="button" id="load-solution-examples" data-source="beginner">Show example moves</button>
     <p id="solution-status" role="status" aria-live="polite"></p>
     {% endif %}
+    <div id="beginner-execution-examples">
+    {% for kind in (['edge', 'corner'] if beginner_execution_order == 'edges' else ['corner', 'edge']) %}
+    <div data-execution-kind="{{ kind }}">
+    {% if kind == 'edge' %}
     <h3>OP edge examples</h3>
     {% if beginner_op_supported %}
     <p>UR buffer; UB, UF, and UL helpers.</p>
@@ -15,6 +19,7 @@
     <p>OP edge examples currently require a UR buffer. M2 and other buffer algorithms have not been defined yet.</p>
     {% endif %}
     <ol id="solution-examples" class="solution-examples"></ol>
+    {% else %}
     <h3>OP corner examples</h3>
     {% if beginner_corner_op_supported %}
     <p>UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.</p>
@@ -22,5 +27,17 @@
     <p>OP corner examples currently require a UBL buffer. Algorithms for other corner buffers have not been defined yet.</p>
     {% endif %}
     <ol id="corner-solution-examples" class="solution-examples"></ol>
+    {% endif %}
+    </div>
+    {% if loop.first and beginner_parity_algorithm %}
+    <div data-execution-kind="parity" class="beginner-parity-example">
+        <h3>Parity algorithm</h3>
+        <p>Execute once between the edge and corner stages when parity is present.</p>
+        {% if corner_buffer == corner_buffer_options.index('UFR') %}<p>Jb-perm · UR / UFR</p>{% else %}<p>OP parity · UR / UBL</p>{% endif %}
+        <code>{{ beginner_parity_algorithm }}</code>
+    </div>
+    {% endif %}
+    {% endfor %}
+    </div>
     <script type="application/json" id="solution-cases">{{ (beginner_solution_examples + beginner_corner_solution_examples) | tojson }}</script>
 </section>

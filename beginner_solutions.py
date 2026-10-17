@@ -98,3 +98,10 @@ def op_corner_examples(targets, letter_scheme):
                        algorithm=' '.join(part for part in (setup, OP_CORNER_ALGORITHM, undo) if part))
         examples.append(row)
     return examples
+
+
+# Parity corrections supplied for the two supported OP buffer combinations.
+OP_PARITY_ALGORITHMS = {
+    ('UR', 'UBL'): "R U R' F' R U2 R' U2 R' F R U R U2 R' U'",
+    ('UR', 'UFR'): "R U R' F' R U R' U' R' F R2 U' R' U'",
+}

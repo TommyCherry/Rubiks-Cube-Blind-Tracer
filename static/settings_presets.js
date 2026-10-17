@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!values) {
                 if (control.id === 'beginner-method') control.value = 'custom';
                 if (control.id === 'beginner-cycle-order-mode') control.value = 'piece';
+                if (control.id === 'beginner-memo-order') control.value = 'corners';
+                if (control.id === 'beginner-execution-order') control.value = 'edges';
                 if (control.name.startsWith('beginner_') && control.type === 'checkbox') control.checked = false;
                 return;
             }

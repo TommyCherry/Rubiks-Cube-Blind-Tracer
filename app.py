@@ -14,7 +14,7 @@ import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
 from conjugacy import generate_state, to_facelets
 from blddb import dataset, edge_example, POSITION_CODES
-from beginner_solutions import op_edge_examples, op_corner_examples
+from beginner_solutions import op_edge_examples, op_corner_examples, OP_PARITY_ALGORITHMS
 
 from flask import jsonify, abort, Flask, render_template, request, redirect, session, url_for
 
@@ -765,11 +765,18 @@ def home(beginner=False):
         allowed.update(f"letter_{target}" for target in EDGE_TARGETS + CORNER_TARGETS)
         allowed.update(f"{kind}_even_cycle_break_order" for kind in ("edge", "corner"))
         allowed.update({"beginner_cycle_order_mode", "edge_sticker_cycle_break_order", "corner_sticker_cycle_break_order",
-                        "beginner_edge_helpers", "beginner_corner_helpers", "beginner_prioritize_helpers"})
+                        "beginner_edge_helpers", "beginner_corner_helpers", "beginner_prioritize_helpers",
+                        "beginner_memo_order", "beginner_execution_order"})
         form = form.copy()
         for key in list(form):
             if key not in allowed:
                 del form[key]
+    beginner_memo_order = form.get('beginner_memo_order', 'corners') if beginner else 'edges'
+    beginner_execution_order = form.get('beginner_execution_order', 'edges') if beginner else 'edges'
+    if beginner_memo_order not in ('corners', 'edges'):
+        beginner_memo_order = 'corners' if beginner else 'edges'
+    if beginner_execution_order not in ('corners', 'edges'):
+        beginner_execution_order = 'edges'
     default_edge_buffer = UR if beginner else UF
     default_corner_buffer = UBL if beginner else UFR
     edge_buffer = default_edge_buffer
@@ -1041,6 +1048,7 @@ def home(beginner=False):
             error = str(e)
 
     context = dict(
+        beginner_memo_order=beginner_memo_order, beginner_execution_order=beginner_execution_order,
         default_edge_buffer=default_edge_buffer, default_corner_buffer=default_corner_buffer,
         odd_break_overrides=odd_break_overrides,
         odd_break_orders=odd_break_orders,
@@ -1107,6 +1115,9 @@ def home(beginner=False):
     )
     context.update(trace_result)
     if beginner:
+        context['beginner_parity_algorithm'] = (
+            OP_PARITY_ALGORITHMS.get((EDGE_BUFFER_OPTIONS[edge_buffer], CORNER_BUFFER_OPTIONS[corner_buffer]))
+            if trace_result.get('parity') == 'Yes' else None)
         context['beginner_op_supported'] = edge_buffer == UR
         context['beginner_corner_op_supported'] = corner_buffer == UBL
         context['beginner_corner_solution_examples'] = (

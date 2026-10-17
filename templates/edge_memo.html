@@ -1,0 +1,35 @@
+                <div class="memo-card" data-memo-kind="edge">
+
+                    <div class="memo-header">
+
+                        <h2>Edge Memo</h2>
+
+                        <span class="target-count">
+                            {{ edge_count }} targets
+                        </span>
+
+                    </div>
+
+                    <div class="memo-content">
+
+                        <p class="memo" id="edge-memo">
+                            {{ edge_memo | highlight_sandwiches }}
+                        </p>
+
+                        <button
+                            type="button"
+                            class="copy-button"
+                            data-copy-target="edge-memo"
+                        >
+                            Copy
+                        </button>
+
+                    </div>
+
+                    <p class="bulk-definition">Each two-letter pair in [Flips: …] or [2Flip: …] identifies one flipped edge, not two targets. A [2Flip: … …] is one algorithm performed at a floating boundary.
+                        Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up.
+                        The selected edge buffer is excluded from the flip list and count.</p>
+
+                </div>
+
+

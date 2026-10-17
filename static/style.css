@@ -1336,3 +1336,12 @@ html[lang="zh-Hans"] .history-eyebrow { letter-spacing: .08em; }
     background: #e8f6f3;
     box-shadow: inset 0 3px 0 #087e79;
 }
+
+.beginner-solving-order { margin: 1.25rem 0; }
+.solving-order-controls { display: flex; flex-wrap: wrap; gap: 1rem; }
+.solving-order-controls label { display: grid; gap: .4rem; }
+.beginner-order-steps { display: flex; flex-wrap: wrap; gap: .5rem 2rem; padding-left: 1.5rem; }
+.beginner-order-steps li { padding: .4rem .5rem; background: #e8f6f3; border-radius: 6px; }
+
+.beginner-parity-example { margin: 1rem 0; padding: 1rem; border: 1px solid #087e79; border-radius: 9px; background: #e8f6f3; }
+.beginner-parity-example code { display: block; white-space: normal; overflow-wrap: anywhere; line-height: 1.8; }

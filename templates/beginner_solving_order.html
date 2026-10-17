@@ -1,0 +1,36 @@
+<div class="beginner-solving-order" aria-labelledby="solving-order-heading">
+    <h3 id="solving-order-heading">Solving order</h3>
+    <p>Choose what to memorize first and what to execute first. Memo cards and solution examples follow your choices.</p>
+    <div class="solving-order-controls">
+        <label for="beginner-order-preset">Order preset
+            <select id="beginner-order-preset">
+                <option value="CEEC" {% if beginner_memo_order == 'corners' and beginner_execution_order == 'edges' %}selected{% endif %}>CEEC — Recommended</option>
+                <option value="CECE" {% if beginner_memo_order == 'corners' and beginner_execution_order == 'corners' %}selected{% endif %}>CECE</option>
+                <option value="ECEC" {% if beginner_memo_order == 'edges' and beginner_execution_order == 'edges' %}selected{% endif %}>ECEC</option>
+                <option value="ECCE" {% if beginner_memo_order == 'edges' and beginner_execution_order == 'corners' %}selected{% endif %}>ECCE</option>
+            </select>
+        </label>
+        <label for="beginner-memo-order">Memo order
+            <select id="beginner-memo-order" name="beginner_memo_order">
+                <option value="corners" {% if beginner_memo_order == 'corners' %}selected{% endif %}>Corners first</option>
+                <option value="edges" {% if beginner_memo_order == 'edges' %}selected{% endif %}>Edges first</option>
+            </select>
+        </label>
+        <label for="beginner-execution-order">Execution order
+            <select id="beginner-execution-order" name="beginner_execution_order">
+                <option value="edges" {% if beginner_execution_order == 'edges' %}selected{% endif %}>Edges first</option>
+                <option value="corners" {% if beginner_execution_order == 'corners' %}selected{% endif %}>Corners first</option>
+            </select>
+        </label>
+    </div>
+    <p class="bulk-definition">CEEC: memorize corners → memorize edges → solve edges → solve corners.</p>
+    <ol id="beginner-order-steps" class="beginner-order-steps" aria-label="Selected solving order" aria-live="polite" aria-atomic="true">
+        {% for kind in (['corners', 'edges'] if beginner_memo_order == 'corners' else ['edges', 'corners']) %}
+        <li>{{ 'Memo corners' if kind == 'corners' else 'Memo edges' }}</li>
+        {% endfor %}
+        {% for kind in (['edges', 'corners'] if beginner_execution_order == 'edges' else ['corners', 'edges']) %}
+        <li>{{ 'Solve corners' if kind == 'corners' else 'Solve edges' }}</li>
+        {% if loop.first and beginner_parity_algorithm %}<li id="beginner-parity-step">Execute parity algorithm</li>{% endif %}
+        {% endfor %}
+    </ol>
+</div>
