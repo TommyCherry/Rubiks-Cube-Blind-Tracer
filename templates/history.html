@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ 'My Official Solve History' if history_view == 'mine' else 'Official Solve History' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='i18n.js') }}" defer></script>
 </head>
 <body class="history-page">
+{% include 'language_selector.html' %}
 <main class="history-results">
     <a class="history-back" href="{{ url_for('home') }}"><span aria-hidden="true">←</span> Back to tracer</a>
     <header class="history-hero">

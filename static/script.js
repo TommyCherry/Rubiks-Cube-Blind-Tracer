@@ -427,7 +427,7 @@ function updateColorScheme() {
 function resetAllSettings() {
 
     const confirmed = confirm(
-        "Reset your letter scheme, color scheme, and cube orientation to defaults?"
+        window.TracerI18n.translate("Reset your letter scheme, color scheme, and cube orientation to defaults?")
     );
 
     if (!confirmed) {
