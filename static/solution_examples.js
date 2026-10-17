@@ -4,6 +4,34 @@
     const status = document.getElementById('solution-status');
     const list = document.getElementById('solution-examples');
     const cases = JSON.parse(document.getElementById('solution-cases').textContent);
+    if (button.dataset.source === 'beginner') {
+        const cornerList = document.getElementById('corner-solution-examples');
+        button.addEventListener('click', () => {
+            list.replaceChildren();
+            cornerList?.replaceChildren();
+            for (const item of cases) {
+                const row = document.createElement('li');
+                const heading = document.createElement('strong');
+                heading.textContent = `${item.memo} · ${item.positions.join(' → ')}`;
+                const recipe = document.createElement(item.recipe ? 'code' : 'p');
+                recipe.textContent = item.recipe || item.error;
+                row.append(heading, recipe);
+                if (item.algorithm) {
+                    const details = document.createElement('details');
+                    const summary = document.createElement('summary');
+                    summary.textContent = 'Full algorithm';
+                    const moves = document.createElement('code');
+                    moves.textContent = item.algorithm;
+                    details.append(summary, moves);
+                    row.append(details);
+                }
+                (item.kind === 'corner' ? cornerList : list).append(row);
+            }
+            status.textContent = cases.length ? 'OP examples loaded.' : 'No supported targets in this trace.';
+            button.hidden = true;
+        });
+        return;
+    }
     const supported = item => item.positions.length === 3 && new Set(item.positions.map(position => [...position].sort().join(''))).size === 3;
     button.addEventListener('click', async () => {
         button.disabled = true;

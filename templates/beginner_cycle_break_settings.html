@@ -13,24 +13,6 @@
         <input type="checkbox" id="beginner-prioritize-helpers" name="beginner_prioritize_helpers" {% if beginner_prioritize_helpers %}checked{% endif %}>
         Prioritize helpers first
     </label>
-    <details class="beginner-helper-settings">
-        <summary>Choose helpers</summary>
-        <p>Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.</p>
-        {% for kind, targets in [('edge', edge_targets), ('corner', corner_targets)] %}
-        <fieldset>
-            <legend>{{ 'Edge helpers' if kind == 'edge' else 'Corner helpers' }}</legend>
-            <div class="beginner-helper-grid">
-            {% for target in targets %}
-                <label>
-                    <input type="checkbox" name="beginner_{{ kind }}_helpers" value="{{ target }}" data-beginner-helper="{{ kind }}" {% if target in beginner_helpers[kind] %}checked{% endif %}>
-                    <strong data-cycle-letter="{{ target }}" data-no-translate>{{ letter_scheme[target] or '—' }}</strong>
-                    <small data-no-translate>{{ target }}</small>
-                </label>
-            {% endfor %}
-            </div>
-        </fieldset>
-        {% endfor %}
-    </details>
     <p>Sticker mode lets you prioritize each letter separately and choose the sticker that opens a new cycle. Other stickers on an already visited piece are skipped.</p>
     <p>Drag tiles or use the arrow buttons. The same priority applies throughout the solve.</p>
     <p>When helper priority is on, highlighted tiles stay first. Reorder helpers among themselves and other targets among themselves.</p>

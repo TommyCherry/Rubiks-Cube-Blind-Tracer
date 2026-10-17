@@ -14,6 +14,7 @@ import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
 from conjugacy import generate_state, to_facelets
 from blddb import dataset, edge_example, POSITION_CODES
+from beginner_solutions import op_edge_examples, op_corner_examples
 
 from flask import jsonify, abort, Flask, render_template, request, redirect, session, url_for
 
@@ -769,8 +770,10 @@ def home(beginner=False):
         for key in list(form):
             if key not in allowed:
                 del form[key]
-    edge_buffer = 0
-    corner_buffer = 0
+    default_edge_buffer = UR if beginner else UF
+    default_corner_buffer = UBL if beginner else UFR
+    edge_buffer = default_edge_buffer
+    corner_buffer = default_corner_buffer
     edge_floating_order = EDGE_BUFFER_OPTIONS.copy()
     enabled_edge_floating = []
     corner_floating_order = CORNER_BUFFER_OPTIONS.copy()
@@ -819,7 +822,7 @@ def home(beginner=False):
     corner_break_order = [CORNER_BUFFER_OPTIONS[i] for i in CORNER_BUFFER_ORDER]
     odd_break_overrides = dict(edge={}, corner={})
     beginner_method = form.get("beginner_method", "custom") if beginner else "custom"
-    if beginner_method not in ("custom", "op_op", "m2_op"):
+    if beginner_method not in ("custom", "op_op", "op_op_ufr", "m2_op"):
         beginner_method = "custom"
     if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
         edge_break_order = ["UB"] + [name for name in edge_break_order if name != "UB"]
@@ -849,11 +852,11 @@ def home(beginner=False):
 
         # Get selected buffers from form
         edge_buffer = int(
-            form.get("edge_buffer", 0)
+            form.get("edge_buffer", default_edge_buffer)
         )
 
         corner_buffer = int(
-            form.get("corner_buffer", 0)
+            form.get("corner_buffer", default_corner_buffer)
         )
 
         # Get pseudoswap settings from form
@@ -1038,6 +1041,7 @@ def home(beginner=False):
             error = str(e)
 
     context = dict(
+        default_edge_buffer=default_edge_buffer, default_corner_buffer=default_corner_buffer,
         odd_break_overrides=odd_break_overrides,
         odd_break_orders=odd_break_orders,
         edge_break_order=edge_break_order, corner_break_order=corner_break_order,
@@ -1102,6 +1106,15 @@ def home(beginner=False):
         wca_user=session.get("wca_user")
     )
     context.update(trace_result)
+    if beginner:
+        context['beginner_op_supported'] = edge_buffer == UR
+        context['beginner_corner_op_supported'] = corner_buffer == UBL
+        context['beginner_corner_solution_examples'] = (
+            op_corner_examples(trace_result.get('corner_target_names', []), letter_scheme)
+            if corner_buffer == UBL else [])
+        context['beginner_solution_examples'] = (
+            op_edge_examples(trace_result.get('edge_target_names', []), letter_scheme)
+            if edge_buffer == UR else [])
     if bulk_results:
         metadata = dict(bulk_stats=bulk_stats, bulk_total=len(bulk_results),
                         include_basic_sandwiching=include_basic_sandwiching,

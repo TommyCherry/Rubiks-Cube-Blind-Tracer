@@ -7,6 +7,19 @@ from app import app, _trace_scramble
 
 
 class TracerModeTests(unittest.TestCase):
+    def test_mode_specific_default_buffers(self):
+        from Cube import UR, UBL, UF, UFR
+        for route, edge, corner in [('/beginner', UR, UBL), ('/expert', UF, UFR)]:
+            with patch('app.render_template', return_value='ok') as render:
+                app.test_client().get(route)
+            context = render.call_args.kwargs
+            self.assertEqual((context['edge_buffer'], context['corner_buffer']), (edge, corner))
+            self.assertEqual((context['default_edge_buffer'], context['default_corner_buffer']), (edge, corner))
+            with patch('app._trace_scramble', wraps=_trace_scramble) as trace, contextlib.redirect_stdout(io.StringIO()):
+                response = app.test_client().post(route, data={'scramble': 'R U'})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual((trace.call_args.kwargs['edge_buffer'], trace.call_args.kwargs['corner_buffer']), (edge, corner))
+
     def test_beginner_controls(self):
         response = app.test_client().get('/beginner')
         self.assertEqual(response.status_code, 200)
@@ -73,6 +86,18 @@ class TracerModeTests(unittest.TestCase):
     def test_method_presets_are_beginner_only(self):
         self.assertIn('id="beginner-method"', app.test_client().get('/beginner').get_data(as_text=True))
         self.assertNotIn('id="beginner-method"', app.test_client().get('/expert').get_data(as_text=True))
+
+    def test_beginner_op_op_ufr_preset_survives_submission(self):
+        from Cube import UR, UFR
+        with patch('app._trace_scramble', wraps=_trace_scramble) as trace, contextlib.redirect_stdout(io.StringIO()):
+            response = app.test_client().post('/beginner', data={
+                'scramble': 'R U', 'beginner_method': 'op_op_ufr',
+                'edge_buffer': str(UR), 'corner_buffer': str(UFR)})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(trace.call_args.kwargs['edge_buffer'], UR)
+        self.assertEqual(trace.call_args.kwargs['corner_buffer'], UFR)
+        self.assertFalse(trace.call_args.kwargs['use_pseudoswap'])
+        self.assertIn('value="op_op_ufr" selected', response.get_data(as_text=True))
 
     def test_beginner_letter_orders_apply_to_both_target_parities(self):
         from app import EDGE_BUFFER_OPTIONS, CORNER_BUFFER_OPTIONS

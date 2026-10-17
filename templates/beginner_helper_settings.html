@@ -1,0 +1,19 @@
+    <details class="beginner-helper-settings">
+        <summary>Choose helpers</summary>
+        <p>Helpers are the positions used to swap pieces with the buffer after doing setup moves.</p>
+        <p>Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.</p>
+        {% for kind, targets in [('edge', edge_targets), ('corner', corner_targets)] %}
+        <fieldset>
+            <legend>{{ 'Edge helpers' if kind == 'edge' else 'Corner helpers' }}</legend>
+            <div class="beginner-helper-grid">
+            {% for target in targets %}
+                <label>
+                    <input type="checkbox" name="beginner_{{ kind }}_helpers" value="{{ target }}" data-beginner-helper="{{ kind }}" {% if target in beginner_helpers[kind] %}checked{% endif %}>
+                    <strong data-cycle-letter="{{ target }}" data-no-translate>{{ letter_scheme[target] or '—' }}</strong>
+                    <small data-no-translate>{{ target }}</small>
+                </label>
+            {% endfor %}
+            </div>
+        </fieldset>
+        {% endfor %}
+    </details>

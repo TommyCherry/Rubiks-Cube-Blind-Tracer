@@ -166,14 +166,25 @@
             </p>
 
             <div class="reset-buttons">
-                <button type="button" id="reset-speffz">
+                <button type="button" id="reset-speffz" aria-describedby="speffz-orientation">
                     Reset to Speffz
+                </button>
+
+                <button type="button" id="apply-chinese-speffz" aria-describedby="speffz-orientation">
+                    Apply Chinese Speffz (中式 Speffz)
+                </button>
+
+                <button type="button" id="apply-chi-chu" aria-describedby="chi-chu-orientation">
+                    Apply Chi Chu (彳亍)
                 </button>
 
                 <button type="button" id="reset-all-settings">
                     Reset All Settings
                 </button>
             </div>
+
+            <p id="speffz-orientation">Both Speffz presets set white up and green front. Chinese Speffz replaces U, V, W, X with W, X, Y, Z.</p>
+            <p id="chi-chu-orientation">Chi Chu sets yellow up, red front, green right, blue left, orange back, and white down.</p>
 
             <!-- COLOR SCHEME -->
 
@@ -603,9 +614,10 @@
                 <select id="beginner-method" name="beginner_method" aria-describedby="beginner-method-help">
                     <option value="custom" {% if beginner_method == 'custom' %}selected{% endif %}>Custom</option>
                     <option value="op_op" {% if beginner_method == 'op_op' %}selected{% endif %}>OP/OP — UR edges, UBL corners</option>
+                    <option value="op_op_ufr" {% if beginner_method == 'op_op_ufr' %}selected{% endif %}>OP/OP — UR edges, UFR corners</option>
                     <option value="m2_op" {% if beginner_method == 'm2_op' %}selected{% endif %}>M2/OP — DF edges, UBL corners</option>
                 </select>
-                <p id="beginner-method-help" class="bulk-definition">Both presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.</p>
+                <p id="beginner-method-help" class="bulk-definition">All presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.</p>
             </div>
             {% endif %}
             <div class="buffer-section">
@@ -614,7 +626,7 @@
                     <strong>Edge Buffer:</strong>
                 </label>
 
-                <select id="edge-buffer" name="edge_buffer">
+                <select id="edge-buffer" name="edge_buffer" data-default-value="{{ default_edge_buffer }}">
                     {% for buffer in edge_buffer_options %}
                         <option
                             value="{{ loop.index0 }}"
@@ -630,7 +642,7 @@
                     <strong>Corner Buffer:</strong>
                 </label>
 
-                <select id="corner-buffer" name="corner_buffer">
+                <select id="corner-buffer" name="corner_buffer" data-default-value="{{ default_corner_buffer }}">
                     {% for buffer in corner_buffer_options %}
                         <option
                             value="{{ loop.index0 }}"
@@ -904,6 +916,7 @@
 <section class="tracer-configuration parity-section" aria-labelledby="parity-heading">
 <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div><h2 id="parity-heading">Parity</h2><p>Choose whether to pseudoswap, then add your corner parity techniques.</p></div></div>
             {% endif %}
+            {% if beginner %}{% include 'beginner_helper_settings.html' %}{% endif %}
             <div class="pseudo-swap-settings">
 
                 <label>
@@ -1034,6 +1047,9 @@
             </section>
 
             {% endif %}
+            {% if beginner %}
+            {% include 'beginner_solution_examples.html' %}
+            {% else %}
             <section class="tracer-configuration solution-section" aria-labelledby="solution-heading">
                 <div class="tracer-section-heading"><div><h2 id="solution-heading">Solution examples</h2>
                 <p>Example moves for each ordinary 3-style edge pair, in tracing order.</p></div></div>
@@ -1043,6 +1059,7 @@
                 <ol id="solution-examples" class="solution-examples"></ol>
                 <script type="application/json" id="solution-cases">{{ solution_cases | default([]) | tojson }}</script>
             </section>
+            {% endif %}
 
             <div class="memo-section">
 
@@ -1234,6 +1251,7 @@
     <form id="bulk-query-form" method="GET" action="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}"></form>
     {% endif %}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='letter_scheme_presets.js') }}"></script>
 
 {% if not beginner %}
 <script src="{{ url_for('static', filename='conjugacy_practice.js') }}"></script>

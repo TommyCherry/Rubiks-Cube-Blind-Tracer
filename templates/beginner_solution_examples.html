@@ -1,0 +1,26 @@
+<section class="tracer-configuration solution-section" aria-labelledby="solution-heading">
+    <div class="tracer-section-heading"><div><h2 id="solution-heading">Solution examples</h2>
+        <p>Old Pochmann algorithms for each sticker target, in tracing order.</p>
+    </div></div>
+    <p class="bulk-definition">Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.</p>
+    <p class="bulk-definition">These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.</p>
+    {% if beginner_op_supported or beginner_corner_op_supported %}
+    <button type="button" id="load-solution-examples" data-source="beginner">Show example moves</button>
+    <p id="solution-status" role="status" aria-live="polite"></p>
+    {% endif %}
+    <h3>OP edge examples</h3>
+    {% if beginner_op_supported %}
+    <p>UR buffer; UB, UF, and UL helpers.</p>
+    {% else %}
+    <p>OP edge examples currently require a UR buffer. M2 and other buffer algorithms have not been defined yet.</p>
+    {% endif %}
+    <ol id="solution-examples" class="solution-examples"></ol>
+    <h3>OP corner examples</h3>
+    {% if beginner_corner_op_supported %}
+    <p>UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.</p>
+    {% else %}
+    <p>OP corner examples currently require a UBL buffer. Algorithms for other corner buffers have not been defined yet.</p>
+    {% endif %}
+    <ol id="corner-solution-examples" class="solution-examples"></ol>
+    <script type="application/json" id="solution-cases">{{ (beginner_solution_examples + beginner_corner_solution_examples) | tojson }}</script>
+</section>

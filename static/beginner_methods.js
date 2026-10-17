@@ -45,7 +45,7 @@
     method.addEventListener('change', () => {
         if (method.value === 'custom') return;
         choose(edge, method.value === 'm2_op' ? 'DF' : 'UR');
-        choose(corner, 'UBL');
+        choose(corner, method.value === 'op_op_ufr' ? 'UFR' : 'UBL');
         pseudoswap.checked = false;
         pseudoswap.dispatchEvent(new Event('change', {bubbles: true}));
         resetCycleOrders();
@@ -54,7 +54,8 @@
     for (const control of [edge, corner]) control.addEventListener('change', event => {
         if (!event.isTrusted) return;
         const expected = method.value === 'm2_op' ? 'DF' : 'UR';
-        if (edge.selectedOptions[0].textContent.trim() !== expected || corner.selectedOptions[0].textContent.trim() !== 'UBL') {
+        const expectedCorner = method.value === 'op_op_ufr' ? 'UFR' : 'UBL';
+        if (edge.selectedOptions[0].textContent.trim() !== expected || corner.selectedOptions[0].textContent.trim() !== expectedCorner) {
             method.value = 'custom';
         }
     });

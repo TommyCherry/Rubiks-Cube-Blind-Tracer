@@ -16,6 +16,7 @@
     const catalog = `
 When helper priority is on, highlighted tiles stay first. Reorder helpers among themselves and other targets among themselves.|启用辅助目标优先时，高亮方块始终排在最前。可分别调整辅助目标和其他目标各自的顺序。
 Prioritize helpers first|优先使用辅助目标
+Helpers are the positions used to swap pieces with the buffer after doing setup moves.|辅助目标是在完成设置步后，用于与缓冲块交换的目标位置。
 Choose helpers|选择辅助目标
 Edge helpers|棱块辅助目标
 Corner helpers|角块辅助目标
@@ -86,6 +87,10 @@ Letter scheme & cube map|字母编码与魔方展开图
 Set your sticker letters, colors, and cube orientation.|设置贴纸字母、颜色及魔方朝向。
 Your sticker letters|贴纸字母编码
 Speffz is loaded by default. Click any sticker to change its letter.|默认使用 Speffz 编码。点击任意贴纸即可修改字母。
+Apply Chinese Speffz (中式 Speffz)|应用中式 Speffz
+Both Speffz presets set white up and green front. Chinese Speffz replaces U, V, W, X with W, X, Y, Z.|两种 Speffz 预设均使用白顶绿前的朝向。中式 Speffz 将 U、V、W、X 分别替换为 W、X、Y、Z。
+Apply Chi Chu (彳亍)|应用彳亍编码
+Chi Chu sets yellow up, red front, green right, blue left, orange back, and white down.|彳亍编码使用黄顶、红前、绿右、蓝左、橙后、白底的朝向。
 Reset to Speffz|重置为 Speffz
 Reset All Settings|重置所有设置
 Color Scheme|配色方案
@@ -98,9 +103,10 @@ Choose your primary buffers and whether to use pseudoswap.|选择主缓冲块以
 Choose your starting buffers, then set your floating priorities.|选择起始缓冲块，然后设置浮动优先级。
 Method preset|方法预设
 Custom|自定义
+OP/OP — UR edges, UFR corners|OP/OP — 棱块 UR，角块 UFR
 OP/OP — UR edges, UBL corners|OP/OP — 棱块 UR，角块 UBL
 M2/OP — DF edges, UBL corners|M2/OP — 棱块 DF，角块 UBL
-Both presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.|两种预设默认关闭伪交换。M2/OP 在目标数为偶数或奇数时，均优先选择 UB 作为棱块断环位置。你可以在下方调整设置。
+All presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.|所有预设默认关闭伪交换。M2/OP 在目标数为偶数或奇数时，均优先选择 UB 作为棱块断环位置。你可以在下方调整设置。
 Edge Buffer:|棱块缓冲块：
 Corner Buffer:|角块缓冲块：
 Floating buffers|浮动缓冲块
@@ -150,6 +156,25 @@ Reset all parity overrides|重置所有奇偶自定义设置
 Default|默认
 Scramble conjugacy class|打乱共轭类
 Original scramble cycles: e = edges, c = corners, ' = nonzero total cycle orientation. Solved pieces are omitted.|原始打乱循环：e = 棱块，c = 角块，' = 循环总方向非零。已复原的块省略。
+Old Pochmann algorithms for each sticker target, in tracing order.|按追踪顺序展示每个贴纸目标的 Old Pochmann 公式。
+Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
+These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标。奇偶处理、翻棱和原地扭角需要单独的公式。
+OP edge examples|OP 棱块示例
+OP corner examples|OP 角块示例
+UR buffer; UB, UF, and UL helpers.|缓冲块为 UR；辅助目标为 UB、UF 和 UL。
+UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.|缓冲块为 UBL，辅助目标为 UFR。使用设置步 + Y-perm + 还原设置步。设置步对应 Speffz 位置，显示字母采用你选择的编码方案。
+OP corner examples currently require a UBL buffer. Algorithms for other corner buffers have not been defined yet.|目前 OP 角块示例仅支持 UBL 缓冲块，尚未定义其他角块缓冲块的公式。
+No OP corner algorithm has been defined for this target.|尚未为此目标定义 OP 角块公式。
+OP examples loaded.|OP 示例已加载。
+No supported targets in this trace.|此追踪中没有受支持的目标。
+Old Pochmann edge algorithms for each sticker target, in tracing order.|按追踪顺序展示每个贴纸目标的 Old Pochmann 棱块公式。
+Uses the built-in OP edge list with a UR buffer and UB, UF, and UL helpers. Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|使用内置 OP 棱块公式表，以 UR 为缓冲块，UB、UF、UL 为辅助目标。每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
+These examples cover edge targets only. Corner algorithms, parity handling, and flipped edges need separate algorithms.|这些示例仅涵盖棱块目标。角块、奇偶处理和翻棱需要单独的公式。
+OP edge examples currently require a UR buffer. M2 and other buffer algorithms have not been defined yet.|目前 OP 棱块示例仅支持 UR 缓冲块。尚未定义 M2 和其他缓冲块的公式。
+Full algorithm|完整公式
+OP edge examples loaded.|OP 棱块示例已加载。
+No edge targets in this trace.|此追踪中没有棱块目标。
+No OP edge algorithm has been defined for this target.|尚未为此目标定义 OP 棱块公式。
 Solution examples|还原示例
 Example moves for each ordinary 3-style edge pair, in tracing order.|按追踪顺序，展示每个普通 3-style 棱块编码对的示例公式。
 Uses the first manmade algorithm from|使用以下来源中的第一个人工公式：

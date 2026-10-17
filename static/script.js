@@ -231,15 +231,6 @@ function loadLetterScheme() {
 }
 
 
-// Reset everything to Speffz
-function resetToSpeffz() {
-    document.querySelectorAll("input.sticker").forEach(sticker => {
-        sticker.value = sticker.dataset.speffz;
-    });
-
-    localStorage.removeItem(STORAGE_KEY);
-}
-
 // ---------------------------------------------------------
 // Cube color scheme / text color / orientation 
 // ---------------------------------------------------------
@@ -441,8 +432,13 @@ function resetAllSettings() {
     });
 
     // Reset buffers
-    document.getElementById("edge-buffer").value = "0";
-    document.getElementById("corner-buffer").value = "0";
+    for (const id of ["edge-buffer", "corner-buffer"]) {
+        const select = document.getElementById(id);
+        select.value = select.dataset.defaultValue;
+        select.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+    const method = document.getElementById('beginner-method');
+    if (method) method.value = 'custom';
 
     // Reset base color scheme
     colorScheme = {
@@ -472,6 +468,7 @@ function resetAllSettings() {
 
     // Update visual cube
     updateCubeColors();
+    document.dispatchEvent(new Event('letter-scheme-change'));
 }
 
 function enableBufferDragging(listId) {
@@ -587,12 +584,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document
         .getElementById("memo-form")
         .addEventListener("submit", saveLetterScheme);
-
-
-    // Reset lettering scheme
-    document
-        .getElementById("reset-speffz")
-        .addEventListener("click", resetToSpeffz);
 
 
     // Memo copy buttons

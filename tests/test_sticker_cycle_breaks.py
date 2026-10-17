@@ -57,6 +57,7 @@ class StickerCycleBreakTests(unittest.TestCase):
         edge = format_edge_trace([(1, 1)])[0]
         corner = format_corner_trace([(1, 2)])[0]
         data = {'scramble': 'R', 'bulk_scrambles': 'R', 'beginner_cycle_order_mode': 'sticker',
+                'edge_buffer': '0', 'corner_buffer': '0',
                 'edge_sticker_cycle_break_order': [edge] + [s for s in EDGE_TARGETS if s != edge],
                 'corner_sticker_cycle_break_order': [corner] + [s for s in CORNER_TARGETS if s != corner]}
         with tempfile.TemporaryDirectory() as directory, patch.dict(app.config, BULK_DATABASE=str(Path(directory) / 'bulk.sqlite3')):

@@ -80,3 +80,21 @@ test('piece/sticker selection is remembered and switching preserves each list or
     assert.equal(storage.get('beginnerCycleOrderMode'), 'piece');
     assert.deepEqual(orders[0].children.map(item => item.dataset.piece), ['DF', 'UF', 'UB']);
 });
+
+
+test('OP/OP UFR preset uses UR edges and UFR corners with pseudoswap off', () => {
+    const {ids} = fixture();
+    const method = ids['beginner-method'];
+    method.value = 'op_op_ufr';
+    method.dispatchEvent(new Event('change'));
+    assert.equal(ids['edge-buffer'].value, '2');
+    assert.equal(ids['corner-buffer'].value, '0');
+    assert.equal(ids.usePseudoswap.checked, false);
+    ids['edge-buffer'].selectedOptions = [{textContent: 'UR'}];
+    ids['corner-buffer'].selectedOptions = [{textContent: 'UFR'}];
+    ids['corner-buffer'].dispatchEvent({type: 'change', isTrusted: true});
+    assert.equal(method.value, 'op_op_ufr');
+    ids['corner-buffer'].selectedOptions = [{textContent: 'UBL'}];
+    ids['corner-buffer'].dispatchEvent({type: 'change', isTrusted: true});
+    assert.equal(method.value, 'custom');
+});
