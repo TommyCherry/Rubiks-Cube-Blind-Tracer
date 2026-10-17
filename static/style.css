@@ -1330,3 +1330,9 @@ html[lang="zh-Hans"] .history-eyebrow { letter-spacing: .08em; }
 .beginner-helper-grid input { width: auto; margin: 0; }
 .beginner-helper-grid small { color: #666; }
 .beginner-effective-order { line-height: 1.8; overflow-wrap: anywhere; }
+
+.beginner-cycle-breaks [data-cycle-break-order] li.helper-prioritized {
+    border-color: #087e79;
+    background: #e8f6f3;
+    box-shadow: inset 0 3px 0 #087e79;
+}

@@ -12,10 +12,10 @@ test('helper preview prioritizes stably, preserves manual lists, and saves choic
     const prioritize = control({checked: false});
     const mode = control({value: 'sticker'});
     const helper = control({value: 'BU', checked: false, dataset: {beginnerHelper: 'edge'}});
-    const piece = name => ({dataset: {piece: name}, querySelectorAll: () => [{textContent: name.toLowerCase()}]});
-    const edgeStickers = {children: ['UF', 'UB', 'BU'].map(piece)};
-    const edgePieces = {children: ['UF', 'UB'].map(piece)};
-    const corner = {children: ['UFR', 'UBL'].map(piece)};
+    const piece = name => ({style: {}, classList: {toggle(name, value) {this[name] = value;}}, dataset: {piece: name}, querySelectorAll: () => [{textContent: name.toLowerCase()}]});
+    const edgeStickers = {dataset: {}, children: ['UF', 'UB', 'BU'].map(piece)};
+    const edgePieces = {dataset: {}, children: ['UF', 'UB'].map(piece)};
+    const corner = {dataset: {}, children: ['UFR', 'UBL'].map(piece)};
     const previews = {edge: {}, corner: {}};
     let saved;
     const document = control({
@@ -30,6 +30,7 @@ test('helper preview prioritizes stably, preserves manual lists, and saves choic
     vm.runInNewContext(fs.readFileSync('static/beginner_helpers.js', 'utf8'), {
         document, localStorage: {getItem: () => null, setItem: (_, value) => {saved = JSON.parse(value);}},
     });
+    const visualOrder = list => [...list.children].sort((a, b) => Number(a.style.order) - Number(b.style.order)).map(item => item.dataset.piece);
     const normal = previews.edge.textContent;
     helper.checked = true;
     helper.fire('change');
@@ -37,15 +38,20 @@ test('helper preview prioritizes stably, preserves manual lists, and saves choic
     prioritize.checked = true;
     prioritize.fire('change');
     assert.equal(previews.edge.textContent, 'bu (BU) → uf (UF) → ub (UB)');
+    assert.deepEqual(visualOrder(edgeStickers), ['BU', 'UF', 'UB']);
+    assert.equal(edgeStickers.children[2].classList['helper-prioritized'], true);
     assert.deepEqual(edgeStickers.children.map(item => item.dataset.piece), ['UF', 'UB', 'BU']);
     assert.deepEqual(saved, {prioritize: true, edge: ['BU'], corner: []});
     mode.value = 'piece';
     mode.fire('change');
     assert.equal(previews.edge.textContent, 'ub (UB) → uf (UF)');
+    assert.deepEqual(visualOrder(edgePieces), ['UB', 'UF']);
     prioritize.checked = false;
     prioritize.fire('change');
     assert.equal(previews.edge.textContent, 'uf (UF) → ub (UB)');
     mode.value = 'sticker';
     mode.fire('change');
     assert.equal(previews.edge.textContent, normal);
+    assert.deepEqual(visualOrder(edgeStickers), ['UF', 'UB', 'BU']);
+    assert.ok(edgeStickers.children.every(item => !item.classList['helper-prioritized']));
 });

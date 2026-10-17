@@ -14,6 +14,7 @@
     }
     // Numbered placeholders preserve names, counts, and cube notation verbatim.
     const catalog = `
+When helper priority is on, highlighted tiles stay first. Reorder helpers among themselves and other targets among themselves.|启用辅助目标优先时，高亮方块始终排在最前。可分别调整辅助目标和其他目标各自的顺序。
 Prioritize helpers first|优先使用辅助目标
 Choose helpers|选择辅助目标
 Edge helpers|棱块辅助目标

@@ -15,6 +15,14 @@
             const isHelper = item => selected.has(mode.value === 'sticker' ? item.dataset.piece : pieceKey(item.dataset.piece));
             const effective = prioritize.checked
                 ? [...items.filter(isHelper), ...items.filter(item => !isHelper(item))] : items;
+            list.dataset.helpersPrioritized = String(prioritize.checked);
+            items.forEach(item => {
+                const prioritized = prioritize.checked && isHelper(item);
+                // Flex order mirrors the effective order without overwriting the
+                // underlying manual order used by storage, presets, and the form.
+                item.style.order = prioritized ? '-1' : '0';
+                item.classList.toggle('helper-prioritized', prioritized);
+            });
             const preview = document.querySelector(`[data-helper-order-preview="${kind}"]`);
             // Keep the editable base order intact so disabling priority restores it exactly.
             preview.textContent = effective.map(item => {

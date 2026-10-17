@@ -771,10 +771,14 @@ document.querySelectorAll('[data-cycle-break-order]').forEach(list => {
         const button = event.target.closest('[data-move]');
         if (!button) return;
         const item = button.closest('li');
-        if (button.dataset.move === 'up' && item.previousElementSibling) {
-            list.insertBefore(item, item.previousElementSibling);
-        } else if (button.dataset.move === 'down' && item.nextElementSibling) {
-            list.insertBefore(item.nextElementSibling, item);
+        // Helpers stay pinned first; arrows move within the visible priority group.
+        const peers = [...list.children].filter(peer => list.dataset.helpersPrioritized !== 'true'
+            || peer.classList.contains('helper-prioritized') === item.classList.contains('helper-prioritized'));
+        const index = peers.indexOf(item);
+        if (button.dataset.move === 'up' && index > 0) {
+            list.insertBefore(item, peers[index - 1]);
+        } else if (button.dataset.move === 'down' && index < peers.length - 1) {
+            list.insertBefore(item, peers[index + 1].nextSibling);
         }
         button.focus();
         save();
@@ -793,6 +797,8 @@ document.querySelectorAll('[data-cycle-break-order]').forEach(list => {
         event.dataTransfer.dropEffect = 'move';
         const target = event.target.closest('li');
         if (!target || target === dragged || target.parentElement !== list) return;
+        if (list.dataset.helpersPrioritized === 'true'
+            && target.classList.contains('helper-prioritized') !== dragged.classList.contains('helper-prioritized')) return;
         const rect = target.getBoundingClientRect();
         list.insertBefore(dragged, event.clientX < rect.left + rect.width / 2 ? target : target.nextSibling);
     });
