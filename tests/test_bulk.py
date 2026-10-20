@@ -357,7 +357,8 @@ class BulkTests(unittest.TestCase):
             ('use_pseudoswap', 'on'), ('pseudoswap_edge_1', '0'),
             ('pseudoswap_edge_2', '2'), ('letter_UB', 'Z'),
         ])
-        scrambles = ["Rw Uw Rw' Uw'", 'R', "R U2 F' L D B2"]
+        scrambles = ["Rw Uw Rw' Uw'", 'R', "R U2 F' L D B2",
+                     "x U y' R z2 F", "U R D L2 D' L2 U2 B2 F2 D' R2 U2 F2 U F' R B L U' F' L2 x y"]
         bulk_data = settings.copy()
         bulk_data.update(dict(action='bulk', bulk_scrambles='\n'.join(scrambles)))
         bulk, _ = self.post(bulk_data)

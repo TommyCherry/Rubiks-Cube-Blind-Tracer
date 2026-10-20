@@ -14,7 +14,7 @@
     {% if kind == 'edge' %}
     <h3>OP edge examples</h3>
     {% if beginner_op_supported %}
-    <p>UR buffer; UB, UF, and UL helpers.</p>
+    <p>{{ edge_buffer_sticker }} buffer sticker on the UR piece. Algorithms follow the selected sticker and memo.</p>
     {% else %}
     <p>OP edge examples currently require a UR buffer. M2 and other buffer algorithms have not been defined yet.</p>
     {% endif %}
@@ -22,7 +22,7 @@
     {% else %}
     <h3>OP corner examples</h3>
     {% if beginner_corner_op_supported %}
-    <p>UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.</p>
+    <p>{{ corner_buffer_sticker }} buffer sticker on the UBL piece. Uses Y-perm with setup and undo moves. Algorithms follow the selected sticker and memo.</p>
     {% else %}
     <p>OP corner examples currently require a UBL buffer. Algorithms for other corner buffers have not been defined yet.</p>
     {% endif %}

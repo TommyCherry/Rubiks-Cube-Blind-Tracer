@@ -593,7 +593,8 @@ class Cube:
         even_cycle_break_order=None,
         odd_cycle_break_order=None,
         odd_cycle_break_overrides=None,
-        sticker_cycle_break_order=None
+        sticker_cycle_break_order=None,
+        buffer_orientations=None
     ):
         """Trace edges, optionally switching through enabled floating buffers.
 
@@ -607,6 +608,19 @@ class Cube:
             raise ValueError('Invalid even edge cycle-break order.')
         if odd_cycle_break_order is not None and (len(odd_cycle_break_order) != 12 or set(odd_cycle_break_order) != set(range(12))):
             raise ValueError('Invalid odd edge cycle-break order.')
+        # Each buffer piece may use any of its 2 stickers. Closing
+        # orientation remains relative to the piece for solved/floating checks.
+        buffer_orientations = dict(buffer_orientations or {})
+        if any(type(p) is not int or p not in range(12)
+               or type(o) is not int or o not in range(2)
+               for p, o in buffer_orientations.items()):
+            raise ValueError("Invalid edge buffer sticker orientation.")
+
+        def buffer_cycle(position):
+            targets, visited, closing = self.trace_edge_cycle(position, target_perm)
+            offset = buffer_orientations.get(position, 0)
+            return ([(p, (o + offset) % 2) for p, o in targets], visited, closing)
+
         # Sticker priority chooses both the piece and its opening orientation.
         sticker_order = None
         opening_orientations = {}
@@ -662,7 +676,7 @@ class Cube:
 
         # The closing orientation includes every edge in the buffer cycle,
         # relative to the target permutation (including pseudoswap).
-        targets, cycle_visited, buffer_ori = self.trace_edge_cycle(buffer, target_perm)
+        targets, cycle_visited, buffer_ori = buffer_cycle(buffer)
         trace.extend(targets)
         visited.update(cycle_visited)
         if targets:
@@ -731,9 +745,7 @@ class Cube:
                     floating_buffers = floating_buffers[
                         floating_buffers.index(next_buffer) + 1:
                     ]
-                    targets, cycle_visited, buffer_ori = self.trace_edge_cycle(
-                        buffer, target_perm
-                    )
+                    targets, cycle_visited, buffer_ori = buffer_cycle(buffer)
                     if buffer in pending_flips:
                         pending_flips.remove(buffer)
                         buffer_ori = 1
@@ -759,7 +771,7 @@ class Cube:
             # opening sticker as buffer, omitting both cycle-break targets.
             if (auto_standalone and cycle_break in floating_buffers
                     and len(trace) % 2 == 0):
-                standalone_targets, standalone_visited, closing_ori = self.trace_edge_cycle(cycle_break, target_perm)
+                standalone_targets, standalone_visited, closing_ori = buffer_cycle(cycle_break)
                 if standalone_targets and len(standalone_targets) % 2 == 0 and closing_ori == 0:
                     floating_opportunities.append({
                         "after_target": len(trace),
@@ -899,7 +911,8 @@ class Cube:
         even_cycle_break_order=None,
         odd_cycle_break_order=None,
         odd_cycle_break_overrides=None,
-        sticker_cycle_break_order=None
+        sticker_cycle_break_order=None,
+        buffer_orientations=None
     ):
         """Trace corners, switching to enabled buffers after solved pairs.
 
@@ -910,6 +923,19 @@ class Cube:
             raise ValueError('Invalid even corner cycle-break order.')
         if odd_cycle_break_order is not None and (len(odd_cycle_break_order) != 8 or set(odd_cycle_break_order) != set(range(8))):
             raise ValueError('Invalid odd corner cycle-break order.')
+        # Each buffer piece may use any of its 3 stickers. Closing
+        # orientation remains relative to the piece for solved/floating checks.
+        buffer_orientations = dict(buffer_orientations or {})
+        if any(type(p) is not int or p not in range(8)
+               or type(o) is not int or o not in range(3)
+               for p, o in buffer_orientations.items()):
+            raise ValueError("Invalid corner buffer sticker orientation.")
+
+        def buffer_cycle(position):
+            targets, visited, closing = self.trace_corner_cycle(position)
+            offset = buffer_orientations.get(position, 0)
+            return ([(p, (o + offset) % 3) for p, o in targets], visited, closing)
+
         # Sticker priority chooses both the piece and its opening orientation.
         sticker_order = None
         opening_orientations = {}
@@ -962,7 +988,7 @@ class Cube:
         # ---------------------------------------------------------
 
         targets, cycle_visited, _ = (
-            self.trace_corner_cycle(buffer)
+            buffer_cycle(buffer)
         )
 
         trace.extend(targets)
@@ -975,7 +1001,7 @@ class Cube:
 
             # For the initial buffer cycle, the closing target is
             # the final target actually included in the memo.
-            initial_closing_ori = targets[-1][1]
+            initial_closing_ori = (targets[-1][1] - buffer_orientations.get(buffer, 0)) % 3
 
             # After tracing the initial cycle, the buffer piece has
             # effectively returned to its buffer position.
@@ -1049,7 +1075,7 @@ class Cube:
                     floating_buffers = floating_buffers[
                         floating_buffers.index(next_buffer) + 1:
                     ]
-                    targets, cycle_visited, closing_ori = self.trace_corner_cycle(buffer)
+                    targets, cycle_visited, closing_ori = buffer_cycle(buffer)
                     trace.extend(targets)
                     visited.update(cycle_visited)
                     if targets:
@@ -1069,7 +1095,7 @@ class Cube:
             # opening sticker as buffer, omitting both cycle-break targets.
             if (auto_standalone and cycle_break in floating_buffers
                     and len(trace) % 2 == 0):
-                standalone_targets, standalone_visited, closing_ori = self.trace_corner_cycle(cycle_break)
+                standalone_targets, standalone_visited, closing_ori = buffer_cycle(cycle_break)
                 if standalone_targets and len(standalone_targets) % 2 == 0 and closing_ori == 0:
                     floating_opportunities.append({
                         "after_target": len(trace),
@@ -1270,6 +1296,21 @@ class Cube:
 
             face = move[0]
             modifier = move[1:]
+
+            if face in {"x", "y", "z"}:
+                if modifier not in {"", "'", "2"}:
+                    raise ValueError(f"Invalid move: {move}")
+                # Rotations change the frame for subsequent moves. Keep the
+                # stored state in the original center orientation for tracing,
+                # just as wide and slice turns do.
+                rotate = {
+                    "x": self.rotate_face_map_x,
+                    "y": self.rotate_face_map_y,
+                    "z": self.rotate_face_map_z,
+                }[face]
+                for _ in range({"": 1, "'": 3, "2": 2}[modifier]):
+                    rotate(face_map)
+                continue
 
             if face not in valid_faces:
                 raise ValueError(f"Invalid move: {move}")

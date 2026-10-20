@@ -4,6 +4,19 @@ Each recipe is setup + named permutation + undo setup. These are single
 sticker targets, unlike the expert page's paired 3-style examples.
 """
 
+from Cube import EDGE_TARGET_NAMES, CORNER_TARGET_NAMES, UR, UBL
+
+
+def relative_target(target, buffer, names, piece, modulus):
+    """Express a sticker swap using the recipe's canonical buffer sticker."""
+    coordinates = {name: pair for pair, name in names.items()}
+    buffer_piece, offset = coordinates[buffer]
+    if buffer_piece != piece:
+        raise ValueError("Unsupported OP buffer piece.")
+    position, orientation = coordinates[target]
+    return names[(position, (orientation - offset) % modulus)]
+
+
 OP_EDGE_ALGORITHMS = {
     'Ja-perm': "x R2' F R F' R U2 Rw' U Rw U2 x'",
     'Jb-perm': "R U R' F' R U R' U' R' F R2 U' R' U'",
@@ -36,12 +49,13 @@ OP_EDGE_RECIPES = {
 }
 
 
-def op_edge_examples(targets, letter_scheme):
+def op_edge_examples(targets, letter_scheme, buffer="UR"):
     """Preserve target order, repeated cycle-break targets, and custom letters."""
     examples = []
     for target in targets:
-        recipe = OP_EDGE_RECIPES.get(target)
-        row = dict(memo=letter_scheme[target], positions=['UR', target])
+        recipe_target = relative_target(target, buffer, EDGE_TARGET_NAMES, UR, 2)
+        recipe = OP_EDGE_RECIPES.get(recipe_target)
+        row = dict(memo=letter_scheme[target], positions=[buffer, target])
         if recipe is None:
             row['error'] = 'No OP edge algorithm has been defined for this target.'
         else:
@@ -85,11 +99,12 @@ def inverse_setup(setup):
                     for move in reversed(setup.split()))
 
 
-def op_corner_examples(targets, letter_scheme):
+def op_corner_examples(targets, letter_scheme, buffer="UBL"):
     examples = []
     for target in targets:
-        setup = OP_CORNER_SETUPS.get(target)
-        row = dict(kind='corner', memo=letter_scheme[target], positions=['UBL', target])
+        recipe_target = relative_target(target, buffer, CORNER_TARGET_NAMES, UBL, 3)
+        setup = OP_CORNER_SETUPS.get(recipe_target)
+        row = dict(kind='corner', memo=letter_scheme[target], positions=[buffer, target])
         if setup is None:
             row['error'] = 'No OP corner algorithm has been defined for this target.'
         else:

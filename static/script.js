@@ -91,7 +91,7 @@ function updatePrimaryFloatingBuffer(
     const newPrimary =
         selectElement.options[
             selectElement.selectedIndex
-        ].text.trim();
+        ].dataset.piece;
 
     const checkboxes = document.querySelectorAll(
         `input[name="${checkboxName}"]`
@@ -118,6 +118,22 @@ function updatePrimaryFloatingBuffer(
     return newPrimary;
 }
 
+
+// A floating choice belongs to a piece; its sticker also follows the primary selector.
+for (const kind of ["edge", "corner"]) {
+    const primary = document.getElementById(`${kind}-buffer`);
+    const floating = [...document.querySelectorAll(`[data-buffer-sticker="${kind}"]`)];
+    primary.addEventListener('change', () => {
+        const selected = primary.selectedOptions[0];
+        const control = floating.find(control => control.dataset.piece === selected.dataset.piece);
+        if (control) control.value = selected.dataset.sticker;
+    });
+    floating.forEach(control => control.addEventListener('change', () => {
+        if (primary.selectedOptions[0].dataset.piece !== control.dataset.piece) return;
+        primary.value = [...primary.options].find(option => option.dataset.sticker === control.value).value;
+        primary.dispatchEvent(new Event('change', {bubbles: true}));
+    }));
+}
 
 // Restore and submit both lists, including their disabled primary checkboxes.
 for (const kind of ["edge", "corner"]) {
@@ -431,6 +447,10 @@ function resetAllSettings() {
         sticker.value = sticker.dataset.speffz;
     });
 
+    // Reset the sticker on each floating piece as well as the primary buffers.
+    document.querySelectorAll('[data-buffer-sticker]').forEach(control => {
+        control.value = control.dataset.piece;
+    });
     // Reset buffers
     for (const id of ["edge-buffer", "corner-buffer"]) {
         const select = document.getElementById(id);
@@ -704,12 +724,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const section = document.getElementById('corner-parity-settings');
     if (!list || !primary || !section) return;
     const refresh = () => {
-        const selected = primary.selectedOptions[0].textContent.trim();
+        const selected = primary.selectedOptions[0].dataset.piece;
         const order = [selected, ...[...list.children].map(item => item.dataset.buffer).filter(name => name !== selected)];
         order.forEach((name, index) => {
             const group = section.querySelector(`[data-parity-buffer="${name}"]`);
+            const sticker = list.querySelector(`[data-buffer-sticker][data-piece="${name}"]`).value;
             group.hidden = index === order.length - 1;
-            group.querySelector('summary').textContent = `${name} buffer — ${(order.length - index - 1) * 3} cases`;
+            group.querySelector('summary').textContent = `${sticker} buffer — ${(order.length - index - 1) * 3} cases`;
+            group.querySelectorAll('[data-parity-target]').forEach(legend => {
+                legend.textContent = `${sticker} → ${legend.dataset.parityTarget}`;
+            });
             const grid = group.querySelector('.parity-case-grid');
             order.forEach((piece, targetIndex) => {
                 grid.querySelectorAll(`[data-parity-piece="${piece}"]`).forEach(fieldset => {
@@ -722,6 +746,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     new MutationObserver(refresh).observe(list, { childList: true });
     primary.addEventListener('change', refresh);
+    list.addEventListener('change', refresh);
     refresh();
 })();
 
