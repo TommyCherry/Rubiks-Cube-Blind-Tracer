@@ -4,11 +4,11 @@
     <button type="button" id="reset-parity-overrides">Reset all parity overrides</button>
     {% for group in parity_cases %}
     <details data-parity-buffer="{{ group.buffer }}" {% if not group.count %}hidden{% endif %}>
-        <summary>{{ group.buffer }} buffer — {{ group.count }} cases</summary>
+        <summary>{{ buffer_sticker_choices.corner[group.buffer] }} buffer — {{ group.count }} cases</summary>
         <div class="parity-case-grid">
         {% for case in group.cases %}
         <fieldset data-parity-piece="{{ case.piece }}" {% if not case.visible %}hidden{% endif %}>
-            <legend>{{ group.buffer }} → {{ case.target }}</legend>
+            <legend data-parity-target="{{ case.target }}">{{ buffer_sticker_choices.corner[group.buffer] }} → {{ case.target }}</legend>
             {% for side in ['first', 'second'] %}
             {% set selected = parity_pseudoswaps.get(case.key, ['', ''])[loop.index0] %}
             <label>{{ 'First' if side == 'first' else 'Second' }} edge

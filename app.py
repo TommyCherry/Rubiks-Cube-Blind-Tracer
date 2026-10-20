@@ -75,6 +75,26 @@ CORNER_BUFFER_OPTIONS = [
     "DFR", "DFL", "DBR", "DBL"
 ]
 
+BUFFER_STICKERS = {
+    kind: {piece: formatter([(p, o) for o in range(modulus)])
+           for p, piece in enumerate(options)}
+    for kind, options, modulus, formatter in (
+        ("edge", EDGE_BUFFER_OPTIONS, 2, format_edge_trace),
+        ("corner", CORNER_BUFFER_OPTIONS, 3, format_corner_trace))
+}
+
+
+def parse_buffer(value, kind):
+    """Accept sticker names and legacy numeric piece IDs from saved presets."""
+    options = EDGE_BUFFER_OPTIONS if kind == "edge" else CORNER_BUFFER_OPTIONS
+    if str(value) in [str(p) for p in range(len(options))]:
+        return int(value), options[int(value)]
+    for position, piece in enumerate(options):
+        if value in BUFFER_STICKERS[kind][piece]:
+            return position, value
+    raise ValueError(f"Invalid {kind} buffer sticker.")
+
+
 def parity_case_groups(order, primary=None, include_hidden=False):
     order = list(order)
     if primary is not None:
@@ -297,8 +317,12 @@ def trace_scramble(scramble, **settings):
 
 def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None, edge_sticker_cycle_break_order=None, corner_sticker_cycle_break_order=None):
+                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None, edge_sticker_cycle_break_order=None, corner_sticker_cycle_break_order=None, edge_buffer_orientations=None, corner_buffer_orientations=None):
     """Shared tracing and memo formatting for individual and bulk input."""
+    edge_buffer_orientations = edge_buffer_orientations or {}
+    corner_buffer_orientations = corner_buffer_orientations or {}
+    edge_buffer_stickers = format_edge_trace([(p, edge_buffer_orientations.get(p, 0)) for p in range(12)])
+    corner_buffer_stickers = format_corner_trace([(p, corner_buffer_orientations.get(p, 0)) for p in range(8)])
     cube = Cube()
     cube.apply_scramble(scramble)
     conjugacy_class = cube.conjugacy_class()
@@ -330,6 +354,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     try:
         edge_trace, edge_cycle_breaks, edge_cycles, edge_floating = cube.trace_edges(
             buffer=edge_buffer,
+            buffer_orientations=edge_buffer_orientations,
             return_cycle_breaks=True,
             return_cycles=True,
             return_floating=True,
@@ -380,6 +405,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     try:
         corner_trace, corner_cycle_breaks, corner_cycles, corner_floating = cube.trace_corners(
             buffer=corner_buffer,
+            buffer_orientations=corner_buffer_orientations,
             return_cycle_breaks=True,
             return_cycles=True,
             return_floating=True,
@@ -480,7 +506,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                 segment, count = sandwich_memo(edge_trace[start:offset], letters, include_basic_sandwiching)
                 edge_sandwiches += count
                 if position != edge_buffer:
-                    label = letter_scheme[EDGE_BUFFER_OPTIONS[position]]
+                    label = letter_scheme[edge_buffer_stickers[position]]
                     segment = f"[Buffer {label}] {segment}"
                 parts.append(segment)
             if "two_flip" in switch:
@@ -498,7 +524,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
         end = switch["after_target"]
         for index in range(start, end, 2):
             targets = edge_target_names[index:min(index + 2, end)]
-            solution_cases.append(dict(positions=[EDGE_BUFFER_OPTIONS[position]] + targets,
+            solution_cases.append(dict(positions=[edge_buffer_stickers[position]] + targets,
                                        memo="".join(edge_letters[index:min(index + 2, end)])))
         start = end
         position = switch.get("to_buffer", position)
@@ -533,7 +559,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                 segment, count = sandwich_memo(corner_trace[start:offset], letters, include_basic_sandwiching)
                 corner_sandwiches += count
                 if position != corner_buffer or start > 0:
-                    label = letter_scheme[CORNER_BUFFER_OPTIONS[position]]
+                    label = letter_scheme[corner_buffer_stickers[position]]
                     segment = f"[Buffer {label}] {segment}"
                 parts.append(segment)
             start = offset
@@ -642,8 +668,8 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
         corner_count=corner_count,
         edge_buffers_used=edge_buffers_used,
         corner_buffers_used=corner_buffers_used,
-        edge_buffer_names_used=[EDGE_BUFFER_OPTIONS[position] for position in sorted(used_buffers)],
-        corner_buffer_names_used=[CORNER_BUFFER_OPTIONS[position] for position in sorted(corner_used_buffers)],
+        edge_buffer_names_used=[edge_buffer_stickers[position] for position in sorted(used_buffers)],
+        corner_buffer_names_used=[corner_buffer_stickers[position] for position in sorted(corner_used_buffers)],
         edge_target_names=edge_target_names,
         corner_target_names=corner_target_names,
         flipped_edges=flipped_edges,
@@ -781,6 +807,10 @@ def home(beginner=False):
     default_corner_buffer = UBL if beginner else UFR
     edge_buffer = default_edge_buffer
     corner_buffer = default_corner_buffer
+    edge_buffer_sticker = EDGE_BUFFER_OPTIONS[edge_buffer]
+    corner_buffer_sticker = CORNER_BUFFER_OPTIONS[corner_buffer]
+    buffer_sticker_choices = {kind: {piece: stickers[0] for piece, stickers in groups.items()}
+                              for kind, groups in BUFFER_STICKERS.items()}
     edge_floating_order = EDGE_BUFFER_OPTIONS.copy()
     enabled_edge_floating = []
     corner_floating_order = CORNER_BUFFER_OPTIONS.copy()
@@ -857,15 +887,6 @@ def home(beginner=False):
     if request.method == "POST":
         scramble = form.get("scramble", "").strip()
 
-        # Get selected buffers from form
-        edge_buffer = int(
-            form.get("edge_buffer", default_edge_buffer)
-        )
-
-        corner_buffer = int(
-            form.get("corner_buffer", default_corner_buffer)
-        )
-
         # Get pseudoswap settings from form
         use_pseudoswap = form.get("use_pseudoswap") == "on"
 
@@ -887,6 +908,16 @@ def home(beginner=False):
             letter_scheme[target] = letter
 
         try:
+            edge_buffer, edge_buffer_sticker = parse_buffer(form.get("edge_buffer", default_edge_buffer), "edge")
+            corner_buffer, corner_buffer_sticker = parse_buffer(form.get("corner_buffer", default_corner_buffer), "corner")
+            for kind, groups in BUFFER_STICKERS.items():
+                for piece, stickers in groups.items():
+                    selected = form.get(f"{kind}_buffer_sticker_{piece}", piece)
+                    if selected not in stickers:
+                        raise ValueError(f"Invalid {kind} buffer sticker.")
+                    buffer_sticker_choices[kind][piece] = selected
+            buffer_sticker_choices["edge"][EDGE_BUFFER_OPTIONS[edge_buffer]] = edge_buffer_sticker
+            buffer_sticker_choices["corner"][CORNER_BUFFER_OPTIONS[corner_buffer]] = corner_buffer_sticker
             for kind, targets in (("edge", EDGE_TARGETS), ("corner", CORNER_TARGETS)):
                 if any(target not in targets for target in beginner_helpers[kind]):
                     raise ValueError(f"Invalid {kind} helper sticker.")
@@ -973,6 +1004,10 @@ def home(beginner=False):
                     target if sticker_mode else "".join(sorted(target))) not in helpers)
 
             settings = dict(
+                edge_buffer_orientations={p: BUFFER_STICKERS["edge"][piece].index(buffer_sticker_choices["edge"][piece])
+                                          for p, piece in enumerate(EDGE_BUFFER_OPTIONS)},
+                corner_buffer_orientations={p: BUFFER_STICKERS["corner"][piece].index(buffer_sticker_choices["corner"][piece])
+                                            for p, piece in enumerate(CORNER_BUFFER_OPTIONS)},
                 edge_sticker_cycle_break_order=helper_priority(sticker_orders["edge"], "edge", True) if beginner_cycle_order_mode == "sticker" else None,
                 corner_sticker_cycle_break_order=helper_priority(sticker_orders["corner"], "corner", True) if beginner_cycle_order_mode == "sticker" else None,
                 edge_odd_cycle_break_overrides={target: [EDGE_BUFFER_OPTIONS.index(name) for name in order] for target, order in odd_break_overrides["edge"].items()},
@@ -1036,7 +1071,8 @@ def home(beginner=False):
                     for kind, options in (("edge", EDGE_BUFFER_OPTIONS),
                                           ("corner", CORNER_BUFFER_OPTIONS)):
                         usage = []
-                        for name in options:
+                        for piece in options:
+                            name = buffer_sticker_choices[kind][piece]
                             count = sum(name in row[f"{kind}_buffer_names_used"] for row in valid)
                             usage.append(dict(name=name, count=count,
                                               percent=100 * count / len(valid)))
@@ -1048,6 +1084,8 @@ def home(beginner=False):
             error = str(e)
 
     context = dict(
+        buffer_stickers=BUFFER_STICKERS, buffer_sticker_choices=buffer_sticker_choices,
+        edge_buffer_sticker=edge_buffer_sticker, corner_buffer_sticker=corner_buffer_sticker,
         beginner_memo_order=beginner_memo_order, beginner_execution_order=beginner_execution_order,
         default_edge_buffer=default_edge_buffer, default_corner_buffer=default_corner_buffer,
         odd_break_overrides=odd_break_overrides,
@@ -1121,10 +1159,10 @@ def home(beginner=False):
         context['beginner_op_supported'] = edge_buffer == UR
         context['beginner_corner_op_supported'] = corner_buffer == UBL
         context['beginner_corner_solution_examples'] = (
-            op_corner_examples(trace_result.get('corner_target_names', []), letter_scheme)
+            op_corner_examples(trace_result.get('corner_target_names', []), letter_scheme, corner_buffer_sticker)
             if corner_buffer == UBL else [])
         context['beginner_solution_examples'] = (
-            op_edge_examples(trace_result.get('edge_target_names', []), letter_scheme)
+            op_edge_examples(trace_result.get('edge_target_names', []), letter_scheme, edge_buffer_sticker)
             if edge_buffer == UR else [])
     if bulk_results:
         metadata = dict(bulk_stats=bulk_stats, bulk_total=len(bulk_results),

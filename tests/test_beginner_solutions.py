@@ -45,7 +45,7 @@ class BeginnerSolutionTests(unittest.TestCase):
                 self.assertIn('Old Pochmann algorithms', html)
             else:
                 self.assertIn('id="load-solution-examples"', html)
-                self.assertIn('UBL buffer; UFR helper.', html)
+                self.assertIn('UBL buffer sticker on the UBL piece.', html)
                 self.assertIn('M2 and other buffer algorithms have not been defined yet.', html)
 
     def test_examples_match_every_trace_target_and_execute_edge_permutation(self):

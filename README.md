@@ -14,7 +14,7 @@ The application takes a scramble, simulates the resulting cube state, and traces
 
 - Option 1: Enter any valid 3×3 scramble manually.
 - Option 2: Generate random 3×3 scrambles using the csTimer scramble generator.
-- Supports standard face turns and cube rotations and gracefully handles invalid inputs.
+- Supports standard face turns, wide turns, slice moves, and cube rotations (`x`, `y`, `z`, including prime and `2` modifiers), and gracefully handles invalid inputs. Rotations change the reference frame for subsequent moves; memo is traced relative to the original centers, so trailing rotations alone do not change the memo.
 
 ### Bulk Scramble Analysis
 
@@ -43,6 +43,8 @@ The program simulates the scrambled cube and automatically determines the blindf
 Edge orientation and corner orientation are tracked throughout the trace so that memo corresponds to the correct sticker rather than only the cubie.
 
 ### Custom Buffers
+
+Beginner and expert modes accept any of the 24 edge or 24 corner buffer stickers, including `LUB` and `BUL` on the `UBL` piece. The first letter identifies the sticker face. Expert floating priorities stay piece-based, with a separate sticker choice on each piece. Traces, floating memo labels, buffer usage, and edge example cases use the selected stickers. Old Pochmann examples support both stickers of the UR edge and all three stickers of the UBL corner. Existing numeric buffer settings and saved presets keep their original sticker defaults.
 
 Choose your preferred BLD buffer independently for:
 

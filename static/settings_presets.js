@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         controls.filter(control => control.type !== 'hidden').forEach(control => {
             const values = settings.fields[control.name];
             if (!values) {
+                if (control.dataset.bufferSticker) control.value = control.dataset.piece;
                 if (control.id === 'beginner-method') control.value = 'custom';
                 if (control.id === 'beginner-cycle-order-mode') control.value = 'piece';
                 if (control.id === 'beginner-memo-order') control.value = 'corners';

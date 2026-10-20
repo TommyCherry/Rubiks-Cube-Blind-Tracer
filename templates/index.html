@@ -629,12 +629,12 @@
 
                 <select id="edge-buffer" name="edge_buffer" data-default-value="{{ default_edge_buffer }}">
                     {% for buffer in edge_buffer_options %}
-                        <option
-                            value="{{ loop.index0 }}"
-                            {% if loop.index0 == edge_buffer %}selected{% endif %}
-                        >
-                            {{ buffer }}
-                        </option>
+                        {% set piece_index = loop.index0 %}
+                        {% for sticker in buffer_stickers['edge'][buffer] %}
+                        <option value="{{ piece_index if loop.first else sticker }}"
+                                data-piece="{{ buffer }}" data-sticker="{{ sticker }}"
+                                {% if sticker == edge_buffer_sticker %}selected{% endif %}>{{ sticker }}</option>
+                        {% endfor %}
                     {% endfor %}
                 </select>
 
@@ -645,16 +645,17 @@
 
                 <select id="corner-buffer" name="corner_buffer" data-default-value="{{ default_corner_buffer }}">
                     {% for buffer in corner_buffer_options %}
-                        <option
-                            value="{{ loop.index0 }}"
-                            {% if loop.index0 == corner_buffer %}selected{% endif %}
-                        >
-                            {{ buffer }}
-                        </option>
+                        {% set piece_index = loop.index0 %}
+                        {% for sticker in buffer_stickers['corner'][buffer] %}
+                        <option value="{{ piece_index if loop.first else sticker }}"
+                                data-piece="{{ buffer }}" data-sticker="{{ sticker }}"
+                                {% if sticker == corner_buffer_sticker %}selected{% endif %}>{{ sticker }}</option>
+                        {% endfor %}
                     {% endfor %}
                 </select>
 
             </div>
+            <p class="bulk-definition">Choose the exact buffer sticker (for example, LUB instead of UBL). The first letter identifies the sticker face.</p>
 
         {% if not beginner %}
         <div class="floating-settings-panel">
@@ -663,7 +664,7 @@
                 <div>
                     <h3>Floating buffers <span class="settings-optional">Optional</span></h3>
                     <p>
-                        Choose which buffers can be used for floating and drag them to set priority. Standalone cycles float only when their opening buffer is enabled in the remaining priority order: they start at a pair boundary, have even length, and open and close on the same sticker.
+                        Choose a sticker for each floating buffer and drag the pieces to set priority. Standalone cycles float only when their opening buffer is enabled in the remaining priority order: they start at a pair boundary, have even length, and open and close on the same sticker.
                     </p>
                 </div>
             </div>
@@ -686,125 +687,19 @@
                      data-order='{{ edge_floating_order | tojson }}'
                      data-enabled='{{ enabled_edge_floating | tojson }}'>
 
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UF">
+                    {% for piece in edge_buffer_options %}
+                    <div class="floating-buffer-item" draggable="true" data-buffer="{{ piece }}">
                         <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UF"
-                        >
-                        <span>UF</span>
+                        <input type="checkbox" name="edge_floating_buffers" value="{{ piece }}"
+                               aria-label="Enable {{ piece }} floating buffer">
+                        <select name="edge_buffer_sticker_{{ piece }}" data-buffer-sticker="edge" data-piece="{{ piece }}"
+                                aria-label="{{ piece }} buffer sticker">
+                            {% for sticker in buffer_stickers['edge'][piece] %}
+                            <option value="{{ sticker }}" {% if sticker == buffer_sticker_choices['edge'][piece] %}selected{% endif %}>{{ sticker }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UB">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UB"
-                        >
-                        <span>UB</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UR"
-                        >
-                        <span>UR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="UL"
-                        >
-                        <span>UL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="FR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="FR"
-                        >
-                        <span>FR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="FL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="FL"
-                        >
-                        <span>FL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DF">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DF"
-                        >
-                        <span>DF</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DB">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DB"
-                        >
-                        <span>DB</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DR"
-                        >
-                        <span>DR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="DL"
-                        >
-                        <span>DL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="BR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="BR"
-                        >
-                        <span>BR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="BL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="edge_floating_buffers"
-                            value="BL"
-                        >
-                        <span>BL</span>
-                    </div>
+                    {% endfor %}
 
                 </div>
             </div>
@@ -828,85 +723,19 @@
                      data-order='{{ corner_floating_order | tojson }}'
                      data-enabled='{{ enabled_corner_floating | tojson }}'>
 
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UFR">
+                    {% for piece in corner_buffer_options %}
+                    <div class="floating-buffer-item" draggable="true" data-buffer="{{ piece }}">
                         <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UFR"
-                        >
-                        <span>UFR</span>
+                        <input type="checkbox" name="corner_floating_buffers" value="{{ piece }}"
+                               aria-label="Enable {{ piece }} floating buffer">
+                        <select name="corner_buffer_sticker_{{ piece }}" data-buffer-sticker="corner" data-piece="{{ piece }}"
+                                aria-label="{{ piece }} buffer sticker">
+                            {% for sticker in buffer_stickers['corner'][piece] %}
+                            <option value="{{ sticker }}" {% if sticker == buffer_sticker_choices['corner'][piece] %}selected{% endif %}>{{ sticker }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UFL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UFL"
-                        >
-                        <span>UFL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UBR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UBR"
-                        >
-                        <span>UBR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="UBL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="UBL"
-                        >
-                        <span>UBL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DFR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DFR"
-                        >
-                        <span>DFR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DFL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DFL"
-                        >
-                        <span>DFL</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DBR">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DBR"
-                        >
-                        <span>DBR</span>
-                    </div>
-
-                    <div class="floating-buffer-item" draggable="true" data-buffer="DBL">
-                        <span class="drag-handle">☰</span>
-                        <input
-                            type="checkbox"
-                            name="corner_floating_buffers"
-                            value="DBL"
-                        >
-                        <span>DBL</span>
-                    </div>
+                    {% endfor %}
 
                 </div>
             </div>
