@@ -1260,6 +1260,35 @@ class Cube:
         face_map["D"] = old["R"]
         face_map["L"] = old["D"]
 
+    def _reorient_to_face_map(self, face_map):
+        """Express positions and home stickers in the final center frame."""
+        original_to_final = {original: final for final, original in face_map.items()}
+        if all(original == final for original, final in original_to_final.items()):
+            return
+        for kind, names, modulus in (
+            ("edge", EDGE_TARGET_NAMES, 2),
+            ("corner", CORNER_TARGET_NAMES, 3),
+        ):
+            # Corner names do not all use the same letter ordering. Identify
+            # the piece by its faces and the sticker by its first face.
+            coordinates = {(frozenset(name), name[0]): pair for pair, name in names.items()}
+            rotated = {}
+            for pair, name in names.items():
+                faces = [original_to_final[face] for face in name]
+                rotated[pair] = coordinates[(frozenset(faces), faces[0])]
+            permutation = getattr(self, f"{kind}_perm")
+            orientations = getattr(self, f"{kind}_ori")
+            new_permutation = [0] * len(permutation)
+            new_orientations = [0] * len(permutation)
+            for position, piece in enumerate(permutation):
+                # The piece's zero sticker occupies slot orientations[position].
+                new_position, slot = rotated[(position, orientations[position])]
+                new_piece, sticker = rotated[(piece, 0)]
+                new_permutation[new_position] = new_piece
+                new_orientations[new_position] = (slot - sticker) % modulus
+            setattr(self, f"{kind}_perm", new_permutation)
+            setattr(self, f"{kind}_ori", new_orientations)
+
     def apply_scramble(self, scramble):
         # Expand slices before processing so their wide turns update the
         # reference frame for all following moves in the same scramble.
@@ -1300,9 +1329,8 @@ class Cube:
             if face in {"x", "y", "z"}:
                 if modifier not in {"", "'", "2"}:
                     raise ValueError(f"Invalid move: {move}")
-                # Rotations change the frame for subsequent moves. Keep the
-                # stored state in the original center orientation for tracing,
-                # just as wide and slice turns do.
+                # Track the frame for subsequent moves, then express the
+                # complete state in the final orientation before tracing.
                 rotate = {
                     "x": self.rotate_face_map_x,
                     "y": self.rotate_face_map_y,
@@ -1389,6 +1417,8 @@ class Cube:
                 actual_face = face_map[face]
 
                 self.move(actual_face + modifier)
+
+        self._reorient_to_face_map(face_map)
 # =========================================================
 # FORMATTING
 # =========================================================

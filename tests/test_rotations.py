@@ -10,28 +10,40 @@ class RotationTests(unittest.TestCase):
             cube.apply_scramble(scramble)
         self.assertEqual(cubes[0].get_state(), cubes[1].get_state())
 
-    def test_following_moves_use_rotated_frame(self):
+    def test_trailing_rotations_change_memo_frame(self):
         for rotation, faces in (
-            ("x", "FRDBLU"), ("x'", "BRUFLD"), ("x2", "DRBULF"),
-            ("y", "UBRDFL"), ("y'", "UFLDBR"), ("y2", "ULBDRF"),
-            ("z", "LUFRDB"), ("z'", "RDFLUB"), ("z2", "DLFURB"),
+            ("x", "BRUFLD"), ("x'", "FRDBLU"), ("x2", "DRBULF"),
+            ("y", "UFLDBR"), ("y'", "UBRDFL"), ("y2", "ULBDRF"),
+            ("z", "RDFLUB"), ("z'", "LUFRDB"), ("z2", "DLFURB"),
         ):
-            with self.subTest(rotation=rotation):
-                self.assert_same_state(
-                    f"{rotation} U R F D L B", " ".join(faces))
+            for face, expected in zip("URFDLB", faces):
+                for suffix in ("", "'", "2"):
+                    with self.subTest(rotation=rotation, face=face, suffix=suffix):
+                        self.assert_same_state(f"{face}{suffix} {rotation}", expected + suffix)
 
-    def test_rotations_alone_and_trailing_rotations_preserve_state(self):
+    def test_rotations_alone_keep_cube_solved(self):
         for rotation in ("x", "y", "z", "x'", "y'", "z'", "x2", "y2", "z2"):
             with self.subTest(rotation=rotation):
                 self.assert_same_state(rotation, "")
-                self.assert_same_state(f"R U F {rotation}", "R U F")
+                self.assert_same_state(f"{rotation} U R F D L B", "U R F D L B")
 
     def test_composed_rotations_and_inverse(self):
-        self.assert_same_state("x y U R F", "F U R")
+        self.assert_same_state("x y U R F", "U R F")
+        self.assert_same_state("U x y", "R")
+        self.assert_same_state("U x R", "B R")
+        self.assert_same_state("x U x'", "F")
         for axis in "xyz":
             self.assert_same_state(f"{axis} {axis}' R U F", "R U F")
             self.assert_same_state(f"{axis}2 {axis}2 R U F", "R U F")
             self.assert_same_state(" ".join([axis] * 4) + " R U F", "R U F")
+
+    def test_rotating_existing_state_matches_one_scramble(self):
+        actual = Cube()
+        actual.apply_scramble("R U F2 L' D")
+        actual.apply_scramble("x y' z2")
+        expected = Cube()
+        expected.apply_scramble("R U F2 L' D x y' z2")
+        self.assertEqual(actual.get_state(), expected.get_state())
 
     def test_rotations_mix_with_wide_and_slice_turns(self):
         for axis, wide, opposite in (("x", "Rw", "L"), ("y", "Uw", "D"), ("z", "Fw", "B")):

@@ -12,9 +12,10 @@ class WideMoveTests(unittest.TestCase):
         self.assertEqual(actual.get_state(), expected.get_state())
 
     def test_reported_wide_commutator(self):
-        # Follow the centers after each wide turn; restore the original
-        # orientation for tracing. The stationary layers are L, B, D, R.
-        self.assert_same_state("Rw Uw Rw' Uw'", "L B D' R'")
+        # The wide commutator leaves the centers rotated. Memo follows that
+        # final frame; an explicit inverse rotation restores the old frame.
+        self.assert_same_state("Rw Uw Rw' Uw'", "U L F' D'")
+        self.assert_same_state("Rw Uw Rw' Uw' y x y' x'", "L B D' R'")
 
     def test_wide_turns_map_following_moves_to_the_correct_face(self):
         cases = [

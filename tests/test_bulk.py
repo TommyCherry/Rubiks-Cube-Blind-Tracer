@@ -147,9 +147,10 @@ class BulkTests(unittest.TestCase):
         self.assertEqual(normal['bulk_results'][0]['flip_count'], 0)
 
     def test_standalone_corner_cycle_returns_to_twisted_primary_buffer(self):
+        # Restore the original frame after Uw2 to retain this regression state.
         context, _ = self.post(dict(
             action='bulk',
-            bulk_scrambles="R' U2 F L' U' B U2 L F2 R' D' F2 B R2 L2 D2 F' D2 B Uw2",
+            bulk_scrambles="R' U2 F L' U' B U2 L F2 R' D' F2 B R2 L2 D2 F' D2 B Uw2 y2",
             use_pseudoswap='on', include_basic_sandwiching='on',
             include_ltct='on', include_t2c='on',
             edge_floating_buffers=['UF', 'UB', 'UR', 'UL', 'FR', 'FL', 'DF', 'DB', 'DR', 'DL', 'BR', 'BL'],
@@ -162,9 +163,10 @@ class BulkTests(unittest.TestCase):
         self.assertEqual(row['corner_buffers_used'], 2)
 
     def test_pseudoswap_flipped_buffer_regression(self):
+        # Restore the original frame after Uw2 to retain this regression state.
         context, _ = self.post(dict(
             action='bulk',
-            bulk_scrambles="F B2 D' R2 U D2 R' B R2 F2 U' B2 L2 D' R2 L2 F2 B' L Uw2",
+            bulk_scrambles="F B2 D' R2 U D2 R' B R2 F2 U' B2 L2 D' R2 L2 F2 B' L Uw2 y2",
             use_pseudoswap='on', include_basic_sandwiching='on',
             include_ltct='on', include_t2c='on',
             edge_floating_buffers=['UF', 'UB', 'UR', 'UL', 'FR', 'FL', 'DF', 'DB', 'DR', 'DL', 'BR', 'BL'],

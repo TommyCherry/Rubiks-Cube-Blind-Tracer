@@ -167,6 +167,24 @@ class BufferStickerFormTests(unittest.TestCase):
             context, _ = self.post("/expert", dict(data, scramble="R U"))
             self.assertIn("buffer sticker", context["error"])
 
+    def test_rotated_scrambles_memo_from_final_orientation(self):
+        for route in ("/beginner", "/expert"):
+            for settings in ({}, {"edge_buffer": "RU", "corner_buffer": "LUB",
+                                  "letter_BUR": "中", "use_pseudoswap": "on"}):
+                for rotated, equivalent in (("U x", "B"), ("U x y", "R"), ("R y", "F")):
+                    with self.subTest(route=route, settings=settings, rotated=rotated):
+                        actual, _ = self.post(route, dict(settings, scramble=rotated))
+                        expected, _ = self.post(route, dict(settings, scramble=equivalent))
+                        bulk, _ = self.post(route, dict(
+                            settings, action="bulk", bulk_scrambles=f"{rotated}\n{equivalent}"))
+                        self.assertIsNone(actual["error"])
+                        self.assertIsNone(bulk["error"])
+                        for key in ("edge_memo", "corner_memo", "edge_target_names",
+                                    "corner_target_names", "edge_count", "corner_count", "solution_cases"):
+                            self.assertEqual(actual[key], expected[key])
+                            self.assertEqual(bulk["bulk_results"][0][key], expected[key])
+                            self.assertEqual(bulk["bulk_results"][1][key], expected[key])
+
 
 if __name__ == "__main__":
     unittest.main()
