@@ -14,7 +14,7 @@ The application takes a scramble, simulates the resulting cube state, and traces
 
 - Option 1: Enter any valid 3×3 scramble manually.
 - Option 2: Generate random 3×3 scrambles using the csTimer scramble generator.
-- Supports standard face turns, wide turns, slice moves, and cube rotations (`x`, `y`, `z`, including prime and `2` modifiers), and gracefully handles invalid inputs. Memo is traced in the final cube orientation: `U x` gives the same memo as `B`. Rotations also affect subsequent moves; rotations alone leave a solved cube solved. Wide and slice turns use the same final-center convention.
+- Supports standard face turns, wide turns, slice moves, and cube rotations (`x`, `y`, `z`, including prime and `2` modifiers), and gracefully handles invalid inputs. Memo and the cube map use the starting orientation: `R y R` gives the same result as `R B`, and `U x` matches `U`. Rotations affect subsequent moves without relabeling the final state. Rotations alone leave a solved cube solved. Wide and slice turns use the same starting-frame convention.
 
 ### Bulk Scramble Analysis
 

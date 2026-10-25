@@ -1,0 +1,38 @@
+<h3>Ranges and distributions</h3>
+<p class="bulk-definition">Distributions describe all valid scrambles in this batch. Cycle breaks count edge and corner cycle entries, including entries for flips and twists. Flips and twists count pieces already in their correct position but misoriented, including the buffer, before pseudoswap.</p>
+<div class="bulk-distributions">
+{% for metric in bulk_distributions %}
+<section class="bulk-distribution">
+    <h4>{{ metric.label }}</h4>
+    {% if metric.key == 'edge_cycle_break_count' %}<small>including flipped edges</small>{% endif %}
+    {% if metric.key == 'corner_cycle_break_count' %}<small>including twisted corners</small>{% endif %}
+    <p><span>Range</span>: {{ metric.minimum }}–{{ metric.maximum }}</p>
+    <table class="distribution-table">
+        <thead><tr><th>Count</th><th>Scrambles</th><th>Distribution</th></tr></thead>
+        <tbody>{% for bin in metric.bins %}
+            <tr><th scope="row">{{ bin.value }}</th><td>{{ bin.count }}</td>
+                <td><meter min="0" max="100" value="{{ bin.percent }}" aria-label="{{ metric.label }}: {{ bin.value }}">{{ '%.1f'|format(bin.percent) }}%</meter> {{ '%.1f'|format(bin.percent) }}%</td></tr>
+        {% endfor %}</tbody>
+    </table>
+</section>
+{% endfor %}
+</div>
+<details class="beginner-bulk-filters" open>
+    <summary>Filter scrambles</summary>
+    <p>Leave bounds blank for any count. Set the same minimum and maximum for an exact count. All filters apply together.</p>
+    <div class="bulk-filter-grid">
+    {% for metric in bulk_distributions %}
+        <fieldset><legend>{{ metric.label }}</legend>
+            <label>Minimum<input type="number" min="0" max="999999" step="1" name="{{ metric.key }}_min" value="{{ request.args.get(metric.key ~ '_min', '') }}" form="bulk-query-form"></label>
+            <label>Maximum<input type="number" min="0" max="999999" step="1" name="{{ metric.key }}_max" value="{{ request.args.get(metric.key ~ '_max', '') }}" form="bulk-query-form"></label>
+        </fieldset>
+    {% endfor %}
+    </div>
+    <label>Parity<select name="parity" form="bulk-query-form">
+        {% for value, label in [('', 'Any'), ('Yes', 'Yes'), ('No', 'No')] %}
+        <option value="{{ value }}" {% if request.args.get('parity', '') == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select></label>
+    <button type="submit" form="bulk-query-form">Apply filters</button>
+    <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset filters</a>
+</details>

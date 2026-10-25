@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+from collections import Counter
 from persistence import (postgres_connection, insert_preset, UNIQUE_ERRORS,
                          preset_database_errors, PostgresConnection, StorageConfigurationError)
 import psycopg
@@ -223,6 +224,60 @@ def annotate_bulk_history(results):
     return None
 
 
+BEGINNER_METRICS = {
+    "edge_count": "Edge target counts", "corner_count": "Corner target counts",
+    "target_count": "Total target counts", "cycle_break_count": "Cycle breaks",
+    "edge_cycle_break_count": "Edge cycle breaks",
+    "corner_cycle_break_count": "Corner cycle breaks",
+    "in_place_flips": "Flipped edges", "in_place_twists": "Twisted corners",
+}
+
+
+def beginner_distributions(results):
+    valid = [row for row in results if "error" not in row]
+    for row in valid:
+        row["edge_cycle_break_count"] = len(row["edge_cycle_breaks"])
+        row["corner_cycle_break_count"] = len(row["corner_cycle_breaks"])
+        row["cycle_break_count"] = row["edge_cycle_break_count"] + row["corner_cycle_break_count"]
+        if "in_place_flips" not in row or "in_place_twists" not in row:
+            cube = Cube()
+            cube.apply_scramble(row["scramble"])
+            row["in_place_flips"] = sum(p == i and o != 0 for i, (p, o) in enumerate(zip(cube.edge_perm, cube.edge_ori)))
+            row["in_place_twists"] = sum(p == i and o != 0 for i, (p, o) in enumerate(zip(cube.corner_perm, cube.corner_ori)))
+    summaries = []
+    for key, label in BEGINNER_METRICS.items():
+        counts = Counter(row[key] for row in valid)
+        summaries.append(dict(key=key, label=label, minimum=min(counts, default=None),
+                              maximum=max(counts, default=None), bins=[
+            dict(value=value, count=count, percent=100 * count / len(valid))
+            for value, count in sorted(counts.items())]))
+    return summaries
+
+
+def filter_beginner_results(results, args):
+    bounds = {}
+    for key in BEGINNER_METRICS:
+        for suffix in ("min", "max"):
+            name = f"{key}_{suffix}"
+            value = args.get(name, "").strip()
+            if value and not re.fullmatch(r"[0-9]{1,6}", value):
+                abort(400, description="Filter bounds must be non-negative whole numbers.")
+            bounds[name] = int(value) if value else None
+        low, high = bounds[f"{key}_min"], bounds[f"{key}_max"]
+        if low is not None and high is not None and low > high:
+            abort(400, description="Filter minimum cannot exceed maximum.")
+    parity = args.get("parity", "")
+    if parity not in ("", "Yes", "No"):
+        abort(400, description="Invalid parity filter.")
+    if not parity and all(value is None for value in bounds.values()):
+        return results
+    return [row for row in results if "error" not in row
+            and (not parity or row["parity"] == parity)
+            and all((bounds[f"{key}_min"] is None or row[key] >= bounds[f"{key}_min"])
+                    and (bounds[f"{key}_max"] is None or row[key] <= bounds[f"{key}_max"])
+                    for key in BEGINNER_METRICS)]
+
+
 @app.get("/bulk/<batch_id>")
 def query_bulk(batch_id):
     count = request.args.get("alg_count", "").strip()
@@ -250,12 +305,22 @@ def query_bulk(batch_id):
     results = [json.loads(row["result"]) for row in rows]
     # Older saved batches predate cycle classification; derive it without retracing.
     for result in results:
-        if "error" not in result and "conjugacy_class" not in result:
+        if "error" not in result and ("conjugacy_class" not in result or "scramble_facelets" not in result):
             cube = Cube()
             cube.apply_scramble(result["scramble"])
             result["conjugacy_class"] = cube.conjugacy_class()
+            result["scramble_facelets"] = to_facelets(cube)
+    metadata = json.loads(batch["metadata"])
+    if metadata.get("beginner"):
+        distributions = beginner_distributions(results)
+        # Saved batches may predate newly added distribution metrics.
+        if not count:
+            metadata["bulk_distributions"] = distributions
+        else:
+            metadata.setdefault("bulk_distributions", distributions)
+        results = filter_beginner_results(results, request.args)
     history_warning = annotate_bulk_history(results)
-    return render_template("bulk_page.html", **json.loads(batch["metadata"]),
+    return render_template("bulk_page.html", **metadata,
                            bulk_results=results, bulk_history_warning=history_warning,
                            bulk_batch_id=batch_id, bulk_alg_counts=counts,
                            bulk_alg_filter=count, bulk_sort=sort)
@@ -317,7 +382,7 @@ def trace_scramble(scramble, **settings):
 
 def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                    pseudoswap_edge_1, pseudoswap_edge_2, floating_buffers,
-                   letter_scheme, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None, edge_sticker_cycle_break_order=None, corner_sticker_cycle_break_order=None, edge_buffer_orientations=None, corner_buffer_orientations=None):
+                   letter_scheme, beginner_flip_targets=False, beginner_twist_targets=False, corner_floating_buffers=None, edge_flip_order=None, include_basic_sandwiching=False, include_ltct=False, include_t2c=False, include_3twist=False, include_parity_3twist=False, edge_even_cycle_break_order=None, corner_even_cycle_break_order=None, edge_odd_cycle_break_order=None, corner_odd_cycle_break_order=None, edge_odd_cycle_break_overrides=None, corner_odd_cycle_break_overrides=None, edge_sticker_cycle_break_order=None, corner_sticker_cycle_break_order=None, edge_buffer_orientations=None, corner_buffer_orientations=None):
     """Shared tracing and memo formatting for individual and bulk input."""
     edge_buffer_orientations = edge_buffer_orientations or {}
     corner_buffer_orientations = corner_buffer_orientations or {}
@@ -326,6 +391,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     cube = Cube()
     cube.apply_scramble(scramble)
     conjugacy_class = cube.conjugacy_class()
+    scramble_facelets = to_facelets(cube)
 
     ltct_positions = {
         orientation: [position for position, value in enumerate(cube.corner_ori)
@@ -348,6 +414,9 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     flip_positions = [position for position, orientation in enumerate(cube.edge_ori)
                       if position != edge_buffer
                       and cube.edge_perm[position] == target_perm[position] and orientation == 1]
+    if beginner_flip_targets:
+        # Keep flipped pieces in ordinary cycle tracing, including both stickers.
+        flip_positions = []
     original_edge_ori = cube.edge_ori.copy()
     for position in flip_positions:
         cube.edge_ori[position] = 0
@@ -384,6 +453,10 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
                       and cube.corner_perm[position] == position and value == orientation]
         for orientation in (1, 2)
     }
+    if beginner_twist_targets:
+        # Leave twists in the cube so normal cycle tracing emits both targets,
+        # respecting the user's cycle-break order and opening sticker.
+        twist_positions = {1: [], 2: []}
     t2c_targets = []
     t2c_pieces = set()
     if include_t2c and not ltct_active and cube.has_parity():
@@ -655,6 +728,7 @@ def _trace_scramble(scramble, *, edge_buffer, corner_buffer, use_pseudoswap,
     return dict(
         parity_case=parity_case,
         conjugacy_class=conjugacy_class,
+        scramble_facelets=scramble_facelets,
         technique_buffer=technique_buffer,
         effective_pseudoswap_edges=[pseudoswap_edge_1, pseudoswap_edge_2],
         t2c_active=bool(t2c_targets),
@@ -782,6 +856,8 @@ def settings_presets():
 @app.route("/expert", methods=["GET", "POST"], endpoint="expert")
 @app.route("/", methods=["GET", "POST"])
 def home(beginner=False):
+    if request.path == "/" and request.method == "GET":
+        return redirect(url_for("beginner"))
     session.setdefault("preset_csrf", secrets.token_urlsafe(32))
     form = request.form
     if beginner:
@@ -861,7 +937,7 @@ def home(beginner=False):
     beginner_method = form.get("beginner_method", "custom") if beginner else "custom"
     if beginner_method not in ("custom", "op_op", "op_op_ufr", "m2_op"):
         beginner_method = "custom"
-    if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
+    if beginner and form.get("edge_buffer") in (str(DF), "DF"):
         edge_break_order = ["UB"] + [name for name in edge_break_order if name != "UB"]
     odd_break_orders = dict(edge=edge_break_order.copy(), corner=corner_break_order.copy())
     beginner_cycle_order_mode = form.get("beginner_cycle_order_mode", "piece") if beginner else "piece"
@@ -873,7 +949,7 @@ def home(beginner=False):
         "corner": format_corner_trace([(p, o) for p in CORNER_BUFFER_ORDER for o in range(3)]),
     }
     sticker_orders = {kind: order.copy() for kind, order in default_sticker_orders.items()}
-    if beginner_method == "m2_op" and form.get("edge_buffer") == str(DF):
+    if beginner and form.get("edge_buffer") in (str(DF), "DF"):
         sticker_orders["edge"].remove("UB")
         sticker_orders["edge"].insert(0, "UB")
     parity_pseudoswaps = {}
@@ -1004,6 +1080,8 @@ def home(beginner=False):
                     target if sticker_mode else "".join(sorted(target))) not in helpers)
 
             settings = dict(
+                beginner_flip_targets=beginner,
+                beginner_twist_targets=beginner,
                 edge_buffer_orientations={p: BUFFER_STICKERS["edge"][piece].index(buffer_sticker_choices["edge"][piece])
                                           for p, piece in enumerate(EDGE_BUFFER_OPTIONS)},
                 corner_buffer_orientations={p: BUFFER_STICKERS["corner"][piece].index(buffer_sticker_choices["corner"][piece])
@@ -1079,6 +1157,20 @@ def home(beginner=False):
                         bulk_stats[f"{kind}_buffer_usage"] = usage
             else:
                 trace_result = trace_scramble(scramble, **settings)
+                # Draw the actual scramble, before any tracing-only pseudoswap.
+                preview_cube = Cube()
+                preview_cube.apply_scramble(scramble)
+                trace_result["scrambled_sticker_faces"] = {
+                    formatter([(position, slot)])[0]: formatter([
+                        (piece, (slot - orientations[position]) % modulus)
+                    ])[0][0]
+                    for permutation, orientations, formatter, modulus in (
+                        (preview_cube.edge_perm, preview_cube.edge_ori, format_edge_trace, 2),
+                        (preview_cube.corner_perm, preview_cube.corner_ori, format_corner_trace, 3),
+                    )
+                    for position, piece in enumerate(permutation)
+                    for slot in range(modulus)
+                }
 
         except ValueError as e:
             error = str(e)
@@ -1165,10 +1257,14 @@ def home(beginner=False):
             op_edge_examples(trace_result.get('edge_target_names', []), letter_scheme, edge_buffer_sticker)
             if edge_buffer == UR else [])
     if bulk_results:
-        metadata = dict(bulk_stats=bulk_stats, bulk_total=len(bulk_results),
+        if beginner:
+            context["bulk_distributions"] = beginner_distributions(bulk_results)
+        metadata = dict(beginner=beginner, bulk_stats=bulk_stats, bulk_total=len(bulk_results),
                         include_basic_sandwiching=include_basic_sandwiching,
                         include_ltct=include_ltct,
                         include_parity_3twist=include_parity_3twist, include_t2c=include_t2c)
+        if beginner:
+            metadata["bulk_distributions"] = context["bulk_distributions"]
         context.update(bulk_batch_id=save_bulk_batch(bulk_results, metadata),
                        bulk_total=len(bulk_results),
                        bulk_alg_counts=sorted({row["alg_count"] for row in bulk_results if "error" not in row}),

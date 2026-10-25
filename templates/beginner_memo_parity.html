@@ -1,0 +1,13 @@
+<section class="memo-card memo-parity" data-memo-kind="parity" aria-labelledby="memo-parity-heading">
+    <div class="memo-header"><h2 id="memo-parity-heading">Parity?</h2></div>
+    {% if edge_count % 2 or corner_count % 2 %}
+    <p class="memo">Yes</p>
+    <p>Make sure to execute your parity algorithm in the correct place during the solving phase. For beginners, this usually means directly after the first piece type.</p>
+    <ul class="parity-guidance">
+        <li>If you solve corners first, you would do it right after corners</li>
+        <li>If you solve edges first, you would do it right after edges</li>
+    </ul>
+    {% else %}
+    <p class="memo">No</p>
+    {% endif %}
+</section>

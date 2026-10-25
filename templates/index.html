@@ -17,7 +17,7 @@
 <body class="tracer-page">
 {% include 'language_selector.html' %}
 
-    <form method="POST" id="memo-form">
+    <form method="POST" id="memo-form" data-request-method="{{ request.method }}" data-mode="{{ 'beginner' if beginner else 'expert' }}">
 
         <header class="tracer-header">
             <div class="tracer-masthead">
@@ -87,6 +87,7 @@
         </section>
             <section class="tracer-workspace" aria-labelledby="scramble-heading">
             <div class="tracer-section-heading"><div><h2 id="scramble-heading">Start with a scramble</h2><p>Paste a scramble or generate a fresh one, then build your memo.</p></div></div>
+            <p class="scramble-orientation-reminder">Make sure to scramble from your own orientation! Otherwise, the generated memorization will not match your cube's!</p>
 
             <!-- SCRAMBLE -->
 
@@ -139,11 +140,18 @@
             <details class="bulk-input" {% if bulk_scrambles or bulk_results %}open{% endif %}>
                 <summary>Bulk scramble analysis</summary>
                 <p id="bulk-help">Enter one scramble per line. Leading list numbers such as <code>1.</code> or <code>1)</code> are removed; blank lines are ignored. Uses your selected buffers, {% if not beginner %}edge and corner floating settings, {% endif %}pseudoswap, and letter scheme.</p>
+                <div class="bulk-generate-controls">
+                    <label for="bulk-random-count">Number of scrambles
+                        <input type="number" id="bulk-random-count" min="1" max="1000" step="1" value="10" aria-describedby="bulk-generation-status">
+                    </label>
+                    <button type="button" id="generate-bulk-scrambles">Generate 10 random scrambles</button>
+                    <button type="submit" class="tracer-primary" id="generate-bulk-memo" name="action" value="bulk">Generate Memo</button>
+                </div>
+                <p id="bulk-generation-status" role="status" aria-live="polite"></p>
                 <label for="bulk-scrambles">Scrambles (up to 1,000)</label>
                 <textarea id="bulk-scrambles" name="bulk_scrambles" rows="7"
                           aria-describedby="bulk-help" spellcheck="false"
                           placeholder="R U R' U'&#10;Rw Uw Rw' Uw'">{{ bulk_scrambles }}</textarea>
-                <button type="submit" name="action" value="bulk">Trace scramble set</button>
             </details>
 
             {% if error %}
@@ -610,16 +618,21 @@
 <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">02</span><div><h2 id="buffers-heading">{{ "Solving settings" if beginner else "Buffers" }}</h2><p>{{ "Choose your primary buffers and whether to use pseudoswap." if beginner else "Choose your starting buffers, then set your floating priorities." }}</p></div></div>
             {% if beginner %}
             <div class="beginner-method-section">
-                <label for="beginner-method"><strong>Method preset</strong></label>
-                <select id="beginner-method" name="beginner_method" aria-describedby="beginner-method-help">
-                    <option value="custom" {% if beginner_method == 'custom' %}selected{% endif %}>Custom</option>
-                    <option value="op_op" {% if beginner_method == 'op_op' %}selected{% endif %}>OP/OP — UR edges, UBL corners</option>
-                    <option value="op_op_ufr" {% if beginner_method == 'op_op_ufr' %}selected{% endif %}>OP/OP — UR edges, UFR corners</option>
-                    <option value="m2_op" {% if beginner_method == 'm2_op' %}selected{% endif %}>M2/OP — DF edges, UBL corners</option>
+                <label for="beginner-corner-method"><strong>Corner method preset</strong></label>
+                <select id="beginner-corner-method" aria-describedby="beginner-method-help">
+                    <option value="UBL" {% if corner_buffer_sticker == 'UBL' %}selected{% endif %}>UBL (OP, most common)</option>
+                    <option value="LUB" {% if corner_buffer_sticker == 'LUB' %}selected{% endif %}>LUB (OP)</option>
+                    <option value="UFR" {% if corner_buffer_sticker == 'UFR' %}selected{% endif %}>UFR (OP)</option>
+                    <option value="custom">Custom</option>
                 </select>
-                <p id="beginner-method-help" class="bulk-definition">All presets start with pseudoswap off. M2/OP uses UB as the first edge cycle-break choice for even and odd target counts. You can adjust the settings below.</p>
+                <label for="beginner-edge-method"><strong>Edge method preset</strong></label>
+                <select id="beginner-edge-method" aria-describedby="beginner-method-help">
+                    <option value="UR" {% if edge_buffer_sticker == 'UR' %}selected{% endif %}>UR (OP)</option>
+                    <option value="DF" {% if edge_buffer_sticker == 'DF' %}selected{% endif %}>DF (M2)</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <p id="beginner-method-help" class="bulk-definition">Choose edges and corners independently. Selecting a preset turns pseudoswap off. M2 uses UB as the first edge cycle-break choice. You can adjust the settings below.</p>
             </div>
-            {% include 'beginner_solving_order.html' %}
             {% endif %}
             <div class="buffer-section">
 
@@ -656,6 +669,10 @@
 
             </div>
             <p class="bulk-definition">Choose the exact buffer sticker (for example, LUB instead of UBL). The first letter identifies the sticker face.</p>
+            {% if beginner %}
+            {% include 'beginner_helper_settings.html' %}
+            {% include 'beginner_solving_order.html' %}
+            {% endif %}
 
         {% if not beginner %}
         <div class="floating-settings-panel">
@@ -746,7 +763,6 @@
 <section class="tracer-configuration parity-section" aria-labelledby="parity-heading">
 <div class="tracer-section-heading"><span class="tracer-step" aria-hidden="true">03</span><div><h2 id="parity-heading">Parity</h2><p>Choose whether to pseudoswap, then add your corner parity techniques.</p></div></div>
             {% endif %}
-            {% if beginner %}{% include 'beginner_helper_settings.html' %}{% endif %}
             <div class="pseudo-swap-settings">
 
                 <label>
@@ -757,6 +773,7 @@
                         {% if use_pseudoswap %}checked{% endif %}
                     >
                     Use Pseudoswap
+                    {% if beginner %}<span>(don't select if you don't know what this is)</span>{% endif %}
                 </label>
 
                 <div
@@ -891,10 +908,11 @@
             </section>
             {% endif %}
 
-            <div class="memo-section">
+            <div class="memo-section" id="generated-memo" tabindex="-1">
 
                 {% for kind in (['corner', 'edge'] if beginner and beginner_memo_order == 'corners' else ['edge', 'corner']) %}
                     {% include kind ~ '_memo.html' %}
+                    {% if beginner and loop.first %}{% include 'beginner_memo_parity.html' %}{% endif %}
                 {% endfor %}
 
                 <!-- TRACE DETAILS -->
@@ -1012,6 +1030,7 @@
     {% if bulk_batch_id %}
     <form id="bulk-query-form" method="GET" action="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}"></form>
     {% endif %}
+    <script type="application/json" id="scrambled-sticker-faces">{{ scrambled_sticker_faces | default({}) | tojson }}</script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="{{ url_for('static', filename='letter_scheme_presets.js') }}"></script>
 
@@ -1025,5 +1044,8 @@
 <script src="{{ url_for('static', filename='beginner_helpers.js') }}"></script>
 <script src="{{ url_for('static', filename='beginner_solving_order.js') }}"></script>
 {% endif %}
+<script src="{{ url_for('static', filename='session_settings.js') }}"></script>
+<script src="{{ url_for('static', filename='bulk_random.js') }}"></script>
+<script src="{{ url_for('static', filename='bulk_images.js') }}"></script>
 </body>
 </html>

@@ -280,15 +280,18 @@ function getContrastTextColor(hexColor) {
 
 // Updates the visual cube to match the current cube orientation
 function updateCubeColors() {
+    const preview = document.getElementById('scrambled-sticker-faces');
+    const scrambledFaces = preview ? JSON.parse(preview.textContent) : {};
     for (const [face, color] of Object.entries(cubeOrientation)) {
 
-        const textColor = getContrastTextColor(color);
 
         document
             .querySelectorAll(`.face-${face.toLowerCase()} .sticker`)
             .forEach(sticker => {
-                sticker.style.backgroundColor = color;
-                sticker.style.color = textColor;
+                const position = (sticker.name || '').replace(/^letter_/, '');
+                const stickerColor = cubeOrientation[scrambledFaces[position]] || color;
+                sticker.style.backgroundColor = stickerColor;
+                sticker.style.color = getContrastTextColor(stickerColor);
             });
     }
 }

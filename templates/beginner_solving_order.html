@@ -29,8 +29,9 @@
         <li>{{ 'Memo corners' if kind == 'corners' else 'Memo edges' }}</li>
         {% endfor %}
         {% for kind in (['edges', 'corners'] if beginner_execution_order == 'edges' else ['corners', 'edges']) %}
-        <li>{{ 'Solve corners' if kind == 'corners' else 'Solve edges' }}</li>
-        {% if loop.first and beginner_parity_algorithm %}<li id="beginner-parity-step">Execute parity algorithm</li>{% endif %}
+        <li value="{{ 3 if loop.first else 4 }}"><span data-step-label>{{ 'Solve corners' if kind == 'corners' else 'Solve edges' }}</span>
+            {% if loop.first %}<small id="beginner-parity-step"><span>(if applicable) Do parity algorithm</span></small>{% endif %}
+        </li>
         {% endfor %}
     </ol>
 </div>

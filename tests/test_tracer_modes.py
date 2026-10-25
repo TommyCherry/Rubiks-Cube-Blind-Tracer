@@ -34,7 +34,7 @@ class TracerModeTests(unittest.TestCase):
         self.assertNotIn('conjugacy_practice.js', html)
 
     def test_expert_and_existing_home_keep_full_controls(self):
-        for path in ['/', '/expert']:
+        for path in ['/expert']:
             response = app.test_client().get(path)
             self.assertEqual(response.status_code, 200)
             html = response.get_data(as_text=True)
@@ -71,7 +71,7 @@ class TracerModeTests(unittest.TestCase):
         from Cube import DF, UBL, UB
         with patch('app._trace_scramble', wraps=_trace_scramble) as trace, contextlib.redirect_stdout(io.StringIO()):
             response = app.test_client().post('/beginner', data={
-                'scramble': 'R U', 'beginner_method': 'm2_op',
+                'scramble': 'R U',
                 'edge_buffer': str(DF), 'corner_buffer': str(UBL)})
         self.assertEqual(response.status_code, 200)
         settings = trace.call_args.kwargs
@@ -81,11 +81,11 @@ class TracerModeTests(unittest.TestCase):
         for key in ['edge_even_cycle_break_order', 'edge_odd_cycle_break_order']:
             self.assertEqual(settings[key][0], UB)
             self.assertEqual(set(settings[key]), set(range(12)))
-        self.assertIn('value="m2_op" selected', response.get_data(as_text=True))
+        self.assertIn('value="DF" selected', response.get_data(as_text=True))
 
     def test_method_presets_are_beginner_only(self):
-        self.assertIn('id="beginner-method"', app.test_client().get('/beginner').get_data(as_text=True))
-        self.assertNotIn('id="beginner-method"', app.test_client().get('/expert').get_data(as_text=True))
+        self.assertIn('id="beginner-edge-method"', app.test_client().get('/beginner').get_data(as_text=True))
+        self.assertNotIn('id="beginner-edge-method"', app.test_client().get('/expert').get_data(as_text=True))
 
     def test_beginner_op_op_ufr_preset_survives_submission(self):
         from Cube import UR, UFR
@@ -97,7 +97,7 @@ class TracerModeTests(unittest.TestCase):
         self.assertEqual(trace.call_args.kwargs['edge_buffer'], UR)
         self.assertEqual(trace.call_args.kwargs['corner_buffer'], UFR)
         self.assertFalse(trace.call_args.kwargs['use_pseudoswap'])
-        self.assertIn('value="op_op_ufr" selected', response.get_data(as_text=True))
+        self.assertIn('value="UFR" selected', response.get_data(as_text=True))
 
     def test_beginner_letter_orders_apply_to_both_target_parities(self):
         from app import EDGE_BUFFER_OPTIONS, CORNER_BUFFER_OPTIONS
@@ -137,3 +137,21 @@ class TracerModeTests(unittest.TestCase):
                     response = app.test_client().post('/beginner', data=data)
                 trace.assert_not_called()
                 self.assertIn(f'Invalid {kind} even cycle-break order.', response.get_data(as_text=True))
+
+    def test_independent_preset_combinations(self):
+        from Cube import UR, DF, UBL, UFR
+        for edge in (UR, DF):
+            for corner, piece, orientation in [('UBL', UBL, 0), ('LUB', UBL, 1), ('UFR', UFR, 0)]:
+                with patch('app._trace_scramble', wraps=_trace_scramble) as trace:
+                    response = app.test_client().post('/beginner', data={
+                        'scramble': 'R U', 'edge_buffer': str(edge), 'corner_buffer': corner})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(trace.call_args.kwargs['edge_buffer'], edge)
+                self.assertEqual(trace.call_args.kwargs['corner_buffer'], piece)
+                self.assertEqual(trace.call_args.kwargs['corner_buffer_orientations'][piece], orientation)
+                self.assertIn(f'value="{corner}" selected', response.text)
+
+    def test_home_redirects_to_beginner(self):
+        response = app.test_client().get('/')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers['Location'], '/beginner')

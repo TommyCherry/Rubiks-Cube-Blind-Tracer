@@ -14,10 +14,12 @@
         preset.value = [...memoKinds, ...executionKinds].map(kind => kind[0].toUpperCase()).join('');
         const labels = [...memoKinds.map(kind => kind === 'corner' ? 'Memo corners' : 'Memo edges'),
             ...executionKinds.map(kind => kind === 'corner' ? 'Solve corners' : 'Solve edges')];
-        if (document.getElementById('beginner-parity-step')) labels.splice(3, 0, 'Execute parity algorithm');
-        [...steps.children].forEach((step, index) => { step.textContent = labels[index]; });
+        [...steps.children].forEach((step, index) => {
+            const label = step.querySelector('[data-step-label]') || step;
+            label.textContent = labels[index];
+        });
         const memos = document.querySelector('.memo-section');
-        if (memos) memoKinds.forEach(kind => {
+        if (memos) [memoKinds[0], 'parity', memoKinds[1]].forEach(kind => {
             const card = memos.querySelector(`[data-memo-kind="${kind}"]`);
             if (card) memos.insertBefore(card, memos.querySelector('.trace-details'));
         });

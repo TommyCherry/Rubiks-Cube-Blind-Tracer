@@ -1357,3 +1357,28 @@ html[lang="zh-Hans"] .history-eyebrow { letter-spacing: .08em; }
     font: inherit;
     cursor: pointer;
 }
+
+.scramble-orientation-reminder { font-size: clamp(1.25rem, 2.5vw, 1.75rem); font-weight: 700; line-height: 1.4; margin: 0 0 24px; }
+
+.parity-guidance { font-size: .9rem; line-height: 1.6; padding-left: 1.5rem; }
+
+#beginner-parity-step { display: block; margin-top: .35rem; font-size: .7em; font-weight: 400; line-height: 1.4; }
+.beginner-order-steps { align-items: flex-start; }
+
+.bulk-generate-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-top: 16px; }
+.bulk-generate-controls label { display: grid; gap: 6px; }
+.bulk-generate-controls input { width: 7rem; }
+#generate-bulk-scrambles { background: white; }
+
+.bulk-scramble-image { display: block; width: 148px; height: 112px; margin: auto; }
+
+.bulk-distributions, .bulk-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 16px 0; }
+.bulk-distribution { border: 1px solid #dce4e9; border-radius: 12px; padding: 16px; background: white; }
+.bulk-distribution h4 { margin: 0; }
+.distribution-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.distribution-table th, .distribution-table td { text-align: left; padding: 5px; }
+.distribution-table meter { width: 65%; max-width: 140px; }
+.bulk-filter-grid fieldset { border: 1px solid #dce4e9; border-radius: 8px; display: flex; gap: 12px; }
+.bulk-filter-grid label { display: grid; gap: 4px; min-width: 0; }
+.bulk-filter-grid input { width: 100%; box-sizing: border-box; }
+.beginner-bulk-filters { margin: 20px 0; }

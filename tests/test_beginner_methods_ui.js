@@ -19,9 +19,10 @@ function fixture(savedMode = null) {
     }));
     const ids = {
         'beginner-cycle-order-mode': element({value: 'piece'}),
-        'beginner-method': element({value: 'custom'}),
+        'beginner-edge-method': element({value: 'UR'}),
+        'beginner-corner-method': element({value: 'UBL'}),
         'edge-buffer': element({options: ['UF', 'UB', 'UR', 'DF'].map((name, i) => ({textContent: name, value: String(i)}))}),
-        'corner-buffer': element({options: ['UFR', 'UBL'].map((name, i) => ({textContent: name, value: String(i)}))}),
+        'corner-buffer': element({options: ['UFR', 'UBL', 'LUB'].map((name, i) => ({textContent: name, value: String(i)}))}),
         'usePseudoswap': element({checked: true}),
         'reset-beginner-cycle-order': element(),
     };
@@ -52,14 +53,14 @@ test('method presets reset priorities, M2 puts UB first, and order changes are p
     const {ids, orders} = fixture();
     let saves = 0;
     orders.forEach(order => order.addEventListener('cycle-break-order-change', () => saves++));
-    ids['beginner-method'].value = 'm2_op';
-    ids['beginner-method'].dispatchEvent(new Event('change'));
+    ids['beginner-edge-method'].value = 'DF';
+    ids['beginner-edge-method'].dispatchEvent(new Event('change'));
     assert.deepEqual(orders[0].children.map(item => item.dataset.piece), ['UB', 'UF', 'DF']);
-    assert.deepEqual(orders[1].children.map(item => item.dataset.piece), ['UFR', 'UBL']);
-    assert.equal(saves, 2);
+    assert.deepEqual(orders[1].children.map(item => item.dataset.piece), ['UBL', 'UFR']);
+    assert.equal(saves, 1);
     assert.equal(ids['edge-buffer'].value, '3');
     assert.equal(ids.usePseudoswap.checked, false);
-    ids['beginner-method'].value = 'custom';
+    ids['beginner-edge-method'].value = 'custom';
     ids['reset-beginner-cycle-order'].dispatchEvent(new Event('click'));
     assert.deepEqual(orders[0].children.map(item => item.dataset.piece), ['UF', 'UB', 'DF']);
 });
@@ -82,19 +83,23 @@ test('piece/sticker selection is remembered and switching preserves each list or
 });
 
 
-test('OP/OP UFR preset uses UR edges and UFR corners with pseudoswap off', () => {
-    const {ids} = fixture();
-    const method = ids['beginner-method'];
-    method.value = 'op_op_ufr';
-    method.dispatchEvent(new Event('change'));
-    assert.equal(ids['edge-buffer'].value, '2');
-    assert.equal(ids['corner-buffer'].value, '0');
-    assert.equal(ids.usePseudoswap.checked, false);
-    ids['edge-buffer'].selectedOptions = [{textContent: 'UR'}];
-    ids['corner-buffer'].selectedOptions = [{textContent: 'UFR'}];
-    ids['corner-buffer'].dispatchEvent({type: 'change', isTrusted: true});
-    assert.equal(method.value, 'op_op_ufr');
-    ids['corner-buffer'].selectedOptions = [{textContent: 'UBL'}];
-    ids['corner-buffer'].dispatchEvent({type: 'change', isTrusted: true});
-    assert.equal(method.value, 'custom');
+test('corner presets change only corners, including the LUB sticker', () => {
+    const {ids, orders} = fixture();
+    const edgeOrder = orders[0].children.map(item => item.dataset.piece);
+    ids['beginner-edge-method'].value = 'DF';
+    ids['beginner-edge-method'].dispatchEvent(new Event('change'));
+    for (const [sticker, value] of [['UBL', '1'], ['LUB', '2'], ['UFR', '0']]) {
+        ids['beginner-corner-method'].value = sticker;
+        ids['beginner-corner-method'].dispatchEvent(new Event('change'));
+        assert.equal(ids['corner-buffer'].value, value);
+        assert.equal(ids['edge-buffer'].value, '3');
+        assert.equal(ids['beginner-edge-method'].value, 'DF');
+        assert.equal(ids.usePseudoswap.checked, false);
+    }
+    ids['corner-buffer'].value = '2';
+    ids['corner-buffer'].dispatchEvent(new Event('change'));
+    assert.equal(ids['beginner-corner-method'].value, 'LUB');
+    ids['beginner-edge-method'].value = 'UR';
+    ids['beginner-edge-method'].dispatchEvent(new Event('change'));
+    assert.equal(ids['corner-buffer'].value, '2');
 });

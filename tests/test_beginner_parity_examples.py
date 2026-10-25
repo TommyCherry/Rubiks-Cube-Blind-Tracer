@@ -27,7 +27,7 @@ class BeginnerParityExampleTests(unittest.TestCase):
                     self.assertEqual(response.status_code, 200)
                     html = response.get_data(as_text=True)
                     self.assertEqual('data-execution-kind="parity"' in html, parity)
-                    self.assertEqual('id="beginner-parity-step"' in html, parity)
+                    self.assertIn('id="beginner-parity-step"', html)
                     if parity:
                         from html import unescape
                         self.assertIn(OP_PARITY_ALGORITHMS[('UR', name)], unescape(html))
@@ -42,7 +42,8 @@ class BeginnerParityExampleTests(unittest.TestCase):
         for scramble in ['R', 'R U F', "R2 U F2"]:
             result = _trace_scramble(scramble, edge_buffer=UR, corner_buffer=UBL,
                 use_pseudoswap=False, pseudoswap_edge_1=UB, pseudoswap_edge_2=UL,
-                floating_buffers=[], letter_scheme=SPEFFZ)
+                floating_buffers=[], letter_scheme=SPEFFZ,
+                beginner_flip_targets=True, beginner_twist_targets=True)
             self.assertEqual(result['parity'], 'Yes')
             edges = [row['algorithm'] for row in op_edge_examples(result['edge_target_names'], SPEFFZ)]
             corners = [row['algorithm'] for row in op_corner_examples(result['corner_target_names'], SPEFFZ)]

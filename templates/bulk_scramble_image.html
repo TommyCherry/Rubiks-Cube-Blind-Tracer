@@ -1,0 +1,12 @@
+<svg class="bulk-scramble-image" viewBox="0 0 124 94" role="img" aria-label="Scramble image" data-no-translate>
+    <title>{{ row.scramble }}</title>
+    {% set defaults = {'U': '#ffffff', 'R': '#e53935', 'F': '#20a84a', 'D': '#ffd92f', 'L': '#ff8c00', 'B': '#2468d8'} %}
+    {% for face, x, y in [('U', 31, 0), ('R', 62, 31), ('F', 31, 31), ('D', 31, 62), ('L', 0, 31), ('B', 93, 31)] %}
+        {% set offset = loop.index0 * 9 %}
+        {% for index in range(9) %}
+            {% set source = row.scramble_facelets[offset + index] %}
+            <rect x="{{ x + (index % 3) * 10 + 1 }}" y="{{ y + (index // 3) * 10 + 1 }}" width="9" height="9" rx="1"
+                  fill="{{ defaults[source] }}" style="fill: var(--scramble-{{ source }}, {{ defaults[source] }})" stroke="#34434e" stroke-width=".5"/>
+        {% endfor %}
+    {% endfor %}
+</svg>

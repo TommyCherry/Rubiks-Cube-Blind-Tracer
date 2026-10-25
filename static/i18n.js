@@ -14,14 +14,56 @@
     }
     // Numbered placeholders preserve names, counts, and cube notation verbatim.
     const catalog = `
-When helper priority is on, highlighted tiles stay first. Reorder helpers among themselves and other targets among themselves.|启用辅助目标优先时，高亮方块始终排在最前。可分别调整辅助目标和其他目标各自的顺序。
-Prioritize helpers first|优先使用辅助目标
-Helpers are the positions used to swap pieces with the buffer after doing setup moves.|辅助目标是在完成设置步后，用于与缓冲块交换的目标位置。
-Choose helpers|选择辅助目标
-Edge helpers|棱块辅助目标
-Corner helpers|角块辅助目标
+Average targets: {0} edges / {1} corners. Total target range: {2}.|平均编码数：棱块 {0} / 角块 {1}。总编码数范围：{2}。
+Edge cycle breaks|棱块借位次数
+Corner cycle breaks|角块借位次数
+including flipped edges|包含翻棱
+including twisted corners|包含反角
+Ranges and distributions|范围与分布
+Edge target counts|棱块编码数
+Corner target counts|角块编码数
+Total target counts|总编码数
+Cycle breaks|借位次数
+Range|范围
+Count|数量
+Distribution|分布
+Filter scrambles|筛选打乱
+Minimum|最小值
+Maximum|最大值
+Any|不限
+Apply filters|应用筛选
+Reset filters|重置筛选
+No scrambles match these filters.|没有符合这些筛选条件的打乱。
+Leave bounds blank for any count. Set the same minimum and maximum for an exact count. All filters apply together.|留空表示不限。将最小值和最大值设为相同数字可筛选精确数量。所有筛选条件同时生效。
+Distributions describe all valid scrambles in this batch. Cycle breaks count edge and corner cycle entries, including entries for flips and twists. Flips and twists count pieces already in their correct position but misoriented, including the buffer, before pseudoswap.|分布统计本批次所有有效打乱。借位次数包含棱块和角块的借位，也包含翻棱和反角的借位。翻棱和反角统计反编前已在正确位置但朝向错误的块，包括缓冲块。
+Scramble image|打乱图
+Number of scrambles|打乱数量
+Generate {0} random scrambles|生成 {0} 个随机打乱
+Enter a whole number from 1 to 1,000.|请输入 1 到 1,000 之间的整数。
+Generating scrambles: {0}/{1}|正在生成打乱：{0}/{1}
+Generated {0} scrambles. Press Generate Memo to analyze them.|已生成 {0} 个打乱。点击生成记忆编码进行分析。
+Could not generate scrambles. Please try again.|无法生成打乱，请重试。
+Corner method preset|角块方法预设
+Edge method preset|棱块方法预设
+UBL (OP, most common)|UBL（OP，最常用）
+LUB (OP)|LUB（OP）
+UFR (OP)|UFR（OP）
+UR (OP)|UR（OP）
+DF (M2)|DF（M2）
+Choose edges and corners independently. Selecting a preset turns pseudoswap off. M2 uses UB as the first edge cycle-break choice. You can adjust the settings below.|分别选择棱块和角块的方法。选择预设会关闭反编。M2 将 UB 作为棱块的首选借位。你可以在下方调整设置。
+Parity?|奇偶？
+Make sure to execute your parity algorithm in the correct place during the solving phase. For beginners, this usually means directly after the first piece type.|请确保在还原阶段的正确时机执行奇偶公式。对于初学者，通常是在完成第一类块后立即执行。
+If you solve corners first, you would do it right after corners|如果先还原角块，就在完成角块后立即执行。
+If you solve edges first, you would do it right after edges|如果先还原棱块，就在完成棱块后立即执行。
+Make sure to scramble from your own orientation! Otherwise, the generated memorization will not match your cube's!|请务必按照你自己的盲拧坐标进行打乱！否则，生成的记忆编码将与你的魔方不匹配！
+When helper priority is on, highlighted tiles stay first. Reorder helpers among themselves and other targets among themselves.|启用辅助位置优先时，高亮方块始终排在最前。可分别调整辅助位置和其他目标各自的顺序。
+Prioritize helpers first|优先使用辅助位置
+Helpers are the positions used to swap pieces with the buffer after doing setup moves.|辅助位置是在完成设置步后，用于与缓冲块交换的目标位置。
+Choose helpers|选择辅助位置
+Edge helpers|棱块辅助位置
+Corner helpers|角块辅助位置
 Effective order:|实际优先顺序：
-Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.|选择你使用的辅助目标字母。在块模式下，选择任意贴纸即可优先处理整个块。在贴纸模式下，仅所选贴纸获得优先级。关闭优先功能后恢复原来的顺序。
+Select the letters you use as helpers. In piece mode, selecting any sticker prioritizes its whole piece. In sticker mode, only the selected stickers get priority. Turning priority off restores your usual order.|选择你使用的辅助位置字母。在块模式下，选择任意贴纸即可优先处理整个块。在贴纸模式下，仅所选贴纸获得优先级。关闭优先功能后恢复原来的顺序。
 Invalid edge helper sticker.|无效的棱块辅助贴纸。
 Invalid corner helper sticker.|无效的角块辅助贴纸。
 Order by|排序单位
@@ -102,7 +144,7 @@ Choose what to memorize first and what to execute first. Memo cards and solution
 Order preset|顺序预设
 CEEC — Recommended|CEEC — 推荐
 Memo order|记忆顺序
-Execution order|执行顺序
+Execution order|复原顺序
 Corners first|角块优先
 Edges first|棱块优先
 CEEC: memorize corners → memorize edges → solve edges → solve corners.|CEEC：记忆角块 → 记忆棱块 → 还原棱块 → 还原角块。
@@ -134,15 +176,16 @@ Highest priority → Lowest priority|最高优先级 → 最低优先级
 Parity|奇偶性
 Choose whether to pseudoswap, then add your corner parity techniques.|选择是否使用反编，然后添加角块奇偶处理技巧。
 Use Pseudoswap|使用反编
+(don't select if you don't know what this is)|(如果你不知道这是什么，请不要勾选)
 First Edge|第一个棱块
 Second Edge|第二个棱块
 First edge|第一个棱块
 Second edge|第二个棱块
 Include LTCT (U-layer corner buffers)|启用 LTCT（U 层角块缓冲块）
 How it works|原理说明
-On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group. LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm. Balanced twist counts and non-parity scrambles are unchanged.|当打乱具有奇排列且顺时针与逆时针扭角数量不等时，将较多一组中的一个扭角与奇偶处理合并。D 层角块缓冲块不支持 LTCT 和 T2C。UFL 强制使用 UF/UL 反编，UBR 使用 UB/UR，UBL 使用 UB/UL，浮动后同样适用。UFR 使用你选择的反编棱块。标记为 [LTCT] 的扭角与奇偶公式合并，可省去一个公式。扭角数量平衡或偶排列的打乱不受影响。
+On parity scrambles with unequal CW/CCW twist counts, combine parity with one twist from the larger group. LTCT and T2C are unavailable from D-layer corner buffers. UFL forces UF/UL pseudoswap, UBR forces UB/UR, and UBL forces UB/UL, including after floating. UFR uses your selected pseudoswap edges. The marked [LTCT] twist saves one algorithm by sharing the parity algorithm. Balanced twist counts and non-parity scrambles are unchanged.|当打乱具有奇排列且顺时针与逆时针反角数量不等时，将较多一组中的一个反角与奇偶处理合并。D 层角块缓冲块不支持 LTCT 和 T2C。UFL 强制使用 UF/UL 反编，UBR 使用 UB/UR，UBL 使用 UB/UL，浮动后同样适用。UFR 使用你选择的反编棱块。标记为 [LTCT] 的反角与奇偶公式合并，可省去一个公式。反角数量平衡或偶排列的打乱不受影响。
 Execute Parity + 3twist as Comm + LTCT|将奇偶 + 三角翻处理为交换子 + LTCT
-Requires Include LTCT. When LTCT leaves an unpaired standalone twist, pair the parity target with a cycle break into that twisted corner, following the odd-target cycle-break order. Use its closing sticker as the new LTCT target. Opposite-direction 2-twists stay paired.|需要启用 LTCT。当 LTCT 留下一个未配对的独立扭角时，按奇数目标借位顺序，将奇偶目标与进入该扭角的借位目标配对，并使用其闭环贴纸作为新的 LTCT 目标。方向相反的双扭角仍保持配对。
+Requires Include LTCT. When LTCT leaves an unpaired standalone twist, pair the parity target with a cycle break into that twisted corner, following the odd-target cycle-break order. Use its closing sticker as the new LTCT target. Opposite-direction 2-twists stay paired.|需要启用 LTCT。当 LTCT 留下一个未配对的独立反角时，按奇数目标借位顺序，将奇偶目标与进入该反角的借位目标配对，并使用其闭环贴纸作为新的 LTCT 目标。方向相反的双反角仍保持配对。
 Include T2C when LTCT is not used|未使用 LTCT 时启用 T2C
 On parity scrambles, reserve one two-piece corner cycle with different opening/closing stickers for the final algorithm. [T2C: …] counts as one algorithm; its three sticker targets are included in target counts. LTCT takes priority.|在奇排列打乱中，保留一个起止贴纸不同的两角块循环作为最后一个公式。[T2C: …] 计为一个公式，其三个贴纸目标计入目标数。LTCT 优先。
 Miscellaneous|其他设置
@@ -150,7 +193,7 @@ Fine-tune techniques, cycle breaks, and individual corner parity cases.|微调�
 Include basic sandwiching|启用基础三明治技巧
 AB CD BE becomes [Sandwich B: CD] AE: one sandwich algorithm plus AE. Highlights mark sandwiches. Each saves one estimated algorithm; target counts stay unchanged. Patterns are matched within each buffer’s memo, without overlapping.|AB CD BE 转换为 [Sandwich B: CD] AE：一个三明治公式加上 AE。三明治部分会高亮显示，每次可减少一个预估公式，目标数不变。模式在各缓冲块编码内匹配，互不重叠。
 Include 3-twists|启用三角翻
-On non-parity scrambles with at least two more CW twists than CCW twists, or vice versa, mark the final two twists from the larger group as a 3-twist with the corner buffer. This changes the tracing output only and does not affect the estimated algorithm count.|在偶排列打乱中，若顺时针扭角比逆时针扭角至少多两个（或反之），则将较多一组的最后两个扭角与角块缓冲块标记为三角翻。此设置仅改变追踪输出，不影响预估公式数。
+On non-parity scrambles with at least two more CW twists than CCW twists, or vice versa, mark the final two twists from the larger group as a 3-twist with the corner buffer. This changes the tracing output only and does not affect the estimated algorithm count.|在偶排列打乱中，若顺时针反角比逆时针反角至少多两个（或反之），则将较多一组的最后两个反角与角块缓冲块标记为三角翻。此设置仅改变追踪输出，不影响预估公式数。
 Cycle-break decisions — even target counts|借位决策 — 偶数目标数
 Cycle-break decisions — odd target counts|借位决策 — 奇数目标数
 Choose which piece to break into after an even number of targets, including zero. The first unsolved, unvisited piece wins; the active buffer is skipped. Each decision uses the current number of traced targets. Floating still follows its separate settings.|选择目标数为偶数（包括零）时的借位位置。优先选择第一个未复原且未访问的块，跳过当前缓冲块。每次决策依据当前已追踪的目标数。浮动仍遵循独立设置。
@@ -172,22 +215,24 @@ Scramble conjugacy class|打乱共轭类
 Original scramble cycles: e = edges, c = corners, ' = nonzero total cycle orientation. Solved pieces are omitted.|原始打乱循环：e = 棱块，c = 角块，' = 循环总方向非零。已复原的块省略。
 Old Pochmann algorithms for each sticker target, in tracing order.|按追踪顺序展示每个贴纸目标的 Old Pochmann 公式。
 Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
-These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标。奇偶处理、翻棱和原地扭角需要单独的公式。
-These examples cover traced targets and supported parity cases. Flipped edges and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标和受支持的奇偶情况。翻棱和原地扭角需要单独的公式。
+These examples cover traced targets. Parity handling, flipped edges, and in-place corner twists need separate algorithms.|这些示例涵盖追踪目标。奇偶处理、翻棱和原地反角需要单独的公式。
+These examples cover traced targets, flipped edges, corner twists, and supported parity cases.|这些示例涵盖追踪目标、翻棱、反角和受支持的奇偶情况。
 Parity algorithm|奇偶公式
 Execute once between the edge and corner stages when parity is present.|存在奇偶情况时，在棱块与角块两个阶段之间执行一次。
 Execute parity algorithm|执行奇偶公式
+Do parity algorithm|执行奇偶公式
+(if applicable) Do parity algorithm|（如适用）执行奇偶公式
 OP parity · UR / UBL|OP 奇偶 · UR / UBL
 OP edge examples|OP 棱块示例
 OP corner examples|OP 角块示例
-UR buffer; UB, UF, and UL helpers.|缓冲块为 UR；辅助目标为 UB、UF 和 UL。
-UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.|缓冲块为 UBL，辅助目标为 UFR。使用设置步 + Y-perm + 还原设置步。设置步对应 Speffz 位置，显示字母采用你选择的编码方案。
+UR buffer; UB, UF, and UL helpers.|缓冲块为 UR；辅助位置为 UB、UF 和 UL。
+UBL buffer; UFR helper. Uses Y-perm with setup and undo moves. Setup positions follow Speffz; displayed letters follow your selected letter scheme.|缓冲块为 UBL，辅助位置为 UFR。使用设置步 + Y-perm + 还原设置步。设置步对应 Speffz 位置，显示字母采用你选择的编码方案。
 OP corner examples currently require a UBL buffer. Algorithms for other corner buffers have not been defined yet.|目前 OP 角块示例仅支持 UBL 缓冲块，尚未定义其他角块缓冲块的公式。
 No OP corner algorithm has been defined for this target.|尚未为此目标定义 OP 角块公式。
 OP examples loaded.|OP 示例已加载。
 No supported targets in this trace.|此追踪中没有受支持的目标。
 Old Pochmann edge algorithms for each sticker target, in tracing order.|按追踪顺序展示每个贴纸目标的 Old Pochmann 棱块公式。
-Uses the built-in OP edge list with a UR buffer and UB, UF, and UL helpers. Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|使用内置 OP 棱块公式表，以 UR 为缓冲块，UB、UF、UL 为辅助目标。每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
+Uses the built-in OP edge list with a UR buffer and UB, UF, and UL helpers. Each example shows setup moves, a named permutation, and the undo moves. Expand it to see the full algorithm.|使用内置 OP 棱块公式表，以 UR 为缓冲块，UB、UF、UL 为辅助位置。每个示例显示设置步、置换公式名称和还原设置步。展开即可查看完整公式。
 These examples cover edge targets only. Corner algorithms, parity handling, and flipped edges need separate algorithms.|这些示例仅涵盖棱块目标。角块、奇偶处理和翻棱需要单独的公式。
 OP edge examples currently require a UR buffer. M2 and other buffer algorithms have not been defined yet.|目前 OP 棱块示例仅支持 UR 缓冲块。尚未定义 M2 和其他缓冲块的公式。
 Full algorithm|完整公式
@@ -213,7 +258,7 @@ Solve Info|还原信息
 Edge Cycle Breaks|棱块借位
 Corner Cycle Breaks|角块借位
 Flipped Edges|翻棱
-Twisted Corners|扭角
+Twisted Corners|反角
 None|无
 Yes|是
 No|否
@@ -298,7 +343,7 @@ No scrambles available for this attempt.|此次尝试暂无可用打乱。
 Bulk scramble results|批量打乱结果
 Trace another scramble set|追踪另一组打乱
 Scramble set results|打乱组分析结果
-Average targets|平均目标数
+Average targets|平均编码数
 Average estimated algorithms|平均预估公式数
 Permutation parity|排列奇偶性
 Average buffers used|平均缓冲块使用数
@@ -321,7 +366,7 @@ No scrambles match this algorithm count.|没有符合此公式数的打乱。
 Line / scramble|行号 / 打乱
 Edge memo|棱块编码
 Corner memo|角块编码
-Targets|目标数
+Targets|编码数
 Edge / corner|棱块 / 角块
 Est. algs|预估公式数
 WCA competition details ({0})|WCA 比赛详情（{0}）
@@ -350,10 +395,10 @@ Reset your letter scheme, color scheme, and cube orientation to defaults?|将字
 `;
     catalog.trim().split('\n').forEach(line => { const index = line.indexOf('|'); add(line.slice(0, index), line.slice(index + 1)); });
     [
-        ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts. The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个扭角，不计入目标数，所选角块缓冲块也不计入。额外扭角公式数 = min（顺时针扭角数，逆时针扭角数）+ |顺时针扭角数 − 逆时针扭角数|。'],
-        ['Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets. Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.', '[Flips: …] 中的每个双字母对表示一个翻棱，而非两个目标。翻棱不计入目标数及平均值。所选棱块缓冲块不计入翻棱列表及数量。'],
-        ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner. Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts. With Execute Parity + 3twist as Comm + LTCT, the twist traced through a cycle break contributes two targets and is removed from standalone twist counts.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个扭角。扭角不计入目标数及平均值，所选角块缓冲块不计入扭角列表及数量。启用“将奇偶 + 三角翻处理为交换子 + LTCT”时，通过借位追踪的扭角贡献两个目标，并从独立扭角计数中移除。'],
-        ['Estimated algorithms = ceil(edge targets ÷ 2) + ceil(corner targets ÷ 2) + ceil(flipped edges ÷ 2) + min(CW twists, CCW twists) + |CW twists − CCW twists|. A marked T2C cycle counts as one final algorithm; its three targets are excluded from ordinary target-pair algorithm estimates. Each applied LTCT subtracts one algorithm for the twist combined with parity. CW/CCW counts include the corner marked LTCT. When basic sandwiching is enabled, each highlighted sandwich subtracts one algorithm. Target counts stay unchanged. Buffers count only those used for targets, with edges and corners counted separately. Enabled edge and corner floating switches are included in buffer usage. Parity describes the scrambled permutation before pseudoswap.', '预估公式数 = ceil（棱块目标数 ÷ 2）+ ceil（角块目标数 ÷ 2）+ ceil（翻棱数 ÷ 2）+ min（顺时针扭角数，逆时针扭角数）+ |顺时针扭角数 − 逆时针扭角数|，其中 ceil 表示向上取整。标记的 T2C 循环计为最后一个公式，其三个目标不计入普通编码对的公式估算。每次 LTCT 将扭角与奇偶合并，减少一个公式。顺/逆时针计数包含标记为 LTCT 的角块。启用基础三明治技巧时，每个高亮三明治减少一个公式，目标数不变。仅统计用于目标的缓冲块，棱块和角块分别计数。已启用的棱角浮动切换计入缓冲块使用量。奇偶性描述反编前的打乱排列。'],
+        ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts. The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个反角，不计入编码数，所选角块缓冲块也不计入。额外反角公式数 = min（顺时针反角数，逆时针反角数）+ |顺时针反角数 − 逆时针反角数|。'],
+        ['Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets. Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.', '[Flips: …] 中的每个双字母对表示一个翻棱，而非两个目标。翻棱不计入编码数及平均值。所选棱块缓冲块不计入翻棱列表及数量。'],
+        ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner. Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts. With Execute Parity + 3twist as Comm + LTCT, the twist traced through a cycle break contributes two targets and is removed from standalone twist counts.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个反角。反角不计入编码数及平均值，所选角块缓冲块不计入反角列表及数量。启用“将奇偶 + 三角翻处理为交换子 + LTCT”时，通过借位追踪的反角贡献两个目标，并从独立反角计数中移除。'],
+        ['Estimated algorithms = ceil(edge targets ÷ 2) + ceil(corner targets ÷ 2) + ceil(flipped edges ÷ 2) + min(CW twists, CCW twists) + |CW twists − CCW twists|. A marked T2C cycle counts as one final algorithm; its three targets are excluded from ordinary target-pair algorithm estimates. Each applied LTCT subtracts one algorithm for the twist combined with parity. CW/CCW counts include the corner marked LTCT. When basic sandwiching is enabled, each highlighted sandwich subtracts one algorithm. Target counts stay unchanged. Buffers count only those used for targets, with edges and corners counted separately. Enabled edge and corner floating switches are included in buffer usage. Parity describes the scrambled permutation before pseudoswap.', '预估公式数 = ceil（棱块编码数 ÷ 2）+ ceil（角块编码数 ÷ 2）+ ceil（翻棱数 ÷ 2）+ min（顺时针反角数，逆时针反角数）+ |顺时针反角数 − 逆时针反角数|，其中 ceil 表示向上取整。标记的 T2C 循环计为最后一个公式，其三个目标不计入普通编码对的公式估算。每次 LTCT 将反角与奇偶合并，减少一个公式。顺/逆时针计数包含标记为 LTCT 的角块。启用基础三明治技巧时，每个高亮三明治减少一个公式，编码数不变。仅统计用于目标的缓冲块，棱块和角块分别计数。已启用的棱角浮动切换计入缓冲块使用量。奇偶性描述反编前的打乱排列。'],
         ['{0} scrambles traced · {1} invalid lines excluded from statistics.', '已追踪 {0} 个打乱 · 统计已排除 {1} 个无效行。'],
         ['Basic sandwiching: Enabled.', '基础三明治技巧：已启用。'],
         ['Basic sandwiching: Disabled.', '基础三明治技巧：已禁用。'],
@@ -361,9 +406,9 @@ Reset your letter scheme, color scheme, and cube orientation to defaults?|将字
         ['T2C: Enabled.', 'T2C：已启用。'], ['T2C: Disabled.', 'T2C：已禁用。'],
         ['{0} sandwiches in {1} / {2} scrambles ({3}%). Matches require AB CD BE within one buffer\'s memo; floating can remove these patterns.', '{1} / {2} 个打乱中共有 {0} 个三明治（{3}%）。需在同一缓冲块编码内匹配 AB CD BE；浮动可能消除这些模式。'],
         ['Enable “Include basic sandwiching” above and re-submit to analyze sandwiches.', '请在上方启用“基础三明治技巧”并重新提交，以分析三明治情况。'],
-        ['{0} scrambles use parity plus one leftover corner twist in a combined algorithm.', '{0} 个打乱使用将奇偶与一个剩余扭角合并的公式。'],
+        ['{0} scrambles use parity plus one leftover corner twist in a combined algorithm.', '{0} 个打乱使用将奇偶与一个剩余反角合并的公式。'],
         ['{0} scrambles use a final T2C algorithm.', '{0} 个打乱使用 T2C 作为最后一个公式。'],
-        ['Average targets: {0} edges / {1} corners. Average buffers: {2} edges / {3} corners. Total target range: {4}.', '平均目标数：棱块 {0} / 角块 {1}。平均缓冲块数：棱块 {2} / 角块 {3}。总目标数范围：{4}。'],
+        ['Average targets: {0} edges / {1} corners. Average buffers: {2} edges / {3} corners. Total target range: {4}.', '平均编码数：棱块 {0} / 角块 {1}。平均缓冲块数：棱块 {2} / 角块 {3}。总编码数范围：{4}。'],
         ['Each percentage is out of all {0} valid scrambles. A buffer counts once per scramble when used for targets. Multiple buffers can be used in one scramble, so percentages may add up to more than 100%.', '各百分比以全部 {0} 个有效打乱为基数。每个缓冲块用于目标时，在每个打乱中计一次。一个打乱可使用多个缓冲块，因此百分比总和可能超过 100%。'],
         ['Showing {0} of {1} lines. Statistics above describe the full batch. Invalid lines have no alg count and appear last when sorting by count.', '显示 {1} 行中的 {0} 行。上方统计描述整个批次。无效行没有公式数，按数量排序时列在最后。'],
         ['Round {0} · Solve {1} · Group {2}', '轮次 {0} · 还原 {1} · 组别 {2}'],

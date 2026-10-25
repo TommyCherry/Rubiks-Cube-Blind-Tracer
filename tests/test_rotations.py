@@ -10,27 +10,31 @@ class RotationTests(unittest.TestCase):
             cube.apply_scramble(scramble)
         self.assertEqual(cubes[0].get_state(), cubes[1].get_state())
 
-    def test_trailing_rotations_change_memo_frame(self):
-        for rotation, faces in (
-            ("x", "BRUFLD"), ("x'", "FRDBLU"), ("x2", "DRBULF"),
-            ("y", "UFLDBR"), ("y'", "UBRDFL"), ("y2", "ULBDRF"),
-            ("z", "RDFLUB"), ("z'", "LUFRDB"), ("z2", "DLFURB"),
-        ):
-            for face, expected in zip("URFDLB", faces):
+    def test_trailing_rotations_preserve_starting_frame(self):
+        for rotation in ("x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"):
+            for face in "URFDLB":
                 for suffix in ("", "'", "2"):
-                    with self.subTest(rotation=rotation, face=face, suffix=suffix):
-                        self.assert_same_state(f"{face}{suffix} {rotation}", expected + suffix)
+                    self.assert_same_state(f"{face}{suffix} {rotation}", face + suffix)
+
+    def test_rotations_remap_subsequent_turns(self):
+        self.assert_same_state("R y R", "R B")
+        self.assert_same_state("R y R y'", "R B")
+        for rotation, face in [('x', 'F'), ("x'", 'B'), ('x2', 'D'),
+                               ('z', 'L'), ("z'", 'R'), ('z2', 'D')]:
+            self.assert_same_state(f"{rotation} U", face)
+        self.assert_same_state("y R", "B")
+        self.assert_same_state("y' R", "F")
+        self.assert_same_state("y2 R", "L")
 
     def test_rotations_alone_keep_cube_solved(self):
         for rotation in ("x", "y", "z", "x'", "y'", "z'", "x2", "y2", "z2"):
             with self.subTest(rotation=rotation):
                 self.assert_same_state(rotation, "")
-                self.assert_same_state(f"{rotation} U R F D L B", "U R F D L B")
 
     def test_composed_rotations_and_inverse(self):
-        self.assert_same_state("x y U R F", "U R F")
-        self.assert_same_state("U x y", "R")
-        self.assert_same_state("U x R", "B R")
+        self.assert_same_state("x y U R F", "F U R")
+        self.assert_same_state("U x y", "U")
+        self.assert_same_state("U x R", "U R")
         self.assert_same_state("x U x'", "F")
         for axis in "xyz":
             self.assert_same_state(f"{axis} {axis}' R U F", "R U F")

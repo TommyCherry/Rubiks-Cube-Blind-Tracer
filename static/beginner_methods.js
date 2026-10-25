@@ -1,6 +1,7 @@
 (() => {
-    const method = document.getElementById('beginner-method');
-    if (!method) return;
+    const edgeMethod = document.getElementById('beginner-edge-method');
+    const cornerMethod = document.getElementById('beginner-corner-method');
+    if (!edgeMethod || !cornerMethod) return;
     const edge = document.getElementById('edge-buffer');
     const corner = document.getElementById('corner-buffer');
     const pseudoswap = document.getElementById('usePseudoswap');
@@ -23,10 +24,10 @@
             label.textContent = sticker.value.trim().toUpperCase() || '—';
         });
     }
-    function resetCycleOrders() {
-        orders.forEach(list => {
+    function resetCycleOrders(kind = null) {
+        orders.filter(list => !kind || list.dataset.cycleBreakOrder === kind).forEach(list => {
             let order = JSON.parse(list.dataset.defaultOrder);
-            if (list.dataset.cycleBreakOrder === 'edge' && method.value === 'm2_op') {
+            if (list.dataset.cycleBreakOrder === 'edge' && edgeMethod.value === 'DF') {
                 order = ['UB', ...order.filter(name => name !== 'UB')];
             }
             const items = [...list.children];
@@ -36,27 +37,28 @@
     }
     document.addEventListener('letter-scheme-change', refreshLetters);
     document.addEventListener('DOMContentLoaded', refreshLetters);
-    document.getElementById('reset-beginner-cycle-order').addEventListener('click', resetCycleOrders);
+    document.getElementById('reset-beginner-cycle-order').addEventListener('click', () => resetCycleOrders());
     refreshLetters();
     const choose = (select, position) => {
         select.value = [...select.options].find(option => option.textContent.trim() === position).value;
         select.dispatchEvent(new Event('change', {bubbles: true}));
     };
-    method.addEventListener('change', () => {
-        if (method.value === 'custom') return;
-        choose(edge, method.value === 'm2_op' ? 'DF' : 'UR');
-        choose(corner, method.value === 'op_op_ufr' ? 'UFR' : 'UBL');
-        pseudoswap.checked = false;
-        pseudoswap.dispatchEvent(new Event('change', {bubbles: true}));
-        resetCycleOrders();
-    });
-    // A manually changed buffer combination no longer represents either preset.
-    for (const control of [edge, corner]) control.addEventListener('change', event => {
-        if (!event.isTrusted) return;
-        const expected = method.value === 'm2_op' ? 'DF' : 'UR';
-        const expectedCorner = method.value === 'op_op_ufr' ? 'UFR' : 'UBL';
-        if (edge.selectedOptions[0].textContent.trim() !== expected || corner.selectedOptions[0].textContent.trim() !== expectedCorner) {
-            method.value = 'custom';
-        }
-    });
+    for (const [kind, preset, control, choices] of [
+        ['edge', edgeMethod, edge, ['UR', 'DF']],
+        ['corner', cornerMethod, corner, ['UBL', 'LUB', 'UFR']],
+    ]) {
+        const sync = () => {
+            const sticker = [...control.options].find(option => option.value === control.value)?.textContent.trim();
+            preset.value = choices.includes(sticker) ? sticker : 'custom';
+        };
+        preset.addEventListener('change', () => {
+            if (preset.value === 'custom') return;
+            choose(control, preset.value);
+            pseudoswap.checked = false;
+            pseudoswap.dispatchEvent(new Event('change', {bubbles: true}));
+            resetCycleOrders(kind);
+        });
+        control.addEventListener('change', sync);
+        sync();
+    }
 })();

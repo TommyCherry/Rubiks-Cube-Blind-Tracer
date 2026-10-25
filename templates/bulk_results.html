@@ -4,6 +4,7 @@
     {% if bulk_history_warning %}<p role="status">{{ bulk_history_warning }}</p>{% endif %}
     {% if bulk_stats %}
     <p>{{ bulk_stats.count }} scrambles traced · {{ bulk_stats.failed }} invalid lines excluded from statistics.</p>
+    {% if not beginner %}
     <p><strong>Basic sandwiching: {{ 'Enabled' if include_basic_sandwiching else 'Disabled' }}.</strong>
         {% if include_basic_sandwiching %}
         {{ bulk_stats.sandwich_count }} sandwiches in {{ bulk_stats.sandwich_scrambles }} / {{ bulk_stats.count }} scrambles
@@ -17,15 +18,18 @@
         {{ bulk_stats.ltct_count }} scrambles use parity plus one leftover corner twist in a combined algorithm.</p>
     <p><strong>T2C: {{ 'Enabled' if include_t2c else 'Disabled' }}.</strong>
         {{ bulk_stats.t2c_count }} scrambles use a final T2C algorithm.</p>
+    {% endif %}
     <div class="bulk-stats">
         <div><strong>{{ '%.2f'|format(bulk_stats.target_count) }}</strong><span>Average targets</span></div>
-        <div><strong>{{ '%.2f'|format(bulk_stats.alg_count) }}</strong><span>Average estimated algorithms</span></div>
-        <div><strong>{{ '%.1f'|format(bulk_stats.parity_percent) }}%</strong><span>Permutation parity</span></div>
-        <div><strong>{{ '%.2f'|format(bulk_stats.buffers_used) }}</strong><span>Average buffers used</span></div>
+        {% if not beginner %}<div><strong>{{ '%.2f'|format(bulk_stats.alg_count) }}</strong><span>Average estimated algorithms</span></div>{% endif %}
+        <div><strong>{{ '%.1f'|format(bulk_stats.parity_percent) }}%</strong><span>{{ 'Parity' if beginner else 'Permutation parity' }}</span></div>
+        {% if not beginner %}<div><strong>{{ '%.2f'|format(bulk_stats.buffers_used) }}</strong><span>Average buffers used</span></div>{% endif %}
     </div>
     <p>Average targets: {{ '%.2f'|format(bulk_stats.edge_count) }} edges / {{ '%.2f'|format(bulk_stats.corner_count) }} corners.
-       Average buffers: {{ '%.2f'|format(bulk_stats.edge_buffers_used) }} edges / {{ '%.2f'|format(bulk_stats.corner_buffers_used) }} corners.
+       {% if not beginner %}Average buffers: {{ '%.2f'|format(bulk_stats.edge_buffers_used) }} edges / {{ '%.2f'|format(bulk_stats.corner_buffers_used) }} corners.{% endif %}
        Total target range: {{ bulk_stats.min_targets }}–{{ bulk_stats.max_targets }}.</p>
+    {% if beginner %}{% include "beginner_bulk_distributions.html" %}{% endif %}
+    {% if not beginner %}
     <h3>Buffer usage by scramble</h3>
     <p class="bulk-definition">Each percentage is out of all {{ bulk_stats.count }} valid scrambles.
         A buffer counts once per scramble when used for targets. Multiple buffers can be used in one scramble, so percentages may add up to more than 100%.</p>
@@ -44,9 +48,11 @@
         </div>
         {% endfor %}
     </div>
+    {% endif %}
     {% else %}
     <p>No valid scrambles to summarize. Correct the flagged lines and submit again.</p>
     {% endif %}
+    {% if not beginner %}
     <p class="bulk-definition">Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets.
         Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.</p>
     <p class="bulk-definition">Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner.
@@ -76,12 +82,21 @@
         <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset</a>
     </div>
     <p>Conjugacy class describes the original scramble: e = edges, c = corners, and ' marks nonzero total cycle orientation. Solved pieces are omitted.</p>
+    {% endif %}
     <p>Showing {{ bulk_results|length }} of {{ bulk_total }} lines. Statistics above describe the full batch.
-       Invalid lines have no alg count and appear last when sorting by count.</p>
-    {% if not bulk_results %}<p role="status">No scrambles match this algorithm count.</p>{% endif %}
+       {% if not beginner %}Invalid lines have no alg count and appear last when sorting by count.{% endif %}</p>
+    {% if not bulk_results %}<p role="status">{{ 'No scrambles match these filters.' if beginner else 'No scrambles match this algorithm count.' }}</p>{% endif %}
     <div class="bulk-table-scroll">
         <table class="bulk-table">
-            <thead><tr><th scope="col">Line / scramble</th><th scope="col">Edge memo</th><th scope="col">Corner memo</th><th scope="col">Conjugacy class</th><th scope="col">Targets<br>Edge / corner</th><th scope="col">Est. algs</th><th scope="col">Parity</th><th scope="col">Buffers<br>Edge / corner</th></tr></thead>
+                <thead><tr><th scope="col">Line / scramble</th>
+                {% if beginner %}<th scope="col">Scramble image</th>{% endif %}
+                <th scope="col">Edge memo</th><th scope="col">Corner memo</th>
+                {% if not beginner %}<th scope="col">Conjugacy class</th>{% endif %}
+                <th scope="col">Targets<br>Edge / corner</th>
+                {% if not beginner %}<th scope="col">Est. algs</th>{% endif %}
+                <th scope="col">Parity</th>
+                {% if not beginner %}<th scope="col">Buffers<br>Edge / corner</th>{% endif %}
+            </tr></thead>
             <tbody>
             {% for row in bulk_results %}
                 <tr>
@@ -100,14 +115,15 @@
                         {% endif %}
                     </td>
                     {% if row.error is defined %}
-                    <td colspan="7" class="error">{{ row.error }}</td>
+                    <td colspan="{{ 5 if beginner else 7 }}" class="error">{{ row.error }}</td>
                     {% else %}
+                    {% if beginner %}<td>{% include "bulk_scramble_image.html" %}</td>{% endif %}
                     <td class="bulk-memo">{{ (row.edge_memo or '—') | highlight_sandwiches }}</td>
                     <td class="bulk-memo">{{ (row.corner_memo or '—') | highlight_sandwiches }}</td>
-                    <td><code class="conjugacy-value">{{ row.conjugacy_class }}</code></td>
+                    {% if not beginner %}<td><code class="conjugacy-value">{{ row.conjugacy_class }}</code></td>{% endif %}
                     <td>{{ row.edge_count }} / {{ row.corner_count }}</td>
-                    <td>{{ row.alg_count }}</td><td>{{ row.parity }}</td>
-                    <td>{{ row.edge_buffers_used }} / {{ row.corner_buffers_used }}</td>
+                    {% if not beginner %}<td>{{ row.alg_count }}</td>{% endif %}<td>{{ row.parity }}</td>
+                    {% if not beginner %}<td>{{ row.edge_buffers_used }} / {{ row.corner_buffers_used }}</td>{% endif %}
                     {% endif %}
                 </tr>
             {% endfor %}

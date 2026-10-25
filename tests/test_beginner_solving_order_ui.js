@@ -7,7 +7,7 @@ function fixture(saved, blocked = false, parity = false) {
     const control = value => ({value, handlers: {}, addEventListener(name, fn) {this.handlers[name] = fn;},
         change(value) {this.value = value; this.handlers.change();}});
     const preset = control('CEEC'), memo = control('corners'), execution = control('edges');
-    const steps = {children: Array.from({length: parity ? 5 : 4}, () => ({}))};
+    const steps = {children: Array.from({length: 4}, () => ({querySelector() { return null; }}))};
     const parent = (children, attr) => ({children,
         querySelector(selector) {return this.children.find(child => selector === '.trace-details' ? child.kind === 'details' : selector === `[${attr}="${child.kind}"]`) || null;},
         insertBefore(item, before) {this.children = this.children.filter(child => child !== item); const index = before ? this.children.indexOf(before) : this.children.length; this.children.splice(index, 0, item);},
@@ -61,9 +61,9 @@ test('restores valid preferences and tolerates invalid or blocked browser storag
 test('parity stays between execution stages and appears in the step preview', () => {
     const page = fixture(null, false, true);
     assert.deepEqual(page.examples.children.map(group => group.kind), ['edge', 'parity', 'corner']);
-    assert.deepEqual(page.steps.children.map(step => step.textContent), ['Memo corners', 'Memo edges', 'Solve edges', 'Execute parity algorithm', 'Solve corners']);
+    assert.deepEqual(page.steps.children.map(step => step.textContent), ['Memo corners', 'Memo edges', 'Solve edges', 'Solve corners']);
     page.execution.change('corners');
     assert.equal(page.preset.value, 'CECE');
     assert.deepEqual(page.examples.children.map(group => group.kind), ['corner', 'parity', 'edge']);
-    assert.deepEqual(page.steps.children.map(step => step.textContent), ['Memo corners', 'Memo edges', 'Solve corners', 'Execute parity algorithm', 'Solve edges']);
+    assert.deepEqual(page.steps.children.map(step => step.textContent), ['Memo corners', 'Memo edges', 'Solve corners', 'Solve edges']);
 });
