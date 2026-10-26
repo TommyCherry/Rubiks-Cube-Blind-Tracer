@@ -1273,6 +1273,40 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 
 .preset-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
 .preset-controls + .preset-controls { margin-top: 16px; }
+.memo-word-examples { margin-top: 16px; }
+.memo-change-word { display: block; margin-top: 6px; padding: 4px 8px; border: 1px solid #b7cdcd; border-radius: 5px; background: #fff; color: #087e7e; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.memo-word-picker { width: min(440px, calc(100vw - 48px)); max-height: 80vh; overflow: auto; padding: 24px; border: 1px solid #b7cdcd; border-radius: 12px; color: #243342; }
+.memo-word-picker::backdrop { background: rgb(0 0 0 / 35%); }
+.memo-word-picker label { display: grid; gap: 6px; margin-top: 14px; }
+.memo-word-picker input, .memo-word-picker select { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; font: inherit; }
+.memo-word-picker input[type="checkbox"] { width: auto; justify-self: start; }
+.memo-word-picker button { margin: 8px 6px 0 0; padding: 8px 10px; cursor: pointer; }
+.bulk-word-controls { margin: 16px 0; padding: 14px 16px; border: 1px solid #d6e3e3; border-radius: 10px; background: #fff; }
+#load-bulk-memo-words { padding: 10px 16px; border: 0; border-radius: 8px; background: #087e7e; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+#load-bulk-memo-words:disabled { opacity: 0.65; cursor: default; }
+#load-bulk-memo-words:focus-visible { outline: 2px solid #243342; outline-offset: 3px; }
+.memo-example-story { flex-basis: 100%; margin: 8px 0 0; color: #344b58; font-family: system-ui, sans-serif; font-size: 0.9rem; line-height: 1.6; }
+.memo-example-story .memo-story-meaning { display: block; margin-top: 4px; font-size: 0.78rem; font-weight: 400; line-height: 1.6; color: #526675; }
+.memo-word-filter { display: block; margin: 10px 0; font-size: 0.9em; }
+.memo-word small { font-size: 0.8em; color: #526675; }
+.memo-words { display: flex; flex-wrap: wrap; gap: 10px; }
+.memo-words[hidden] { display: none; }
+.bulk-memo .memo-words { display: block; margin-top: 6px; font-family: system-ui, sans-serif; font-size: 0.9em; line-height: 1.7; color: #526675; text-align: left; }
+.bulk-memo .memo-words[hidden] { display: none; }
+.bulk-story-row[hidden] { display: none; }
+.bulk-table .bulk-story-row > td { padding: 8px 16px 14px; background: #f0f5f5; }
+.bulk-story { display: grid; gap: 6px; }
+.bulk-story-section { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.bulk-story-label { font-size: 0.8rem; color: #526675; }
+.bulk-story .memo-words { display: block; margin: 0; font-family: system-ui, sans-serif; font-size: 0.85rem; line-height: 1.6; color: #526675; text-align: left; }
+.bulk-story .memo-words[hidden] { display: none; }
+.bulk-word-button { display: inline; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: #087e7e; font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.bulk-word-button:hover, .bulk-word-button[aria-expanded="true"] { text-decoration: underline; text-underline-offset: 3px; }
+.bulk-word-button:focus-visible { outline: 2px solid #087e7e; outline-offset: 3px; }
+.bulk-word-detail { margin-top: 6px; padding: 6px 10px; border-left: 2px solid #087e7e; background: #eef5f5; font-size: 0.9em; }
+.memo-word { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 8px; background: #eef5f5; color: #243342; overflow-wrap: anywhere; max-width: 100%; }
+.memo-word strong { color: #087e7e; }
+.memo-word-annotation { background: transparent; font-size: 0.9em; }
 .preset-controls label { display: grid; gap: 8px; flex: 1 1 220px; font-size: 12px; font-weight: 600; }
 .preset-controls :is(input, select, button) { min-height: 40px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d6dfe5; border-radius: 8px; background: #fff; color: #243342; font: inherit; }
 .preset-controls button { cursor: pointer; font-size: 13px; }

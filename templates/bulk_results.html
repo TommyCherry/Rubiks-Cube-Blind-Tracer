@@ -1,6 +1,7 @@
 {% if bulk_results or bulk_batch_id %}
 <section class="bulk-results" aria-labelledby="bulk-title">
     <h2 id="bulk-title">Scramble set results</h2>
+    {% if bulk_storage_warning %}<p role="status">{{ bulk_storage_warning }}</p>{% endif %}
     {% if bulk_history_warning %}<p role="status">{{ bulk_history_warning }}</p>{% endif %}
     {% if bulk_stats %}
     <p>{{ bulk_stats.count }} scrambles traced · {{ bulk_stats.failed }} invalid lines excluded from statistics.</p>
@@ -63,6 +64,7 @@
         Buffers count only those used for targets, with edges and corners counted separately.
         Enabled edge and corner floating switches are included in buffer usage.
         Parity describes the scrambled permutation before pseudoswap.</p>
+    {% if bulk_batch_id %}
     <div class="bulk-query-controls">
         <label for="bulk-alg-count">Exact estimated alg count
             <input id="bulk-alg-count" name="alg_count" type="number" min="0" max="999999999" step="1"
@@ -81,11 +83,21 @@
         <button type="submit" form="bulk-query-form">Search / sort</button>
         <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset</a>
     </div>
+    {% endif %}
     <p>Conjugacy class describes the original scramble: e = edges, c = corners, and ' marks nonzero total cycle orientation. Solved pieces are omitted.</p>
     {% endif %}
     <p>Showing {{ bulk_results|length }} of {{ bulk_total }} lines. Statistics above describe the full batch.
        {% if not beginner %}Invalid lines have no alg count and appear last when sorting by count.{% endif %}</p>
     {% if not bulk_results %}<p role="status">{{ 'No scrambles match these filters.' if beginner else 'No scrambles match this algorithm count.' }}</p>{% endif %}
+    {% if bulk_results %}
+    <div class="bulk-word-controls">
+        <button type="button" id="load-bulk-memo-words">Show memo words &amp; stories</button>
+        <p class="bulk-definition">Show words and example stories beneath each displayed scramble. Taken from <a href="https://bestsiteever.net/colpi/" target="_blank" rel="noopener">CoLPI</a>.</p>
+        <label class="memo-word-filter"><input type="checkbox" data-one-syllable> One-syllable words only (approximate short cues when needed)</label>
+        <p class="bulk-definition">Click a word to see its letter pair, original word, and short cue. Short cues are approximate; pairs without an example keep their letters.</p>
+        <p id="bulk-memo-words-status" role="status" aria-live="polite"></p>
+    </div>
+    {% endif %}
     <div class="bulk-table-scroll">
         <table class="bulk-table">
                 <thead><tr><th scope="col">Line / scramble</th>
@@ -118,14 +130,31 @@
                     <td colspan="{{ 5 if beginner else 7 }}" class="error">{{ row.error }}</td>
                     {% else %}
                     {% if beginner %}<td>{% include "bulk_scramble_image.html" %}</td>{% endif %}
-                    <td class="bulk-memo">{{ (row.edge_memo or '—') | highlight_sandwiches }}</td>
-                    <td class="bulk-memo">{{ (row.corner_memo or '—') | highlight_sandwiches }}</td>
+                    {% for kind in ['edge', 'corner'] %}
+                    <td class="bulk-memo">
+                        <span id="bulk-{{ row.line_number }}-{{ kind }}-memo">{{ (row[kind ~ '_memo'] or '—') | highlight_sandwiches }}</span>
+                    </td>
+                    {% endfor %}
                     {% if not beginner %}<td><code class="conjugacy-value">{{ row.conjugacy_class }}</code></td>{% endif %}
                     <td>{{ row.edge_count }} / {{ row.corner_count }}</td>
                     {% if not beginner %}<td>{{ row.alg_count }}</td>{% endif %}<td>{{ row.parity }}</td>
                     {% if not beginner %}<td>{{ row.edge_buffers_used }} / {{ row.corner_buffers_used }}</td>{% endif %}
                     {% endif %}
                 </tr>
+                {% if row.error is not defined %}
+                <tr class="bulk-story-row" id="bulk-story-{{ row.line_number }}" hidden>
+                    <td colspan="{{ 6 if beginner else 8 }}">
+                        <div class="bulk-story" aria-label="Word memo for scramble {{ row.line_number }}">
+                            {% for kind, label in [('edge', 'Edges'), ('corner', 'Corners')] %}
+                            <div class="bulk-story-section">
+                                <strong class="bulk-story-label">{{ label }}</strong>
+                                <div class="memo-words" data-memo-words="bulk-{{ row.line_number }}-{{ kind }}-memo" data-bulk-words data-story-row="bulk-story-{{ row.line_number }}" hidden></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
             {% endfor %}
             </tbody>
         </table>

@@ -180,6 +180,73 @@ python app.py
 
 Then open the local address displayed by Flask in your browser.
 
+### Example memo words
+
+Generated edge and corner memos load English letter-pair examples from
+[CoLPI](https://bestsiteever.net/colpi/) underneath the memo. The lookup runs
+separately from tracing and does not need a database or CoLPI login. Repeated
+pairs retain their positions; single letters and bracketed technique annotations
+are left unchanged. Ordinary A–Z (and CoLPI's `ʧ`) pairs are supported.
+
+The one-syllable filter is remembered in the browser and applies to both memo
+cards. Longer examples also show an approximate short cue, such as Pikachu → pik;
+enabling the filter makes that cue the main text. These locally generated cues
+use English spelling heuristics and a small override list, not pronunciation
+data. The original CoLPI example remains visible for reference. Missing cues
+keep their letter pair visible rather than dropping a target from the memo.
+
+Word examples also include a locally assembled example story. Simple connecting
+phrases preserve cue order in groups of up to five; missing images, single
+letters and technique annotations interrupt the sentence and remain bracketed.
+Stories follow the one-syllable setting and pair-letter capitalization. They
+use fixed, nonviolent connectors, require no additional service, and are a
+first-pass memory aid rather than a grammatical or semantic language model.
+
+Each pair has a “Choose word” picker (in bulk, click its word first). Alternatives
+are fetched on demand from CoLPI's pair-detail page, with censorship verified
+and each offensive flag checked; private exclusions apply as well. Users may
+instead type a custom word or restore the default. Overrides update every
+occurrence of that pair on the current page, including stories and short cues.
+Signed-in users can check “Save to my account” before applying a word to reuse
+it on later visits in either mode. Otherwise overrides last only on the current
+page. The picker also offers removal of a saved account word; “Restore default”
+alone affects only the current page. Signed-out users see a WCA login link.
+Choices are private to the account and never sent to CoLPI. Custom text is user-authored
+and displayed as plain text; it is not a moderated CoLPI suggestion.
+
+Account words use the preset database. Local SQLite creates `memo_word_choices`
+automatically; PostgreSQL requires `migrations/003_memo_word_choices.sql`.
+Apply pending migrations with `python scripts/persistent_data.py init` using
+`DATABASE_URL_DIRECT` before deploying this feature. Database outages leave
+page-only overrides usable and show an error for account saving.
+
+The server reads the public anonymous suggestion grid and requires CoLPI to
+report `showOffensive: false` and English before returning any words. Censorship
+cannot be disabled through the tracer. Filtering relies on CoLPI's community
+moderation; unflagged submissions are not independently reviewed. Suggestions
+are cached for five minutes. If the provider is unavailable or its response
+format changes, examples are omitted and the original memo stays usable.
+
+`memo_word_policy.py` loads optional extra exclusions from the server-only
+`MEMO_WORD_EXCLUSIONS` environment variable, a JSON array of full entries.
+The real list belongs in your ignored `.env` locally and in Vercel environment
+variables for each intended deployment environment; never put it in frontend
+code, tests, or committed configuration. Tests use fictional examples only.
+A harmless example of the format is `["purple dragon", "silver robot"]`.
+For a shell-sourced `.env`, quote the JSON as a shell value (including escaping
+any apostrophes in entries). Paste the raw JSON array, without shell quotes,
+into Vercel. Restart locally or redeploy after configuration changes.
+
+Only add real exclusions after observing the full entry in CoLPI's censored
+English grid. Matching ignores case, accents, spacing and punctuation but
+matches full entries rather than generic keywords. The next ranked suggestion
+is tried when one is excluded; if none qualify, no example is returned. Cached
+words are checked again before reaching the browser. An unset variable means
+no extra exclusions; CoLPI's censorship remains mandatory. Malformed private
+configuration disables word examples with a generic error instead of exposing
+its contents or silently bypassing the extra filter. This list is not a
+comprehensive semantic classifier.
+
 ### Production persistence
 
 See the [Neon setup, schema initialization, SQLite import, and verification guide](docs/postgres-phase1.md). Presets and saved bulk results use `DATABASE_URL` when set; local development keeps SQLite when it is absent. Vercel/production requires `DATABASE_URL`. Official history also uses PostgreSQL when configured, with local MySQL fallback. See the [Phase 2 reduced WCA import and deployment guide](docs/postgres-phase2.md).

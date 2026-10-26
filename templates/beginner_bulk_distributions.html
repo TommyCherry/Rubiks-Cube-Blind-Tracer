@@ -17,6 +17,7 @@
 </section>
 {% endfor %}
 </div>
+{% if bulk_batch_id %}
 <details class="beginner-bulk-filters" open>
     <summary>Filter scrambles</summary>
     <p>Leave bounds blank for any count. Set the same minimum and maximum for an exact count. All filters apply together.</p>
@@ -36,3 +37,4 @@
     <button type="submit" form="bulk-query-form">Apply filters</button>
     <a href="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}">Reset filters</a>
 </details>
+{% endif %}

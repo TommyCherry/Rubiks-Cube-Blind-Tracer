@@ -57,6 +57,26 @@ class WcaAuthTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         post.assert_called_once()
 
+    @patch.object(app_module.requests, 'get')
+    @patch.object(app_module.requests, 'post')
+    def test_memo_login_returns_to_completion_page(self, post, get):
+        post.return_value = Mock(ok=True, json=lambda: {'access_token': 'token'})
+        get.return_value = Mock(ok=True, json=lambda: {'me': {
+            'id': 123, 'name': 'Test Cuber', 'avatar': {'thumb_url': ''}}})
+        alias = self.client.get('/auth/wca?memo=1', base_url='https://alias.example')
+        self.assertEqual(alias.location, 'https://cube.example/auth/wca?memo=1')
+        response = self.client.get('/auth/wca?memo=1', base_url='https://cube.example')
+        state = parse_qs(urlsplit(response.location).query)['state'][0]
+        response = self.client.get('/auth/wca/callback', query_string={'state': state, 'code': 'test'}, base_url='https://cube.example')
+        self.assertEqual(response.location, '/auth/wca/memo-complete')
+        status = self.client.get('/api/memo-word-session', base_url='https://cube.example')
+        self.assertTrue(status.json['signed_in'])
+        self.assertTrue(status.json['csrf'])
+        self.assertEqual(status.headers['Cache-Control'], 'no-store')
+        with self.client.session_transaction(base_url='https://cube.example') as session:
+            self.assertNotIn('wca_memo_login', session)
+        self.assertFalse(app_module.app.test_client().get('/api/memo-word-session').json['signed_in'])
+
     @patch.object(app_module.requests, 'post')
     def test_missing_or_mismatched_state_never_exchanges_code(self, post):
         self.client.get('/auth/wca', base_url='https://cube.example')

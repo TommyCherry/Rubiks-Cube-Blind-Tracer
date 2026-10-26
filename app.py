@@ -3,7 +3,7 @@ import json
 import sqlite3
 from collections import Counter
 from persistence import (postgres_connection, insert_preset, UNIQUE_ERRORS,
-                         preset_database_errors, PostgresConnection, StorageConfigurationError)
+                         preset_database_errors, PostgresConnection, StorageConfigurationError, DATABASE_ERRORS)
 import psycopg
 from history_queries import THREE_BLIND_SQL, multiblind_sql
 from contextlib import closing
@@ -12,6 +12,7 @@ import secrets
 from urllib.parse import urlencode, urlsplit
 from auth_config import session_secret
 import requests
+from colpi import suggestions_for, valid_pair, alternatives_for
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
 from conjugacy import generate_state, to_facelets
@@ -793,6 +794,30 @@ def solution_examples():
         return jsonify(error="BLDDB examples are temporarily unavailable. Your trace is still available."), 503
 
 
+@app.get("/api/memo-words")
+def memo_words():
+    raw = request.args.get("pairs", "")
+    pairs = list(dict.fromkeys(raw.split(",")))
+    if len(raw) > 3000 or len(pairs) > 729 or not all(valid_pair(pair) for pair in pairs):
+        return jsonify(error="Provide up to 729 two-letter pairs."), 400
+    try:
+        return jsonify(words=suggestions_for(pairs), censored=True, language="en")
+    except (requests.RequestException, ValueError, TypeError, AttributeError):
+        app.logger.warning("Censored CoLPI suggestions unavailable")
+        return jsonify(error="Censored word examples are temporarily unavailable."), 503
+
+
+@app.get("/api/memo-word-options")
+def memo_word_options():
+    pair = request.args.get("pair", "")
+    if not valid_pair(pair):
+        return jsonify(error="Provide one two-letter pair."), 400
+    try:
+        return jsonify(pair=pair, words=alternatives_for(pair), censored=True)
+    except (requests.RequestException, ValueError, TypeError, AttributeError):
+        return jsonify(error="Word alternatives are temporarily unavailable."), 503
+
+
 def preset_connection():
     postgres = postgres_connection(app.config)
     if postgres is not None:
@@ -804,7 +829,51 @@ def preset_connection():
     connection.execute("""CREATE TABLE IF NOT EXISTS settings_presets (
         id INTEGER PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
         settings TEXT NOT NULL, UNIQUE(user_id, name))""")
+    connection.execute("""CREATE TABLE IF NOT EXISTS memo_word_choices (
+        user_id TEXT NOT NULL, pair TEXT NOT NULL, word TEXT NOT NULL,
+        PRIMARY KEY (user_id, pair))""")
     return connection
+
+
+@app.context_processor
+def memo_account_context():
+    signed_in = bool((session.get("wca_user") or {}).get("id"))
+    token = session.setdefault("memo_word_csrf", secrets.token_urlsafe(32)) if signed_in else ""
+    return dict(memo_signed_in=signed_in, memo_word_csrf=token)
+
+
+@app.route("/api/memo-word-choices", methods=["GET", "PUT", "DELETE"])
+def memo_word_choices():
+    user_id = (session.get("wca_user") or {}).get("id")
+    if not user_id:
+        return jsonify(error="Sign in with WCA to save word choices."), 401
+    if request.method != "GET":
+        token = request.headers.get("X-Memo-CSRF", "")
+        if not token or not secrets.compare_digest(token, session.get("memo_word_csrf", "")):
+            return jsonify(error="Refresh the page before saving word choices."), 403
+        if request.content_length and request.content_length > 4096:
+            return jsonify(error="Word choice is too large."), 400
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or not valid_pair(data.get("pair")):
+            return jsonify(error="Provide one two-letter pair."), 400
+        word = data.get("word")
+        if request.method == "PUT" and (not isinstance(word, str) or not 1 <= len(word.strip()) <= 120):
+            return jsonify(error="Enter a word between 1 and 120 characters."), 400
+    try:
+        with closing(preset_connection()) as connection, connection:
+            if request.method == "GET":
+                rows = connection.execute("SELECT pair, word FROM memo_word_choices WHERE user_id = ?", (str(user_id),)).fetchall()
+                return jsonify(words={row["pair"]: row["word"] for row in rows})
+            if request.method == "DELETE":
+                connection.execute("DELETE FROM memo_word_choices WHERE user_id = ? AND pair = ?", (str(user_id), data["pair"]))
+            else:
+                connection.execute("""INSERT INTO memo_word_choices (user_id, pair, word) VALUES (?, ?, ?)
+                    ON CONFLICT (user_id, pair) DO UPDATE SET word = excluded.word""",
+                    (str(user_id), data["pair"], word.strip()))
+        return jsonify(saved=True)
+    except DATABASE_ERRORS as error:
+        app.logger.warning("Memo choice storage unavailable (%s)", type(error).__name__)
+        return jsonify(error="Account word choices are temporarily unavailable. You can still use a word on this page."), 503
 
 
 @app.route("/api/settings-presets", methods=["GET", "POST"])
@@ -1266,7 +1335,16 @@ def home(beginner=False):
                         include_parity_3twist=include_parity_3twist, include_t2c=include_t2c)
         if beginner:
             metadata["bulk_distributions"] = context["bulk_distributions"]
-        context.update(bulk_batch_id=save_bulk_batch(bulk_results, metadata),
+        try:
+            batch_id = save_bulk_batch(bulk_results, metadata)
+        except DATABASE_ERRORS as error:
+            app.logger.warning("Bulk storage unavailable (%s)", type(error).__name__)
+            batch_id = None
+            context["bulk_storage_warning"] = (
+                "These results could not be saved because storage is unavailable. "
+                "Your traces and statistics are shown below, but saved-batch filtering "
+                "and sorting are unavailable. Keep this page open or copy your results.")
+        context.update(bulk_batch_id=batch_id,
                        bulk_total=len(bulk_results),
                        bulk_alg_counts=sorted({row["alg_count"] for row in bulk_results if "error" not in row}),
                        bulk_alg_filter="", bulk_sort="original")
@@ -1282,9 +1360,10 @@ def wca_login():
     callback = urlsplit(WCA_REDIRECT_URI)
     origin = f"{callback.scheme}://{callback.netloc}"
     if request.host_url.rstrip("/") != origin:
-        return redirect(origin + url_for("wca_login"))
+        return redirect(origin + url_for("wca_login", **({'memo': '1'} if request.args.get('memo') == '1' else {})))
     state = secrets.token_urlsafe(32)
     session["wca_oauth_state"] = state
+    session["wca_memo_login"] = request.args.get("memo") == "1"
     return redirect("https://www.worldcubeassociation.org/oauth/authorize?" + urlencode({
         "client_id": os.environ["WCA_CLIENT_ID"],
         "redirect_uri": WCA_REDIRECT_URI,
@@ -1354,7 +1433,23 @@ def wca_callback():
         "avatar_url": wca_user["avatar"]["thumb_url"],
     }
 
+    if session.pop("wca_memo_login", False):
+        return redirect(url_for("wca_memo_complete"))
     return redirect("/")
+
+
+@app.get("/auth/wca/memo-complete")
+def wca_memo_complete():
+    return render_template("memo_login_complete.html")
+
+
+@app.get("/api/memo-word-session")
+def memo_word_session():
+    signed_in = bool((session.get("wca_user") or {}).get("id"))
+    token = session.setdefault("memo_word_csrf", secrets.token_urlsafe(32)) if signed_in else ""
+    response = jsonify(signed_in=signed_in, csrf=token)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 @app.route("/logout")
 def logout():

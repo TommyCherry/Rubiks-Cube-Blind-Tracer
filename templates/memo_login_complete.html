@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WCA sign-in</title></head>
+<body>
+{% if memo_signed_in %}
+<h1>You're signed in</h1>
+<p>Return to your original tracer tab. Your word picker and draft are still there, ready to save to your account. You can close this tab.</p>
+{% else %}
+<h1>Sign-in is not complete</h1>
+<p>Return to the word picker and try signing in again.</p>
+{% endif %}
+</body>
+</html>
