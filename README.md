@@ -184,6 +184,19 @@ Then open the local address displayed by Flask in your browser.
 
 See the [Neon setup, schema initialization, SQLite import, and verification guide](docs/postgres-phase1.md). Presets and saved bulk results use `DATABASE_URL` when set; local development keeps SQLite when it is absent. Vercel/production requires `DATABASE_URL`. Official history also uses PostgreSQL when configured, with local MySQL fallback. See the [Phase 2 reduced WCA import and deployment guide](docs/postgres-phase2.md).
 
+Presets are listed separately for beginner and expert mode. Full loads only apply
+to the current mode. The other mode's presets can supply letters, colors, and cube
+orientation through the explicit copy button; buffers, methods, and solving
+options are preserved. Existing presets keep their saved mode and remain usable.
+Preset names must still be unique across your profile, with a total limit of 30.
+
+“Profile presets are temporarily unavailable” means the server could not access
+preset storage, rather than a mismatch between beginner and expert settings.
+Check `DATABASE_URL`, database connectivity, and that schema initialization has
+completed using the persistence guide above. After restoring access, use “Retry
+loading presets”. For local-only development, start with `DATABASE_URL` unset to
+use local SQLite presets; these are separate from your online profile data.
+
 ### WCA OAuth redirect configuration
 
 The authorization request and token exchange both use `WCA_REDIRECT_URI`.
@@ -196,6 +209,20 @@ URL (no trailing slash):
 ```text
 WCA_REDIRECT_URI=https://rubiks-cube-blind-tracer.vercel.app/auth/wca/callback
 ```
+
+Also set `FLASK_SECRET_KEY` to a persistent, randomly generated secret in Vercel's
+environment variables, alongside `WCA_CLIENT_ID` and `WCA_CLIENT_SECRET`, and
+redeploy after changing them. Generate a key with
+`python -c 'import secrets; print(secrets.token_hex(32))'`. Use the same key across
+all workers and deployments; do not generate it during application startup.
+Production refuses to start without it, because changing keys invalidates the
+session containing the WCA sign-in state. Local development can use a temporary
+key, but restarting the app then invalidates existing sessions.
+
+Sign-in starts on the origin configured in `WCA_REDIRECT_URI`, including when
+opened from a deployment alias, so the session cookie reaches the callback.
+After fixing configuration, start a fresh sign-in from the site instead of
+reloading an old callback URL.
 
 Register that exact same production callback URL as a redirect URI in your
 WCA OAuth application. Keep `http://localhost:5001/auth/wca/callback`

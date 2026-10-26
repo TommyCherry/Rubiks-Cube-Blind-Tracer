@@ -71,16 +71,21 @@
             </nav>
         <section class="tracer-configuration preset-section" aria-labelledby="presets-heading"
                  data-mode="{{ 'beginner' if beginner else 'expert' }}" data-csrf="{{ session.get('preset_csrf', '') }}">
-            <div class="tracer-section-heading"><div><h2 id="presets-heading">Save settings</h2>
-                <p>Keep named presets on your profile, including letters, colors, buffers, and all solving options on this page.</p></div></div>
+            <div class="tracer-section-heading"><div><h2 id="presets-heading">{{ 'Beginner' if beginner else 'Expert' }} presets</h2>
+                <p>Save and load settings for this mode. Copy letters, colors, and cube orientation from the other mode without changing your solving options.</p></div></div>
             {% if wca_user %}
             <div class="preset-controls">
                 <label for="preset-name">Preset name<input id="preset-name" maxlength="80" placeholder="e.g. My competition setup"></label>
                 <button type="button" id="save-preset">Save new preset</button>
-                <label for="preset-list">Your presets<select id="preset-list"><option value="">Choose a preset</option></select></label>
+                <label for="preset-list">Your {{ 'beginner' if beginner else 'expert' }} presets<select id="preset-list"><option value="">Choose a preset</option></select></label>
                 <button type="button" id="load-preset" disabled>Load preset</button>
             </div>
+            <div class="preset-controls">
+                <label for="shared-preset-list">Copy from {{ 'expert' if beginner else 'beginner' }}<select id="shared-preset-list"><option value="">Choose a preset</option></select></label>
+                <button type="button" id="copy-shared-preset" disabled>Copy letters, colors &amp; orientation</button>
+            </div>
             <p id="preset-status" role="status" aria-live="polite"></p>
+            <button type="button" id="retry-presets" hidden>Retry loading presets</button>
             {% else %}
             <a class="wca-sign-in" href="{{ url_for('wca_login') }}">Sign in with WCA to save settings to your profile</a>
             {% endif %}

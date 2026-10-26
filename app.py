@@ -9,7 +9,8 @@ from history_queries import THREE_BLIND_SQL, multiblind_sql
 from contextlib import closing
 import re
 import secrets
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
+from auth_config import session_secret
 import requests
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
@@ -36,7 +37,7 @@ from Cube import (
 )
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.secret_key = session_secret(os.environ)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["DATABASE_URL"] = os.environ.get("DATABASE_URL")
 app.config["PRESET_DATABASE"] = os.environ.get("PRESET_DATABASE", os.path.join(app.instance_path, "presets.sqlite3"))
@@ -1277,6 +1278,11 @@ def home(beginner=False):
 def wca_login():
     if not os.environ.get("WCA_CLIENT_ID") or not os.environ.get("WCA_CLIENT_SECRET"):
         return "Set WCA_CLIENT_ID and WCA_CLIENT_SECRET before signing in.", 503
+    # Set the state cookie on the same origin that receives the callback.
+    callback = urlsplit(WCA_REDIRECT_URI)
+    origin = f"{callback.scheme}://{callback.netloc}"
+    if request.host_url.rstrip("/") != origin:
+        return redirect(origin + url_for("wca_login"))
     state = secrets.token_urlsafe(32)
     session["wca_oauth_state"] = state
     return redirect("https://www.worldcubeassociation.org/oauth/authorize?" + urlencode({

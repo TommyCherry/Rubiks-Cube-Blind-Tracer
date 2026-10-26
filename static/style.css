@@ -1272,6 +1272,7 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 .tracer-mode-nav a:hover { color: #087e79; }
 
 .preset-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.preset-controls + .preset-controls { margin-top: 16px; }
 .preset-controls label { display: grid; gap: 8px; flex: 1 1 220px; font-size: 12px; font-weight: 600; }
 .preset-controls :is(input, select, button) { min-height: 40px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d6dfe5; border-radius: 8px; background: #fff; color: #243342; font: inherit; }
 .preset-controls button { cursor: pointer; font-size: 13px; }

@@ -4,10 +4,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!save) return;
     const load = document.getElementById('load-preset');
     const list = document.getElementById('preset-list');
+    const sharedList = document.getElementById('shared-preset-list');
+    const copyShared = document.getElementById('copy-shared-preset');
+    const retry = document.getElementById('retry-presets');
     const name = document.getElementById('preset-name');
     const status = document.getElementById('preset-status');
     const root = document.querySelector('.solve-settings');
     let presets = [];
+    let activity = 0;
     const orderLists = () => [...root.querySelectorAll('[data-cycle-break-order], .floating-buffer-list')];
     const orderKey = element => element.id || element.querySelector('input[name]').name;
     const piece = element => element.dataset.piece || element.dataset.buffer;
@@ -15,31 +19,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         status.textContent = text;
         status.classList.toggle('error', error);
     };
-    async function api(options) {
-        const response = await fetch('/api/settings-presets', options);
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'Could not access presets. Please try again.');
-        return result;
+    async function api(options = {}) {
+        const controller = new AbortController();
+        let timer;
+        const timeout = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+                reject(new Error(options.method === 'POST'
+                    ? 'Saving timed out. Your preset may have been saved. Retry loading presets before saving again.'
+                    : 'Loading presets timed out. Please retry. You can still try saving a new preset.'));
+                controller.abort();
+            }, 12000);
+        });
+        try {
+            return await Promise.race([timeout, (async () => {
+                const response = await fetch('/api/settings-presets', {...options, signal: controller.signal});
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Could not access presets. Please try again.');
+                return result;
+            })()]);
+        } finally { clearTimeout(timer); }
     }
     function snapshot() {
         const fields = {};
         root.querySelectorAll('input[name], select[name]').forEach(control => {
             fields[control.name] ||= [];
-            if (control.type !== 'checkbox' || control.checked) fields[control.name].push(control.value);
+            if (!['checkbox', 'radio'].includes(control.type) || control.checked) fields[control.name].push(control.value);
         });
         return {mode: panel.dataset.mode, fields,
             orders: Object.fromEntries(orderLists().map(element => [orderKey(element), [...element.children].map(piece)])),
             colors: {...colorScheme}, orientation: {...cubeOrientation}};
     }
-    function apply(preset) {
+    function apply(preset, sharedOnly = false) {
         const settings = preset.settings;
-        if (settings.mode !== panel.dataset.mode) {
-            sessionStorage.setItem('pendingSettingsPreset', String(preset.id));
-            location.assign(settings.mode === 'beginner' ? '/beginner' : '/expert');
-            return;
-        }
+        if (!sharedOnly && settings.mode !== panel.dataset.mode) return;
         // Set values first, then trigger dependent visibility and primary-buffer logic.
-        const controls = [...root.querySelectorAll('input[name], select[name]')];
+        const controls = [...root.querySelectorAll('input[name], select[name]')]
+            .filter(control => !sharedOnly || control.name.startsWith('letter_'));
         controls.filter(control => control.type !== 'hidden').forEach(control => {
             const values = settings.fields[control.name];
             if (!values) {
@@ -51,13 +66,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (control.name.startsWith('beginner_') && control.type === 'checkbox') control.checked = false;
                 return;
             }
-            if (control.type === 'checkbox') control.checked = values.includes(control.value);
-            else control.value = values[0] ?? '';
+            if (['checkbox', 'radio'].includes(control.type)) control.checked = values.includes(control.value);
+            else if (control.tagName !== 'SELECT' || [...control.options].some(option => option.value === values[0])) {
+                control.value = values[0] ?? '';
+            }
         });
         controls.filter(control => control.type !== 'hidden' && control.id !== 'beginner-method').forEach(control => control.dispatchEvent(new Event('change', {bubbles: true})));
         // Change handlers may reorder primary buffers and custom cycle orders.
         // Restore the saved order after those handlers finish.
-        orderLists().forEach(element => {
+        (sharedOnly ? [] : orderLists()).forEach(element => {
             const order = settings.orders[orderKey(element)];
             if (!order) return;
             const children = [...element.children];
@@ -76,6 +93,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateCubeColors();
         saveCubeColors();
         saveLetterScheme();
+        // Persist the final state after dependent handlers and order restoration.
+        document.getElementById('memo-form').dispatchEvent(new Event('change', {bubbles: true}));
+        document.dispatchEvent(new Event('cycle-break-order-updated'));
+        if (sharedOnly) {
+            message(`Copied letters, colors and orientation from “${preset.name}”. Solving options are unchanged. Save a new preset to keep this combination on your profile.`);
+            return;
+        }
         name.value = preset.name;
         list.value = String(preset.id);
         load.disabled = false;
@@ -83,10 +107,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     function renderList(selected = '') {
         list.replaceChildren(new Option('Choose a preset', ''));
-        presets.forEach(preset => list.add(new Option(`${preset.name} (${preset.settings.mode})`, preset.id)));
+        sharedList.replaceChildren(new Option('Choose a preset', ''));
+        presets.forEach(preset => {
+            const target = preset.settings.mode === panel.dataset.mode ? list : sharedList;
+            target.add(new Option(preset.name, preset.id));
+        });
         list.value = String(selected);
         load.disabled = !list.value;
+        copyShared.disabled = true;
     }
+    sharedList.addEventListener('change', () => { copyShared.disabled = !sharedList.value; });
+    copyShared.addEventListener('click', () => {
+        try {
+            const preset = presets.find(item => String(item.id) === sharedList.value);
+            if (preset) apply(preset, true);
+        } catch (error) { message(error.message, true); }
+    });
     list.addEventListener('change', () => { load.disabled = !list.value; });
     load.addEventListener('click', () => {
         try {
@@ -95,8 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) { message(error.message, true); }
     });
     save.addEventListener('click', async () => {
+        if (save.disabled) return;
         if (!name.value.trim()) { message('Enter a name for your preset.', true); name.focus(); return; }
+        ++activity;
         save.disabled = load.disabled = true;
+        retry.disabled = true;
         message('Saving settings…');
         try {
             const preset = await api({method: 'POST', headers: {'Content-Type': 'application/json', 'X-Preset-CSRF': panel.dataset.csrf},
@@ -104,15 +143,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             presets.push(preset);
             renderList(preset.id);
             message(`Saved “${preset.name}” to your profile.`);
-        } catch (error) { message(error.message, true); }
-        finally { save.disabled = false; load.disabled = !list.value; }
+        } catch (error) { message(error.message, true); retry.hidden = false; }
+        finally { save.disabled = false; retry.disabled = false; load.disabled = !list.value; }
     });
-    try {
-        presets = (await api()).presets;
-        renderList();
-        const pending = sessionStorage.getItem('pendingSettingsPreset');
-        sessionStorage.removeItem('pendingSettingsPreset');
-        const preset = presets.find(item => String(item.id) === pending);
-        if (preset) apply(preset);
-    } catch (error) { message(error.message, true); }
+    async function refresh() {
+        const currentActivity = ++activity;
+        retry.hidden = true;
+        message('Loading presets…');
+        try {
+            const fetched = (await api()).presets;
+            // A save may finish while this older list request is in flight.
+            presets = [...new Map([...fetched, ...presets].map(preset => [String(preset.id), preset])).values()];
+            renderList(list.value);
+            if (currentActivity === activity) message('');
+        } catch (error) {
+            if (currentActivity === activity) message(error.message, true);
+            retry.hidden = false;
+        }
+    }
+    retry.addEventListener('click', refresh);
+    await refresh();
 });
