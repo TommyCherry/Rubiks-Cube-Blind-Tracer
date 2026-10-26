@@ -11,6 +11,9 @@ import unicodedata
 
 # Deployment-specific entries belong in MEMO_WORD_EXCLUSIONS, not source code.
 
+class MemoPolicyConfigurationError(ValueError):
+    """Invalid private configuration; messages must never contain its value."""
+
 
 def normalize(text):
     text = unicodedata.normalize('NFKD', text.casefold())
@@ -23,10 +26,10 @@ def _exclusions(raw):
     try:
         entries = json.loads(raw)
     except (ValueError, TypeError):
-        raise ValueError('MEMO_WORD_EXCLUSIONS must be a JSON array of strings.') from None
+        raise MemoPolicyConfigurationError('MEMO_WORD_EXCLUSIONS must be a JSON array of strings.') from None
     if (not isinstance(entries, list)
             or any(not isinstance(entry, str) or not entry.strip() for entry in entries)):
-        raise ValueError('MEMO_WORD_EXCLUSIONS must be a JSON array of nonempty strings.')
+        raise MemoPolicyConfigurationError('MEMO_WORD_EXCLUSIONS must be a JSON array of nonempty strings.')
     normalized = frozenset(normalize(entry) for entry in entries)
     return normalized, frozenset(entry.replace(' ', '') for entry in normalized)
 

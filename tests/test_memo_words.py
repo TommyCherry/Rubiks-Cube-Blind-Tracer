@@ -45,6 +45,16 @@ class MemoWordsTests(unittest.TestCase):
         with patch('app.suggestions_for', side_effect=requests.Timeout):
             self.assertEqual(client.get('/api/memo-words?pairs=AB').status_code, 503)
 
+    def test_private_configuration_error_is_identified_without_disclosure(self):
+        from memo_word_policy import MemoPolicyConfigurationError
+        for endpoint, lookup in (('/api/memo-words?pairs=AB', 'app.suggestions_for'),
+                                 ('/api/memo-word-options?pair=AB', 'app.alternatives_for')):
+            with patch(lookup, side_effect=MemoPolicyConfigurationError('private test content')):
+                response = app.test_client().get(endpoint)
+                self.assertEqual(response.status_code, 503)
+                self.assertEqual(response.json['code'], 'memo_policy_configuration')
+                self.assertNotIn(b'private test content', response.data)
+
     def test_bulk_pairs_and_panels(self):
         pairs = [a + b for a in 'ABCDEFGHIJK' for b in 'ABCDEFGHIJK']
         with patch('app.suggestions_for', return_value={}) as lookup:

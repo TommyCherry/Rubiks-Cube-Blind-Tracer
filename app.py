@@ -13,6 +13,7 @@ from urllib.parse import urlencode, urlsplit
 from auth_config import session_secret
 import requests
 from colpi import suggestions_for, valid_pair, alternatives_for
+from memo_word_policy import MemoPolicyConfigurationError
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
 from conjugacy import generate_state, to_facelets
@@ -802,8 +803,12 @@ def memo_words():
         return jsonify(error="Provide up to 729 two-letter pairs."), 400
     try:
         return jsonify(words=suggestions_for(pairs), censored=True, language="en")
-    except (requests.RequestException, ValueError, TypeError, AttributeError):
-        app.logger.warning("Censored CoLPI suggestions unavailable")
+    except MemoPolicyConfigurationError:
+        app.logger.warning("Memo words unavailable: invalid MEMO_WORD_EXCLUSIONS format")
+        return jsonify(error="Word examples are unavailable because the server's word-filter configuration is invalid.", code="memo_policy_configuration"), 503
+    except (requests.RequestException, ValueError, TypeError, AttributeError) as error:
+        app.logger.warning("Censored CoLPI suggestions unavailable (%s, upstream status %s)",
+                           type(error).__name__, getattr(getattr(error, 'response', None), 'status_code', None))
         return jsonify(error="Censored word examples are temporarily unavailable."), 503
 
 
@@ -814,7 +819,12 @@ def memo_word_options():
         return jsonify(error="Provide one two-letter pair."), 400
     try:
         return jsonify(pair=pair, words=alternatives_for(pair), censored=True)
-    except (requests.RequestException, ValueError, TypeError, AttributeError):
+    except MemoPolicyConfigurationError:
+        app.logger.warning("Memo alternatives unavailable: invalid MEMO_WORD_EXCLUSIONS format")
+        return jsonify(error="Word alternatives are unavailable because the server's word-filter configuration is invalid.", code="memo_policy_configuration"), 503
+    except (requests.RequestException, ValueError, TypeError, AttributeError) as error:
+        app.logger.warning("CoLPI alternatives unavailable (%s, upstream status %s)",
+                           type(error).__name__, getattr(getattr(error, 'response', None), 'status_code', None))
         return jsonify(error="Word alternatives are temporarily unavailable."), 503
 
 

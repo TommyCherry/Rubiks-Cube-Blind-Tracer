@@ -350,8 +350,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('/api/memo-words?pairs=' + encodeURIComponent(pairs.join(',')),
             {signal: controller.signal});
-        if (!response.ok) throw new Error('Unavailable');
         const result = await response.json();
+        if (!response.ok) {
+            const error = new Error('Unavailable');
+            error.policyConfiguration = result.code === 'memo_policy_configuration';
+            throw error;
+        }
         if (result.censored !== true) throw new Error('Censorship not verified');
         Object.assign(words, result.words);
         selected.forEach(({panel}) => loaded.add(panel));
@@ -444,8 +448,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         render();
         return true;
-    } catch (_) {
-        selected.forEach(({panel}) => { panel.textContent = 'Word examples are unavailable right now. Your letter memo is ready to use.'; });
+    } catch (error) {
+        selected.forEach(({panel}) => { panel.textContent = error.policyConfiguration
+            ? 'Word examples are unavailable because the server’s word-filter configuration needs fixing. Your letter memo is ready to use.'
+            : 'Word examples are unavailable right now. Your letter memo is ready to use.'; });
         return false;
     } finally { clearTimeout(timer); }
     }
