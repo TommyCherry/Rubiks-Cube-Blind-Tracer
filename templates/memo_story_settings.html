@@ -1,0 +1,8 @@
+<button type="button" class="show-memo-stories" data-show-stories="{{ story_scope }}" data-english-memo aria-expanded="false">Show memo sentences/stories (in testing mode)</button>
+<div class="memo-story-settings" data-story-settings="{{ story_scope }}" hidden>
+    <span>Filler words per pair: <output data-filler-output>2–2</output> (approximate average)</span>
+    <label>Low <input type="range" min="0" max="2" step="0.1" value="2" data-filler-low aria-label="Minimum filler words per pair for {{ story_scope }}"></label>
+    <label>High <input type="range" min="0" max="2" step="0.1" value="2" data-filler-high aria-label="Maximum filler words per pair for {{ story_scope }}"></label>
+    <small><span class="story-cue">Memo words</span> · <span class="story-filler">Connecting words</span> · Lower values make shorter fragments; higher values allow more grammar.</small>
+    <small>Recall each link from its initiator to its target: person sends email; email alerts person. Arrows preserve order in shorter fragments.</small>
+</div>

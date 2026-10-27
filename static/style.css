@@ -1266,7 +1266,7 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 
 .conjugacy-practice-controls .conjugacy-count { flex: 0 1 140px; }
 
-.tracer-mode-nav { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 20px; border: 1px solid #dce4e9; border-radius: 10px; background: #eaf0f2; }
+.tracer-mode-nav { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 20px; border: 1px solid #dce4e9; border-radius: 10px; background: #eaf0f2; }
 .tracer-mode-nav a { padding: 10px 22px; border-radius: 7px; color: #526474; text-decoration: none; font-size: 13px; font-weight: 600; }
 .tracer-mode-nav a[aria-current="page"] { background: #fff; color: #087e79; box-shadow: 0 1px 4px #23354812; }
 .tracer-mode-nav a:hover { color: #087e79; }
@@ -1287,6 +1287,12 @@ body.tracer-page { margin: 0; padding: 36px 40px 64px; background: #f4f6f8; colo
 #load-bulk-memo-words:focus-visible { outline: 2px solid #243342; outline-offset: 3px; }
 .memo-example-story { flex-basis: 100%; margin: 8px 0 0; color: #344b58; font-family: system-ui, sans-serif; font-size: 0.9rem; line-height: 1.6; }
 .memo-example-story .memo-story-meaning { display: block; margin-top: 4px; font-size: 0.78rem; font-weight: 400; line-height: 1.6; color: #526675; }
+.story-cue { color: #087e7e; font-weight: 600; }
+.story-filler { color: #825624; font-weight: 400; }
+.story-annotation { color: #526675; font-family: monospace; }
+.memo-story-settings { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-family: system-ui, sans-serif; font-size: 0.8rem; color: #526675; }
+.memo-story-settings label { display: inline-flex; align-items: center; gap: 6px; }
+.memo-story-settings input[type="range"] { width: 100px; accent-color: #087e7e; }
 .memo-word-filter { display: block; margin: 10px 0; font-size: 0.9em; }
 .memo-word small { font-size: 0.8em; color: #526675; }
 .memo-words { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -1417,3 +1423,25 @@ html[lang="zh-Hans"] .history-eyebrow { letter-spacing: .08em; }
 .bulk-filter-grid label { display: grid; gap: 4px; min-width: 0; }
 .bulk-filter-grid input { width: 100%; box-sizing: border-box; }
 .beginner-bulk-filters { margin: 20px 0; }
+
+/* Standalone local story playground. */
+.story-playground { max-width: 960px; margin: 2rem auto; padding: 1.5rem; }
+.story-playground textarea { display: block; box-sizing: border-box; width: 100%; resize: vertical; font: inherit; padding: 1rem; }
+.story-playground-controls { display: grid; gap: .5rem; margin: 1.25rem 0; }
+.story-playground-controls input { width: min(100%, 420px); }
+.story-playground-buttons { display: flex; gap: .75rem; flex-wrap: wrap; }
+.story-playground #story-playground-result { margin-top: 1.5rem; padding: 1.25rem; background: #fff; border: 1px solid #d7e1e8; border-radius: 16px; overflow-wrap: anywhere; }
+.story-playground-note, #story-input-help { color: #536879; }
+.story-playground .memo-example-story { font-size: 1.15rem; }
+.story-ai-controls, .story-playground #story-ai-result { margin: 1.5rem 0; padding: 1.25rem; border: 1px solid #d7e1e8; border-radius: 16px; background: #fff; overflow-wrap: anywhere; }
+.story-ai-controls button { margin: .3rem .5rem .3rem 0; }
+
+/* Chinese workbook words have no English short-cue or sentence controls. */
+html:not([lang="zh-Hans"]) [data-chinese-memo],
+html[lang="zh-Hans"] [data-english-memo],
+html[lang="zh-Hans"] [data-story-settings] { display: none; }
+
+.show-memo-stories { padding: 10px 16px; margin: 10px 0; border: 0; border-radius: 8px; background: #15803d; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.show-memo-stories:disabled { opacity: .65; cursor: default; }
+.show-memo-stories:focus-visible { outline: 2px solid #243342; outline-offset: 3px; }
+.memo-story-settings[hidden], .memo-example-story[hidden] { display: none; }

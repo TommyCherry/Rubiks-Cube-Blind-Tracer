@@ -249,7 +249,7 @@ Corner Memo|角块记忆编码
 {0} targets|{0} 个目标
 Copy|复制
 Copied!|已复制！
-Each two-letter pair in [Flips: …] or [2Flip: …] identifies one flipped edge, not two targets. A [2Flip: … …] is one algorithm performed at a floating boundary. Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up. The selected edge buffer is excluded from the flip list and count.|[Flips: …] 或 [2Flip: …] 中的每个双字母对表示一个翻棱，而非两个目标。[2Flip: … …] 表示在浮动边界执行的一个公式。翻棱不计入目标数，每两个翻棱增加一个公式，向上取整。所选棱块缓冲块不计入翻棱列表及数量。
+Each two-letter pair in [Flips: …] or [2Flip: …] identifies one flipped edge, not two targets. A [2Flip: … …] is one algorithm performed at a floating boundary. Flips are excluded from target counts and add one algorithm per two flipped edges, rounded up. The selected edge buffer is excluded from the flip list and count.|[Flips: …] 或 [2Flip: …] 中的每个编码表示一个翻棱，而非两个目标。[2Flip: … …] 表示在浮动边界执行的一个公式。翻棱不计入目标数，每两个翻棱增加一个公式，向上取整。所选棱块缓冲块不计入翻棱列表及数量。
 Show Trace Details|显示追踪详情
 Edge Targets|棱块目标
 Corner Targets|角块目标
@@ -396,7 +396,7 @@ Reset your letter scheme, color scheme, and cube orientation to defaults?|将字
     catalog.trim().split('\n').forEach(line => { const index = line.indexOf('|'); add(line.slice(0, index), line.slice(index + 1)); });
     [
         ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner, excluded from target counts. The selected corner buffer is excluded. Added twist algorithms = min(CW twists, CCW twists) + |CW twists − CCW twists|.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个反角，不计入编码数，所选角块缓冲块也不计入。额外反角公式数 = min（顺时针反角数，逆时针反角数）+ |顺时针反角数 − 逆时针反角数|。'],
-        ['Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets. Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.', '[Flips: …] 中的每个双字母对表示一个翻棱，而非两个目标。翻棱不计入编码数及平均值。所选棱块缓冲块不计入翻棱列表及数量。'],
+        ['Each two-letter pair in [Flips: …] identifies one flipped edge, not two targets. Flips are excluded from target counts and averages. The selected edge buffer is excluded from the flip list and count.', '[Flips: …] 中的每个编码表示一个翻棱，而非两个目标。翻棱不计入编码数及平均值。所选棱块缓冲块不计入翻棱列表及数量。'],
         ['Each letter in [CW Twists: …] or [CCW Twists: …] identifies one twisted corner. Twists are excluded from target counts and averages, and the selected corner buffer is excluded from twist lists and counts. With Execute Parity + 3twist as Comm + LTCT, the twist traced through a cycle break contributes two targets and is removed from standalone twist counts.', '[CW Twists: …] 或 [CCW Twists: …] 中的每个字母表示一个反角。反角不计入编码数及平均值，所选角块缓冲块不计入反角列表及数量。启用“将奇偶 + 三角翻处理为交换子 + LTCT”时，通过借位追踪的反角贡献两个目标，并从独立反角计数中移除。'],
         ['Estimated algorithms = ceil(edge targets ÷ 2) + ceil(corner targets ÷ 2) + ceil(flipped edges ÷ 2) + min(CW twists, CCW twists) + |CW twists − CCW twists|. A marked T2C cycle counts as one final algorithm; its three targets are excluded from ordinary target-pair algorithm estimates. Each applied LTCT subtracts one algorithm for the twist combined with parity. CW/CCW counts include the corner marked LTCT. When basic sandwiching is enabled, each highlighted sandwich subtracts one algorithm. Target counts stay unchanged. Buffers count only those used for targets, with edges and corners counted separately. Enabled edge and corner floating switches are included in buffer usage. Parity describes the scrambled permutation before pseudoswap.', '预估公式数 = ceil（棱块编码数 ÷ 2）+ ceil（角块编码数 ÷ 2）+ ceil（翻棱数 ÷ 2）+ min（顺时针反角数，逆时针反角数）+ |顺时针反角数 − 逆时针反角数|，其中 ceil 表示向上取整。标记的 T2C 循环计为最后一个公式，其三个目标不计入普通编码对的公式估算。每次 LTCT 将反角与奇偶合并，减少一个公式。顺/逆时针计数包含标记为 LTCT 的角块。启用基础三明治技巧时，每个高亮三明治减少一个公式，编码数不变。仅统计用于目标的缓冲块，棱块和角块分别计数。已启用的棱角浮动切换计入缓冲块使用量。奇偶性描述反编前的打乱排列。'],
         ['{0} scrambles traced · {1} invalid lines excluded from statistics.', '已追踪 {0} 个打乱 · 统计已排除 {1} 个无效行。'],
@@ -482,6 +482,21 @@ Select two different edges for parity case {0}, or leave both as Default.|请为
     'JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split(' ').forEach((month, index) => add(month, `${index + 1}月`));
     // Match specific sentences before generic count labels.
     patterns.sort((a, b) => b[0].source.length - a[0].source.length);
+    add('Letter-pair memo', '编码记忆');
+    add('Letter pair memo playground (in testing mode)', '编码记忆练习场（测试中）');
+    add('This playground is in testing mode. Generated stories may be awkward or inaccurate; review them before using them for memorization.', '此练习场目前处于测试阶段。生成的故事可能不自然或不准确，请在用于记忆前检查。');
+    add('Show memo sentences/stories (in testing mode)', '显示记忆句子／故事（测试中）');
+    add('Hide memo sentences/stories (in testing mode)', '隐藏记忆句子／故事（测试中）');
+    add('Retry loading memo words', '重新加载联想词');
+    add('← Back to the tracer', '← 返回盲拧追踪器');
+    add('Enter letter pairs to get their assigned words and a memory story. No scramble needed.', '输入编码即可获取对应联想词和记忆故事，无需输入打乱。中文模式目前仅显示联想词。');
+    add('Letter pairs, in memo order', '按记忆顺序输入编码');
+    add('Separate pairs with spaces, commas, or new lines. Up to 60 pairs. Single letters stay as separate cues.', '用空格、逗号或换行分隔，最多输入60组。单个字母将保留为独立提示。');
+    add('Generate memo', '生成记忆');
+    add('Your memo', '你的记忆');
+    add('Enter at least one letter pair.', '请至少输入一组编码。');
+    add('Enter up to 60 pairs or single-letter cues.', '最多输入60组编码或单字母提示。');
+    add('Separate letter pairs with spaces, commas, or new lines. Single letters are kept as separate cues.', '请用空格、逗号或换行分隔编码。单个字母将保留为独立提示。');
     let language = 'en';
     try { language = localStorage.getItem('tracer-language') === 'zh' ? 'zh' : 'en'; } catch (_) { /* Storage can be disabled. */ }
     function translate(value) {

@@ -1,0 +1,2536 @@
+{
+  "source": "勺子首字读音联想词-202607版 2.xlsx",
+  "sheet": "竖总表",
+  "entries": {
+    "AB": {
+      "word": "阿波罗",
+      "pronunciation": "bō",
+      "source_word": "阿波罗"
+    },
+    "AC": {
+      "word": "鹌鹑蛋",
+      "pronunciation": "chùn",
+      "source_word": "`鹌鹑蛋"
+    },
+    "AD": {
+      "word": "AD钙奶",
+      "pronunciation": "dì",
+      "source_word": "AD钙奶"
+    },
+    "AE": {
+      "word": "阿尔卑斯糖",
+      "pronunciation": "ā",
+      "source_word": "阿尔卑斯糖"
+    },
+    "AF": {
+      "word": "艾弗尔铁塔",
+      "pronunciation": "ài",
+      "source_word": "艾弗尔铁塔"
+    },
+    "AG": {
+      "word": "阿哥",
+      "pronunciation": "à",
+      "source_word": "阿哥"
+    },
+    "AH": {
+      "word": "暗黑",
+      "pronunciation": "àn",
+      "source_word": "暗黑"
+    },
+    "AJ": {
+      "word": "埃及",
+      "pronunciation": "jí",
+      "source_word": "埃及"
+    },
+    "AK": {
+      "word": "AK47",
+      "pronunciation": "ēi",
+      "source_word": "AK47"
+    },
+    "AL": {
+      "word": "阿拉伯",
+      "pronunciation": "lā",
+      "source_word": "阿拉伯"
+    },
+    "AM": {
+      "word": "阿妹",
+      "pronunciation": "mēi",
+      "source_word": "阿妹+"
+    },
+    "AN": {
+      "word": "安妮",
+      "pronunciation": "ān",
+      "source_word": "安妮-"
+    },
+    "AO": {
+      "word": "哀",
+      "pronunciation": "āi",
+      "source_word": "哀-"
+    },
+    "AP": {
+      "word": "阿飘",
+      "pronunciation": "piào",
+      "source_word": "`阿飘"
+    },
+    "AQ": {
+      "word": "安全带",
+      "pronunciation": "quàn",
+      "source_word": "`安全带"
+    },
+    "AR": {
+      "word": "矮人",
+      "pronunciation": "ǎi",
+      "source_word": "矮人"
+    },
+    "AS": {
+      "word": "盎司*",
+      "pronunciation": "áng",
+      "source_word": "盎司*"
+    },
+    "AT": {
+      "word": "安徒生*",
+      "pronunciation": "tú",
+      "source_word": "安徒生*"
+    },
+    "AW": {
+      "word": "艾薇儿",
+      "pronunciation": "wēi",
+      "source_word": "艾薇儿"
+    },
+    "AX": {
+      "word": "阿修罗",
+      "pronunciation": "xiū",
+      "source_word": "阿修罗-"
+    },
+    "AY": {
+      "word": "暗夜",
+      "pronunciation": "yè",
+      "source_word": "暗夜-"
+    },
+    "AZ": {
+      "word": "阿紫",
+      "pronunciation": "zǐ",
+      "source_word": "阿紫-"
+    },
+    "BA": {
+      "word": "爸",
+      "pronunciation": "bà",
+      "source_word": "爸"
+    },
+    "BC": {
+      "word": "蹦床",
+      "pronunciation": "bèng",
+      "source_word": "蹦床"
+    },
+    "BD": {
+      "word": "绷带",
+      "pronunciation": "bēng",
+      "source_word": "绷带"
+    },
+    "BE": {
+      "word": "杯",
+      "pronunciation": "bēi",
+      "source_word": "杯"
+    },
+    "BF": {
+      "word": "蝙蝠",
+      "pronunciation": "biān",
+      "source_word": "蝙蝠"
+    },
+    "BG": {
+      "word": "八卦",
+      "pronunciation": "bā",
+      "source_word": "八卦"
+    },
+    "BH": {
+      "word": "壁虎",
+      "pronunciation": "bì",
+      "source_word": "壁虎"
+    },
+    "BJ": {
+      "word": "簸箕",
+      "pronunciation": "bò",
+      "source_word": "簸箕"
+    },
+    "BK": {
+      "word": "贝壳",
+      "pronunciation": "bèi",
+      "source_word": "贝壳"
+    },
+    "BL": {
+      "word": "宾利",
+      "pronunciation": "bīn",
+      "source_word": "宾利"
+    },
+    "BM": {
+      "word": "斑马",
+      "pronunciation": "bān",
+      "source_word": "斑马"
+    },
+    "BN": {
+      "word": "白娘子",
+      "pronunciation": "bái",
+      "source_word": "白娘子-"
+    },
+    "BO": {
+      "word": "笔",
+      "pronunciation": "bǐ",
+      "source_word": "笔"
+    },
+    "BP": {
+      "word": "帮派*",
+      "pronunciation": "bāng",
+      "source_word": "帮派*"
+    },
+    "BQ": {
+      "word": "标枪",
+      "pronunciation": "biāo",
+      "source_word": "标枪"
+    },
+    "BR": {
+      "word": "半人马",
+      "pronunciation": "bàn",
+      "source_word": "半人马"
+    },
+    "BS": {
+      "word": "别墅",
+      "pronunciation": "bié",
+      "source_word": "别墅"
+    },
+    "BT": {
+      "word": "变态*",
+      "pronunciation": "biàn",
+      "source_word": "变态*"
+    },
+    "BW": {
+      "word": "布娃",
+      "pronunciation": "bù",
+      "source_word": "布娃"
+    },
+    "BX": {
+      "word": "冰箱",
+      "pronunciation": "bīng",
+      "source_word": "冰箱"
+    },
+    "BY": {
+      "word": "鲍鱼",
+      "pronunciation": "bào",
+      "source_word": "鲍鱼"
+    },
+    "BZ": {
+      "word": "棒子",
+      "pronunciation": "bàng",
+      "source_word": "棒子"
+    },
+    "CA": {
+      "word": "叉",
+      "pronunciation": "chā",
+      "source_word": "叉"
+    },
+    "CB": {
+      "word": "搓板",
+      "pronunciation": "cuō",
+      "source_word": "搓板"
+    },
+    "CD": {
+      "word": "锉刀",
+      "pronunciation": "cuò",
+      "source_word": "锉刀"
+    },
+    "CE": {
+      "word": "车",
+      "pronunciation": "chē",
+      "source_word": "车"
+    },
+    "CF": {
+      "word": "吹风机",
+      "pronunciation": "chuī",
+      "source_word": "吹风机"
+    },
+    "CG": {
+      "word": "唇膏",
+      "pronunciation": "chún",
+      "source_word": "唇膏"
+    },
+    "CH": {
+      "word": "柴火",
+      "pronunciation": "chái",
+      "source_word": "柴火"
+    },
+    "CJ": {
+      "word": "餐巾",
+      "pronunciation": "cān",
+      "source_word": "餐巾"
+    },
+    "CK": {
+      "word": "创可贴",
+      "pronunciation": "chuāng",
+      "source_word": "创可贴"
+    },
+    "CL": {
+      "word": "成龙",
+      "pronunciation": "chéng",
+      "source_word": "成龙+"
+    },
+    "CM": {
+      "word": "筹码",
+      "pronunciation": "chóu",
+      "source_word": "筹码"
+    },
+    "CN": {
+      "word": "彩泥",
+      "pronunciation": "cǎi",
+      "source_word": "彩泥"
+    },
+    "CO": {
+      "word": "磁",
+      "pronunciation": "cí",
+      "source_word": "磁"
+    },
+    "CP": {
+      "word": "脆皮",
+      "pronunciation": "cuì",
+      "source_word": "脆皮"
+    },
+    "CQ": {
+      "word": "充气船",
+      "pronunciation": "chōng",
+      "source_word": "充气船"
+    },
+    "CR": {
+      "word": "超人",
+      "pronunciation": "chāo",
+      "source_word": "超人"
+    },
+    "CS": {
+      "word": "穿山甲",
+      "pronunciation": "chuān",
+      "source_word": "穿山甲"
+    },
+    "CT": {
+      "word": "锄头",
+      "pronunciation": "chú",
+      "source_word": "锄头"
+    },
+    "CW": {
+      "word": "刺猬",
+      "pronunciation": "cì",
+      "source_word": "刺猬"
+    },
+    "CX": {
+      "word": "沉香",
+      "pronunciation": "chén",
+      "source_word": "沉香-"
+    },
+    "CY": {
+      "word": "苍蝇",
+      "pronunciation": "cāng",
+      "source_word": "苍蝇"
+    },
+    "CZ": {
+      "word": "搋子",
+      "pronunciation": "chuāi",
+      "source_word": "搋子"
+    },
+    "DA": {
+      "word": "档案",
+      "pronunciation": "dàng",
+      "source_word": "档案"
+    },
+    "DB": {
+      "word": "碉堡",
+      "pronunciation": "diāo",
+      "source_word": "碉堡"
+    },
+    "DC": {
+      "word": "单车",
+      "pronunciation": "dān",
+      "source_word": "单车"
+    },
+    "DE": {
+      "word": "蝶",
+      "pronunciation": "dié",
+      "source_word": "蝶"
+    },
+    "DF": {
+      "word": "东风",
+      "pronunciation": "dōng",
+      "source_word": "东风"
+    },
+    "DG": {
+      "word": "蛋糕弹弓",
+      "pronunciation": "dàn",
+      "source_word": "蛋糕弹弓"
+    },
+    "DH": {
+      "word": "吊环",
+      "pronunciation": "diào",
+      "source_word": "吊环"
+    },
+    "DJ": {
+      "word": "独角兽",
+      "pronunciation": "dú",
+      "source_word": "独角兽"
+    },
+    "DK": {
+      "word": "短裤",
+      "pronunciation": "duǎn",
+      "source_word": "短裤"
+    },
+    "DL": {
+      "word": "灯笼",
+      "pronunciation": "dēng",
+      "source_word": "灯笼"
+    },
+    "DM": {
+      "word": "盗墓%",
+      "pronunciation": "dào",
+      "source_word": "盗墓%"
+    },
+    "DN": {
+      "word": "豆奶",
+      "pronunciation": "dòu",
+      "source_word": "豆奶"
+    },
+    "DO": {
+      "word": "兜",
+      "pronunciation": "dōu",
+      "source_word": "兜"
+    },
+    "DP": {
+      "word": "盾牌",
+      "pronunciation": "dùn",
+      "source_word": "盾牌"
+    },
+    "DQ": {
+      "word": "刀鞘",
+      "pronunciation": "dāo",
+      "source_word": "刀鞘"
+    },
+    "DR": {
+      "word": "多肉",
+      "pronunciation": "duō",
+      "source_word": "多肉"
+    },
+    "DS": {
+      "word": "袋鼠",
+      "pronunciation": "dài",
+      "source_word": "袋鼠"
+    },
+    "DT": {
+      "word": "电筒电梯",
+      "pronunciation": "diàn",
+      "source_word": "电筒电梯"
+    },
+    "DW": {
+      "word": "动物*",
+      "pronunciation": "dòng",
+      "source_word": "动物*"
+    },
+    "DX": {
+      "word": "大象",
+      "pronunciation": "dà",
+      "source_word": "大象"
+    },
+    "DY": {
+      "word": "杜宇生#",
+      "pronunciation": "dù",
+      "source_word": "杜宇生#"
+    },
+    "DZ": {
+      "word": "队长",
+      "pronunciation": "duì",
+      "source_word": "队长-"
+    },
+    "EA": {
+      "word": "鹅",
+      "pronunciation": "é",
+      "source_word": "鹅"
+    },
+    "EB": {
+      "word": "耳包",
+      "pronunciation": "bāo",
+      "source_word": "耳包"
+    },
+    "EC": {
+      "word": "二叉树",
+      "pronunciation": "chà",
+      "source_word": "二叉树"
+    },
+    "ED": {
+      "word": "耳钉",
+      "pronunciation": "dīng",
+      "source_word": "耳钉"
+    },
+    "EF": {
+      "word": "耳返",
+      "pronunciation": "fǎn",
+      "source_word": "耳返"
+    },
+    "EG": {
+      "word": "二锅头",
+      "pronunciation": "guō",
+      "source_word": "二锅头"
+    },
+    "EH": {
+      "word": "二胡",
+      "pronunciation": "hú",
+      "source_word": "二胡"
+    },
+    "EJ": {
+      "word": "二极管",
+      "pronunciation": "èr",
+      "source_word": "二极管"
+    },
+    "EK": {
+      "word": "尔康",
+      "pronunciation": "kāng",
+      "source_word": "尔康"
+    },
+    "EL": {
+      "word": "二郎神",
+      "pronunciation": "láng",
+      "source_word": "二郎神"
+    },
+    "EM": {
+      "word": "恶魔",
+      "pronunciation": "è",
+      "source_word": "恶魔"
+    },
+    "EN": {
+      "word": "摁*",
+      "pronunciation": "èn",
+      "source_word": "摁*"
+    },
+    "EO": {
+      "word": "EI",
+      "pronunciation": "èi",
+      "source_word": "`EI"
+    },
+    "EP": {
+      "word": "EP*",
+      "pronunciation": "pì",
+      "source_word": "`EP*"
+    },
+    "EQ": {
+      "word": "EQ*",
+      "pronunciation": "kiū",
+      "source_word": "`EQ*"
+    },
+    "ER": {
+      "word": "耳*",
+      "pronunciation": "ěr",
+      "source_word": "耳*"
+    },
+    "ES": {
+      "word": "耳勺",
+      "pronunciation": "sháo",
+      "source_word": "耳勺"
+    },
+    "ET": {
+      "word": "ET",
+      "pronunciation": "tì",
+      "source_word": "`ET"
+    },
+    "EW": {
+      "word": "二维码",
+      "pronunciation": "wéi",
+      "source_word": "二维码"
+    },
+    "EX": {
+      "word": "恩希#",
+      "pronunciation": "ēn",
+      "source_word": "恩希#"
+    },
+    "EY": {
+      "word": "鳄鱼",
+      "pronunciation": "yú",
+      "source_word": "鳄鱼"
+    },
+    "EZ": {
+      "word": "儿子",
+      "pronunciation": "ér",
+      "source_word": "儿子"
+    },
+    "FA": {
+      "word": "发",
+      "pronunciation": "fào",
+      "source_word": "`发"
+    },
+    "FB": {
+      "word": "粪便",
+      "pronunciation": "fòu",
+      "source_word": "`粪便"
+    },
+    "FC": {
+      "word": "帆船",
+      "pronunciation": "fāi",
+      "source_word": "`帆船"
+    },
+    "FD": {
+      "word": "芬达",
+      "pronunciation": "fēn",
+      "source_word": "芬达"
+    },
+    "FE": {
+      "word": "飞蛾",
+      "pronunciation": "fēi",
+      "source_word": "飞蛾"
+    },
+    "FG": {
+      "word": "发箍",
+      "pronunciation": "fà",
+      "source_word": "发箍"
+    },
+    "FH": {
+      "word": "凤凰",
+      "pronunciation": "fèng",
+      "source_word": "凤凰"
+    },
+    "FJ": {
+      "word": "佛经",
+      "pronunciation": "fó",
+      "source_word": "佛经"
+    },
+    "FK": {
+      "word": "饭卡",
+      "pronunciation": "fàn",
+      "source_word": "饭卡"
+    },
+    "FL": {
+      "word": "凤梨",
+      "pronunciation": "fìng",
+      "source_word": "`凤梨"
+    },
+    "FM": {
+      "word": "坟墓",
+      "pronunciation": "fén",
+      "source_word": "坟墓"
+    },
+    "FN": {
+      "word": "肥牛",
+      "pronunciation": "féi",
+      "source_word": "肥牛"
+    },
+    "FO": {
+      "word": "佛",
+      "pronunciation": "fò",
+      "source_word": "`佛"
+    },
+    "FP": {
+      "word": "废品*",
+      "pronunciation": "fèi",
+      "source_word": "废品*"
+    },
+    "FQ": {
+      "word": "番茄",
+      "pronunciation": "fān",
+      "source_word": "番茄"
+    },
+    "FR": {
+      "word": "缝纫机",
+      "pronunciation": "féng",
+      "source_word": "缝纫机"
+    },
+    "FS": {
+      "word": "富士%",
+      "pronunciation": "fù",
+      "source_word": "富士%"
+    },
+    "FT": {
+      "word": "发条",
+      "pronunciation": "fā",
+      "source_word": "发条"
+    },
+    "FW": {
+      "word": "福娃",
+      "pronunciation": "fú",
+      "source_word": "福娃"
+    },
+    "FX": {
+      "word": "方向盘",
+      "pronunciation": "fāng",
+      "source_word": "方向盘"
+    },
+    "FY": {
+      "word": "放映机",
+      "pronunciation": "fàng",
+      "source_word": "放映机"
+    },
+    "FZ": {
+      "word": "风筝",
+      "pronunciation": "fēng",
+      "source_word": "风筝"
+    },
+    "GA": {
+      "word": "GAN",
+      "pronunciation": "gàn",
+      "source_word": "GAN"
+    },
+    "GB": {
+      "word": "鼓棒",
+      "pronunciation": "gǔ",
+      "source_word": "鼓棒"
+    },
+    "GC": {
+      "word": "棺材",
+      "pronunciation": "guān",
+      "source_word": "棺材"
+    },
+    "GD": {
+      "word": "高达",
+      "pronunciation": "gāo",
+      "source_word": "高达"
+    },
+    "GE": {
+      "word": "鸽",
+      "pronunciation": "gē",
+      "source_word": "鸽"
+    },
+    "GF": {
+      "word": "盖饭",
+      "pronunciation": "gài",
+      "source_word": "盖饭"
+    },
+    "GH": {
+      "word": "篝火",
+      "pronunciation": "gōu",
+      "source_word": "篝火"
+    },
+    "GJ": {
+      "word": "公交",
+      "pronunciation": "gōng",
+      "source_word": "公交"
+    },
+    "GK": {
+      "word": "钢盔",
+      "pronunciation": "gāng",
+      "source_word": "钢盔"
+    },
+    "GL": {
+      "word": "咖喱",
+      "pronunciation": "gā",
+      "source_word": "咖喱"
+    },
+    "GM": {
+      "word": "根苗",
+      "pronunciation": "gēn",
+      "source_word": "根苗"
+    },
+    "GN": {
+      "word": "耕牛",
+      "pronunciation": "gēng",
+      "source_word": "耕牛"
+    },
+    "GO": {
+      "word": "狗",
+      "pronunciation": "gǒu",
+      "source_word": "狗"
+    },
+    "GP": {
+      "word": "瓜皮%",
+      "pronunciation": "guā",
+      "source_word": "瓜皮%"
+    },
+    "GQ": {
+      "word": "国旗",
+      "pronunciation": "guó",
+      "source_word": "国旗"
+    },
+    "GR": {
+      "word": "光刃",
+      "pronunciation": "guāng",
+      "source_word": "光刃"
+    },
+    "GS": {
+      "word": "怪兽*",
+      "pronunciation": "guài",
+      "source_word": "怪兽*"
+    },
+    "GT": {
+      "word": "滚筒*",
+      "pronunciation": "gǔn",
+      "source_word": "滚筒*"
+    },
+    "GW": {
+      "word": "格瓦斯",
+      "pronunciation": "gé",
+      "source_word": "格瓦斯"
+    },
+    "GX": {
+      "word": "龟仙人",
+      "pronunciation": "guī",
+      "source_word": "龟仙人-"
+    },
+    "GY": {
+      "word": "桂圆",
+      "pronunciation": "guì",
+      "source_word": "桂圆"
+    },
+    "GZ": {
+      "word": "挂钟",
+      "pronunciation": "guà",
+      "source_word": "挂钟"
+    },
+    "HA": {
+      "word": "蛤",
+      "pronunciation": "há",
+      "source_word": "蛤"
+    },
+    "HB": {
+      "word": "怀表",
+      "pronunciation": "huái",
+      "source_word": "怀表"
+    },
+    "HC": {
+      "word": "红茶",
+      "pronunciation": "hóng",
+      "source_word": "红茶"
+    },
+    "HD": {
+      "word": "憨豆",
+      "pronunciation": "hān",
+      "source_word": "憨豆-"
+    },
+    "HE": {
+      "word": "海尔",
+      "pronunciation": "hǎi",
+      "source_word": "海尔-"
+    },
+    "HF": {
+      "word": "汉服",
+      "pronunciation": "hàn",
+      "source_word": "汉服"
+    },
+    "HG": {
+      "word": "黄瓜",
+      "pronunciation": "huáng",
+      "source_word": "黄瓜"
+    },
+    "HJ": {
+      "word": "火炬",
+      "pronunciation": "huǒ",
+      "source_word": "火炬"
+    },
+    "HK": {
+      "word": "哈克",
+      "pronunciation": "hā",
+      "source_word": "哈克-"
+    },
+    "HL": {
+      "word": "灰狼",
+      "pronunciation": "huī",
+      "source_word": "灰狼"
+    },
+    "HM": {
+      "word": "航母",
+      "pronunciation": "háng",
+      "source_word": "航母"
+    },
+    "HN": {
+      "word": "混凝土",
+      "pronunciation": "hùn",
+      "source_word": "混凝土"
+    },
+    "HO": {
+      "word": "猴",
+      "pronunciation": "hóu",
+      "source_word": "猴"
+    },
+    "HP": {
+      "word": "画皮",
+      "pronunciation": "huà",
+      "source_word": "画皮-"
+    },
+    "HQ": {
+      "word": "魂器",
+      "pronunciation": "hún",
+      "source_word": "魂器-"
+    },
+    "HR": {
+      "word": "黑人*",
+      "pronunciation": "hēi",
+      "source_word": "黑人*"
+    },
+    "HS": {
+      "word": "花生",
+      "pronunciation": "huā",
+      "source_word": "花生"
+    },
+    "HT": {
+      "word": "河豚",
+      "pronunciation": "hé",
+      "source_word": "河豚"
+    },
+    "HW": {
+      "word": "护腕",
+      "pronunciation": "hù",
+      "source_word": "护腕"
+    },
+    "HX": {
+      "word": "浣熊",
+      "pronunciation": "huàn",
+      "source_word": "浣熊"
+    },
+    "HY": {
+      "word": "后羿",
+      "pronunciation": "hòu",
+      "source_word": "后羿-"
+    },
+    "HZ": {
+      "word": "耗子",
+      "pronunciation": "hào",
+      "source_word": "耗子"
+    },
+    "JA": {
+      "word": "JAY",
+      "pronunciation": "jèi",
+      "source_word": "`JAY"
+    },
+    "JB": {
+      "word": "煎饼",
+      "pronunciation": "jiān",
+      "source_word": "煎饼"
+    },
+    "JC": {
+      "word": "卷尺",
+      "pronunciation": "juǎn",
+      "source_word": "卷尺"
+    },
+    "JD": {
+      "word": "军刀",
+      "pronunciation": "jūn",
+      "source_word": "军刀"
+    },
+    "JE": {
+      "word": "姐",
+      "pronunciation": "jiě",
+      "source_word": "姐"
+    },
+    "JF": {
+      "word": "教父",
+      "pronunciation": "jiào",
+      "source_word": "教父-"
+    },
+    "JG": {
+      "word": "金刚",
+      "pronunciation": "jīn",
+      "source_word": "金刚-"
+    },
+    "JH": {
+      "word": "菊花",
+      "pronunciation": "jú",
+      "source_word": "菊花"
+    },
+    "JK": {
+      "word": "JK",
+      "pronunciation": "jēi",
+      "source_word": "`JK"
+    },
+    "JL": {
+      "word": "降落伞",
+      "pronunciation": "jiàng",
+      "source_word": "降落伞"
+    },
+    "JM": {
+      "word": "芥末",
+      "pronunciation": "jiè",
+      "source_word": "芥末"
+    },
+    "JN": {
+      "word": "胶囊",
+      "pronunciation": "jiāo",
+      "source_word": "胶囊"
+    },
+    "JO": {
+      "word": "鸡",
+      "pronunciation": "jī",
+      "source_word": "鸡"
+    },
+    "JP": {
+      "word": "键盘",
+      "pronunciation": "jiàn",
+      "source_word": "键盘"
+    },
+    "JQ": {
+      "word": "锦旗",
+      "pronunciation": "jǐn",
+      "source_word": "锦旗"
+    },
+    "JR": {
+      "word": "巨人",
+      "pronunciation": "jù",
+      "source_word": "巨人"
+    },
+    "JS": {
+      "word": "救生圈",
+      "pronunciation": "jiù",
+      "source_word": "救生圈"
+    },
+    "JT": {
+      "word": "掘土机",
+      "pronunciation": "jué",
+      "source_word": "掘土机"
+    },
+    "JW": {
+      "word": "姜文",
+      "pronunciation": "jiāng",
+      "source_word": "姜文+"
+    },
+    "JX": {
+      "word": "夹心",
+      "pronunciation": "jiā",
+      "source_word": "夹心"
+    },
+    "JY": {
+      "word": "鲸鱼",
+      "pronunciation": "jīng",
+      "source_word": "鲸鱼"
+    },
+    "JZ": {
+      "word": "镜子",
+      "pronunciation": "jìng",
+      "source_word": "镜子"
+    },
+    "KA": {
+      "word": "卡",
+      "pronunciation": "kǎ",
+      "source_word": "卡"
+    },
+    "KB": {
+      "word": "挎包",
+      "pronunciation": "kuà",
+      "source_word": "挎包"
+    },
+    "KC": {
+      "word": "快餐*",
+      "pronunciation": "kuài",
+      "source_word": "快餐*"
+    },
+    "KD": {
+      "word": "蝌蚪",
+      "pronunciation": "kē",
+      "source_word": "蝌蚪"
+    },
+    "KE": {
+      "word": "坑",
+      "pronunciation": "kēng",
+      "source_word": "坑"
+    },
+    "KF": {
+      "word": "KFC",
+      "pronunciation": "kèi",
+      "source_word": "`KFC"
+    },
+    "KG": {
+      "word": "苦瓜",
+      "pronunciation": "kǔ",
+      "source_word": "苦瓜"
+    },
+    "KH": {
+      "word": "葵花",
+      "pronunciation": "kuí",
+      "source_word": "葵花"
+    },
+    "KJ": {
+      "word": "坎肩",
+      "pronunciation": "kǎn",
+      "source_word": "坎肩"
+    },
+    "KL": {
+      "word": "骷髅",
+      "pronunciation": "kū",
+      "source_word": "骷髅"
+    },
+    "KM": {
+      "word": "孔明",
+      "pronunciation": "kǒng",
+      "source_word": "孔明-"
+    },
+    "KN": {
+      "word": "肯尼迪",
+      "pronunciation": "kěn",
+      "source_word": "肯尼迪+"
+    },
+    "KO": {
+      "word": "口",
+      "pronunciation": "kǒu",
+      "source_word": "口"
+    },
+    "KP": {
+      "word": "鲲鹏",
+      "pronunciation": "kūn",
+      "source_word": "鲲鹏"
+    },
+    "KQ": {
+      "word": "矿泉水",
+      "pronunciation": "kuàng",
+      "source_word": "矿泉水"
+    },
+    "KR": {
+      "word": "烤肉",
+      "pronunciation": "kǎo",
+      "source_word": "烤肉"
+    },
+    "KS": {
+      "word": "克苏鲁*",
+      "pronunciation": "kè",
+      "source_word": "克苏鲁*"
+    },
+    "KT": {
+      "word": "空调",
+      "pronunciation": "kōng",
+      "source_word": "空调"
+    },
+    "KW": {
+      "word": "开卫",
+      "pronunciation": "kāi",
+      "source_word": "开卫"
+    },
+    "KX": {
+      "word": "凯旋门",
+      "pronunciation": "kǎi",
+      "source_word": "凯旋门"
+    },
+    "KY": {
+      "word": "蛞蝓",
+      "pronunciation": "kuò",
+      "source_word": "蛞蝓"
+    },
+    "KZ": {
+      "word": "靠枕",
+      "pronunciation": "kào",
+      "source_word": "靠枕"
+    },
+    "LA": {
+      "word": "莱昂",
+      "pronunciation": "lái",
+      "source_word": "莱昂+"
+    },
+    "LB": {
+      "word": "绿宝石",
+      "pronunciation": "lǜ",
+      "source_word": "绿宝石-"
+    },
+    "LC": {
+      "word": "凉茶",
+      "pronunciation": "liáng",
+      "source_word": "凉茶"
+    },
+    "LD": {
+      "word": "漏斗",
+      "pronunciation": "lòu",
+      "source_word": "漏斗"
+    },
+    "LE": {
+      "word": "灵儿",
+      "pronunciation": "líng",
+      "source_word": "灵儿-"
+    },
+    "LF": {
+      "word": "廖凡",
+      "pronunciation": "liào",
+      "source_word": "廖凡+"
+    },
+    "LG": {
+      "word": "乐高",
+      "pronunciation": "lè",
+      "source_word": "乐高"
+    },
+    "LH": {
+      "word": "老虎",
+      "pronunciation": "láo",
+      "source_word": "`老虎"
+    },
+    "LJ": {
+      "word": "棱镜",
+      "pronunciation": "léng",
+      "source_word": "棱镜"
+    },
+    "LK": {
+      "word": "林克",
+      "pronunciation": "lín",
+      "source_word": "林克-"
+    },
+    "LM": {
+      "word": "龙猫",
+      "pronunciation": "lóng",
+      "source_word": "龙猫"
+    },
+    "LN": {
+      "word": "列宁",
+      "pronunciation": "liè",
+      "source_word": "列宁+"
+    },
+    "LO": {
+      "word": "梨",
+      "pronunciation": "lí",
+      "source_word": "梨"
+    },
+    "LP": {
+      "word": "脸盆脸谱",
+      "pronunciation": "liǎn",
+      "source_word": "脸盆脸谱"
+    },
+    "LQ": {
+      "word": "篮球",
+      "pronunciation": "lán",
+      "source_word": "篮球"
+    },
+    "LR": {
+      "word": "驴肉*",
+      "pronunciation": "lǘ",
+      "source_word": "驴肉*"
+    },
+    "LS": {
+      "word": "卵石",
+      "pronunciation": "luǎn",
+      "source_word": "卵石"
+    },
+    "LT": {
+      "word": "烙铁",
+      "pronunciation": "luò",
+      "source_word": "烙铁"
+    },
+    "LW": {
+      "word": "芦苇",
+      "pronunciation": "lú",
+      "source_word": "芦苇"
+    },
+    "LX": {
+      "word": "流星",
+      "pronunciation": "liú",
+      "source_word": "流星"
+    },
+    "LY": {
+      "word": "轮椅",
+      "pronunciation": "lún",
+      "source_word": "轮椅"
+    },
+    "LZ": {
+      "word": "栗子",
+      "pronunciation": "lì",
+      "source_word": "栗子"
+    },
+    "MA": {
+      "word": "马",
+      "pronunciation": "mǎ",
+      "source_word": "马"
+    },
+    "MB": {
+      "word": "面包",
+      "pronunciation": "miàn",
+      "source_word": "面包"
+    },
+    "MC": {
+      "word": "迷彩",
+      "pronunciation": "mí",
+      "source_word": "迷彩"
+    },
+    "MD": {
+      "word": "麦兜",
+      "pronunciation": "mài",
+      "source_word": "麦兜"
+    },
+    "ME": {
+      "word": "门",
+      "pronunciation": "mén",
+      "source_word": "门"
+    },
+    "MF": {
+      "word": "蜜蜂",
+      "pronunciation": "mì",
+      "source_word": "蜜蜂"
+    },
+    "MG": {
+      "word": "芒果",
+      "pronunciation": "máng",
+      "source_word": "芒果"
+    },
+    "MH": {
+      "word": "灭火器",
+      "pronunciation": "miè",
+      "source_word": "灭火器"
+    },
+    "MJ": {
+      "word": "民警",
+      "pronunciation": "mín",
+      "source_word": "民警"
+    },
+    "MK": {
+      "word": "棉裤",
+      "pronunciation": "mián",
+      "source_word": "棉裤"
+    },
+    "ML": {
+      "word": "牡蛎",
+      "pronunciation": "mǔ",
+      "source_word": "牡蛎"
+    },
+    "MN": {
+      "word": "蒙牛",
+      "pronunciation": "měng",
+      "source_word": "蒙牛"
+    },
+    "MO": {
+      "word": "猫",
+      "pronunciation": "māo",
+      "source_word": "猫"
+    },
+    "MP": {
+      "word": "磨盘",
+      "pronunciation": "mó",
+      "source_word": "磨盘"
+    },
+    "MQ": {
+      "word": "麻雀",
+      "pronunciation": "má",
+      "source_word": "麻雀"
+    },
+    "MR": {
+      "word": "鸣人",
+      "pronunciation": "míng",
+      "source_word": "鸣人-"
+    },
+    "MS": {
+      "word": "缪斯",
+      "pronunciation": "miù",
+      "source_word": "缪斯-"
+    },
+    "MT": {
+      "word": "馒头",
+      "pronunciation": "mán",
+      "source_word": "馒头"
+    },
+    "MW": {
+      "word": "魔王",
+      "pronunciation": "mó",
+      "source_word": "魔王-"
+    },
+    "MX": {
+      "word": "梅西",
+      "pronunciation": "méi",
+      "source_word": "梅西+"
+    },
+    "MY": {
+      "word": "木鱼",
+      "pronunciation": "mù",
+      "source_word": "木鱼"
+    },
+    "MZ": {
+      "word": "帽子",
+      "pronunciation": "mào",
+      "source_word": "帽子"
+    },
+    "NA": {
+      "word": "NASA*",
+      "pronunciation": "nā",
+      "source_word": "`NASA*"
+    },
+    "NB": {
+      "word": "囊饼",
+      "pronunciation": "náng",
+      "source_word": "囊饼"
+    },
+    "NC": {
+      "word": "纳粹*",
+      "pronunciation": "nà",
+      "source_word": "纳粹*"
+    },
+    "ND": {
+      "word": "脑袋",
+      "pronunciation": "nǎo",
+      "source_word": "脑袋"
+    },
+    "NE": {
+      "word": "哪吒",
+      "pronunciation": "né",
+      "source_word": "哪吒"
+    },
+    "NF": {
+      "word": "聂风",
+      "pronunciation": "niè",
+      "source_word": "聂风-"
+    },
+    "NG": {
+      "word": "南瓜",
+      "pronunciation": "nán",
+      "source_word": "南瓜"
+    },
+    "NH": {
+      "word": "尿壶",
+      "pronunciation": "niào",
+      "source_word": "尿壶"
+    },
+    "NJ": {
+      "word": "牛角",
+      "pronunciation": "niú",
+      "source_word": "牛角"
+    },
+    "NK": {
+      "word": "纽扣",
+      "pronunciation": "niǔ",
+      "source_word": "纽扣"
+    },
+    "NL": {
+      "word": "能量球",
+      "pronunciation": "néng",
+      "source_word": "能量球"
+    },
+    "NM": {
+      "word": "柠檬",
+      "pronunciation": "níng",
+      "source_word": "柠檬"
+    },
+    "NO": {
+      "word": "糯",
+      "pronunciation": "nuò",
+      "source_word": "糯"
+    },
+    "NP": {
+      "word": "弩炮",
+      "pronunciation": "nǔ",
+      "source_word": "弩炮"
+    },
+    "NQ": {
+      "word": "泥鳅",
+      "pronunciation": "ní",
+      "source_word": "泥鳅"
+    },
+    "NR": {
+      "word": "鸟人",
+      "pronunciation": "niǎo",
+      "source_word": "鸟人-"
+    },
+    "NS": {
+      "word": "暖水袋",
+      "pronunciation": "nuǎn",
+      "source_word": "暖水袋"
+    },
+    "NT": {
+      "word": "奶糖",
+      "pronunciation": "nǎi",
+      "source_word": "奶糖"
+    },
+    "NW": {
+      "word": "女娲",
+      "pronunciation": "nǚ",
+      "source_word": "女娲-"
+    },
+    "NX": {
+      "word": "农械*",
+      "pronunciation": "nóng",
+      "source_word": "农械*"
+    },
+    "NY": {
+      "word": "内衣",
+      "pronunciation": "nèi",
+      "source_word": "内衣"
+    },
+    "NZ": {
+      "word": "念珠",
+      "pronunciation": "niàn",
+      "source_word": "念珠"
+    },
+    "OA": {
+      "word": "藕",
+      "pronunciation": "ǒu",
+      "source_word": "藕"
+    },
+    "OB": {
+      "word": "鳌拜",
+      "pronunciation": "bài",
+      "source_word": "鳌拜"
+    },
+    "OC": {
+      "word": "凹槽",
+      "pronunciation": "cáo",
+      "source_word": "凹槽"
+    },
+    "OD": {
+      "word": "奥迪%",
+      "pronunciation": "dí",
+      "source_word": "奥迪%"
+    },
+    "OE": {
+      "word": "IE浏览器",
+      "pronunciation": "òu",
+      "source_word": "`IE浏览器"
+    },
+    "OF": {
+      "word": "藕粉",
+      "pronunciation": "fěn",
+      "source_word": "藕粉"
+    },
+    "OG": {
+      "word": "欧冠*",
+      "pronunciation": "guàn",
+      "source_word": "欧冠*"
+    },
+    "OH": {
+      "word": "ohm",
+      "pronunciation": "ōu",
+      "source_word": "`ohm"
+    },
+    "OJ": {
+      "word": "奥加",
+      "pronunciation": "ào",
+      "source_word": "奥加"
+    },
+    "OK": {
+      "word": "OK*",
+      "pronunciation": "kēi",
+      "source_word": "`OK*"
+    },
+    "OL": {
+      "word": "傲罗",
+      "pronunciation": "luó",
+      "source_word": "傲罗-"
+    },
+    "OM": {
+      "word": "奥妙",
+      "pronunciation": "miào",
+      "source_word": "奥妙"
+    },
+    "ON": {
+      "word": "On*",
+      "pronunciation": "àng",
+      "source_word": "`On*"
+    },
+    "OP": {
+      "word": "藕片",
+      "pronunciation": "piàn",
+      "source_word": "藕片"
+    },
+    "OQ": {
+      "word": "IQ*",
+      "pronunciation": "kiù",
+      "source_word": "`IQ*"
+    },
+    "OR": {
+      "word": "OR橘子",
+      "pronunciation": "āo",
+      "source_word": "OR橘子"
+    },
+    "OS": {
+      "word": "奥斯卡",
+      "pronunciation": "sī",
+      "source_word": "奥斯卡"
+    },
+    "OT": {
+      "word": "凹凸曼",
+      "pronunciation": "tū",
+      "source_word": "凹凸曼"
+    },
+    "OW": {
+      "word": "欧文",
+      "pronunciation": "wèn",
+      "source_word": "`欧文+"
+    },
+    "OX": {
+      "word": "偶像*",
+      "pronunciation": "xiàng",
+      "source_word": "偶像*"
+    },
+    "OY": {
+      "word": "欧阳#",
+      "pronunciation": "yáng",
+      "source_word": "欧阳#"
+    },
+    "OZ": {
+      "word": "袄子",
+      "pronunciation": "ǎo",
+      "source_word": "袄子"
+    },
+    "PA": {
+      "word": "派%",
+      "pronunciation": "pài",
+      "source_word": "派%"
+    },
+    "PB": {
+      "word": "破冰船",
+      "pronunciation": "pò",
+      "source_word": "破冰船"
+    },
+    "PC": {
+      "word": "碰碰车",
+      "pronunciation": "pèng",
+      "source_word": "碰碰车"
+    },
+    "PD": {
+      "word": "剖刀",
+      "pronunciation": "pōu",
+      "source_word": "剖刀"
+    },
+    "PE": {
+      "word": "普洱",
+      "pronunciation": "pǔ",
+      "source_word": "普洱"
+    },
+    "PF": {
+      "word": "屏风",
+      "pronunciation": "píng",
+      "source_word": "屏风"
+    },
+    "PG": {
+      "word": "培根",
+      "pronunciation": "péi",
+      "source_word": "培根"
+    },
+    "PH": {
+      "word": "喷壶",
+      "pronunciation": "pēn",
+      "source_word": "喷壶"
+    },
+    "PJ": {
+      "word": "盆景",
+      "pronunciation": "pén",
+      "source_word": "盆景"
+    },
+    "PK": {
+      "word": "扑克",
+      "pronunciation": "pū",
+      "source_word": "扑克"
+    },
+    "PL": {
+      "word": "爬犁",
+      "pronunciation": "pá",
+      "source_word": "爬犁"
+    },
+    "PM": {
+      "word": "泡面",
+      "pronunciation": "pào",
+      "source_word": "泡面"
+    },
+    "PN": {
+      "word": "匹诺曹",
+      "pronunciation": "pī",
+      "source_word": "`匹诺曹"
+    },
+    "PO": {
+      "word": "坡坡#",
+      "pronunciation": "pō",
+      "source_word": "坡坡#"
+    },
+    "PQ": {
+      "word": "佩琪",
+      "pronunciation": "pèi",
+      "source_word": "佩琪-"
+    },
+    "PR": {
+      "word": "飘柔",
+      "pronunciation": "piāo",
+      "source_word": "飘柔"
+    },
+    "PS": {
+      "word": "磐石",
+      "pronunciation": "pán",
+      "source_word": "磐石"
+    },
+    "PT": {
+      "word": "拼图",
+      "pronunciation": "pīn",
+      "source_word": "拼图"
+    },
+    "PW": {
+      "word": "牌位",
+      "pronunciation": "pái",
+      "source_word": "牌位"
+    },
+    "PX": {
+      "word": "螃蟹",
+      "pronunciation": "páng",
+      "source_word": "螃蟹"
+    },
+    "PY": {
+      "word": "朋友*",
+      "pronunciation": "péng",
+      "source_word": "朋友*"
+    },
+    "PZ": {
+      "word": "胖子*",
+      "pronunciation": "pàng",
+      "source_word": "胖子*"
+    },
+    "QA": {
+      "word": "洽米#",
+      "pronunciation": "qià",
+      "source_word": "洽米#"
+    },
+    "QB": {
+      "word": "跷板",
+      "pronunciation": "qiào",
+      "source_word": "跷板"
+    },
+    "QC": {
+      "word": "雀巢",
+      "pronunciation": "què",
+      "source_word": "雀巢"
+    },
+    "QD": {
+      "word": "气垫",
+      "pronunciation": "qì",
+      "source_word": "气垫"
+    },
+    "QE": {
+      "word": "切格瓦拉",
+      "pronunciation": "qiè",
+      "source_word": "切格瓦拉+"
+    },
+    "QF": {
+      "word": "樵夫乔峰",
+      "pronunciation": "qiáo",
+      "source_word": "樵夫乔峰-"
+    },
+    "QG": {
+      "word": "切割机",
+      "pronunciation": "qiē",
+      "source_word": "切割机"
+    },
+    "QH": {
+      "word": "秦昊",
+      "pronunciation": "qín",
+      "source_word": "秦昊+"
+    },
+    "QJ": {
+      "word": "拳击",
+      "pronunciation": "quán",
+      "source_word": "拳击"
+    },
+    "QK": {
+      "word": "巧克力",
+      "pronunciation": "qiǎo",
+      "source_word": "巧克力"
+    },
+    "QL": {
+      "word": "情侣",
+      "pronunciation": "qíng",
+      "source_word": "情侣"
+    },
+    "QM": {
+      "word": "驱魔人",
+      "pronunciation": "qū",
+      "source_word": "驱魔人"
+    },
+    "QN": {
+      "word": "牵牛花",
+      "pronunciation": "qiān",
+      "source_word": "牵牛花"
+    },
+    "QO": {
+      "word": "棋",
+      "pronunciation": "qí",
+      "source_word": "棋"
+    },
+    "QP": {
+      "word": "枪炮",
+      "pronunciation": "qiāng",
+      "source_word": "枪炮"
+    },
+    "QR": {
+      "word": "穷人*",
+      "pronunciation": "qióng",
+      "source_word": "穷人*"
+    },
+    "QS": {
+      "word": "潜水艇",
+      "pronunciation": "qián",
+      "source_word": "潜水艇"
+    },
+    "QT": {
+      "word": "蜻蜓",
+      "pronunciation": "qīng",
+      "source_word": "蜻蜓"
+    },
+    "QW": {
+      "word": "蔷薇",
+      "pronunciation": "qiáng",
+      "source_word": "蔷薇"
+    },
+    "QX": {
+      "word": "球鞋",
+      "pronunciation": "qiú",
+      "source_word": "球鞋"
+    },
+    "QY": {
+      "word": "蚯蚓",
+      "pronunciation": "qiū",
+      "source_word": "蚯蚓"
+    },
+    "QZ": {
+      "word": "裙子",
+      "pronunciation": "qún",
+      "source_word": "裙子"
+    },
+    "RA": {
+      "word": "瓤",
+      "pronunciation": "ráng",
+      "source_word": "瓤"
+    },
+    "RB": {
+      "word": "绒布",
+      "pronunciation": "róng",
+      "source_word": "绒布"
+    },
+    "RC": {
+      "word": "若虫",
+      "pronunciation": "ruò",
+      "source_word": "若虫"
+    },
+    "RD": {
+      "word": "热带鱼",
+      "pronunciation": "rē",
+      "source_word": "`热带鱼"
+    },
+    "RE": {
+      "word": "瑞恩",
+      "pronunciation": "ruī",
+      "source_word": "`瑞恩"
+    },
+    "RF": {
+      "word": "润发",
+      "pronunciation": "rùn",
+      "source_word": "润发+"
+    },
+    "RG": {
+      "word": "染缸",
+      "pronunciation": "rǎn",
+      "source_word": "染缸"
+    },
+    "RH": {
+      "word": "软红",
+      "pronunciation": "ruān",
+      "source_word": "`软红"
+    },
+    "RJ": {
+      "word": "肉夹馍",
+      "pronunciation": "rōu",
+      "source_word": "`肉夹馍"
+    },
+    "RK": {
+      "word": "瑞克",
+      "pronunciation": "ruì",
+      "source_word": "瑞克-"
+    },
+    "RL": {
+      "word": "日历",
+      "pronunciation": "rì",
+      "source_word": "日历"
+    },
+    "RM": {
+      "word": "人民币",
+      "pronunciation": "rén",
+      "source_word": "人民币"
+    },
+    "RN": {
+      "word": "乳牛",
+      "pronunciation": "rǔ",
+      "source_word": "乳牛"
+    },
+    "RO": {
+      "word": "日",
+      "pronunciation": "rī",
+      "source_word": "`日"
+    },
+    "RP": {
+      "word": "软盘",
+      "pronunciation": "ruǎn",
+      "source_word": "软盘"
+    },
+    "RQ": {
+      "word": "热气球",
+      "pronunciation": "rè",
+      "source_word": "热气球"
+    },
+    "RS": {
+      "word": "燃烧弹",
+      "pronunciation": "rán",
+      "source_word": "燃烧弹"
+    },
+    "RT": {
+      "word": "软糖",
+      "pronunciation": "rēng",
+      "source_word": "`软糖"
+    },
+    "RW": {
+      "word": "肉丸",
+      "pronunciation": "ròu",
+      "source_word": "肉丸"
+    },
+    "RX": {
+      "word": "绕线器",
+      "pronunciation": "rào",
+      "source_word": "绕线器"
+    },
+    "RY": {
+      "word": "如意",
+      "pronunciation": "rú",
+      "source_word": "如意"
+    },
+    "RZ": {
+      "word": "忍者",
+      "pronunciation": "rèn",
+      "source_word": "`忍者"
+    },
+    "SA": {
+      "word": "厦",
+      "pronunciation": "shà",
+      "source_word": "厦"
+    },
+    "SB": {
+      "word": "扇贝",
+      "pronunciation": "shàn",
+      "source_word": "扇贝"
+    },
+    "SC": {
+      "word": "水车",
+      "pronunciation": "shuǐ",
+      "source_word": "水车"
+    },
+    "SD": {
+      "word": "圣诞树",
+      "pronunciation": "shèng",
+      "source_word": "圣诞树"
+    },
+    "SE": {
+      "word": "蛇",
+      "pronunciation": "shé",
+      "source_word": "蛇"
+    },
+    "SF": {
+      "word": "沙发",
+      "pronunciation": "shā",
+      "source_word": "沙发"
+    },
+    "SG": {
+      "word": "试管",
+      "pronunciation": "shì",
+      "source_word": "试管"
+    },
+    "SH": {
+      "word": "珊瑚",
+      "pronunciation": "shān",
+      "source_word": "珊瑚"
+    },
+    "SJ": {
+      "word": "双截棍",
+      "pronunciation": "shuāng",
+      "source_word": "双截棍"
+    },
+    "SK": {
+      "word": "烧烤",
+      "pronunciation": "shāo",
+      "source_word": "烧烤"
+    },
+    "SL": {
+      "word": "神龙",
+      "pronunciation": "shén",
+      "source_word": "神龙"
+    },
+    "SM": {
+      "word": "酸梅汤",
+      "pronunciation": "suān",
+      "source_word": "酸梅汤"
+    },
+    "SN": {
+      "word": "唢呐索尼",
+      "pronunciation": "suǒ",
+      "source_word": "唢呐索尼"
+    },
+    "SO": {
+      "word": "松",
+      "pronunciation": "sōng",
+      "source_word": "松"
+    },
+    "SP": {
+      "word": "算盘",
+      "pronunciation": "suàn",
+      "source_word": "算盘"
+    },
+    "SQ": {
+      "word": "书签",
+      "pronunciation": "shū",
+      "source_word": "书签"
+    },
+    "SR": {
+      "word": "兽人",
+      "pronunciation": "shòu",
+      "source_word": "兽人-"
+    },
+    "ST": {
+      "word": "赛艇",
+      "pronunciation": "sài",
+      "source_word": "赛艇"
+    },
+    "SW": {
+      "word": "筛网",
+      "pronunciation": "shāi",
+      "source_word": "筛网"
+    },
+    "SX": {
+      "word": "孙笑川",
+      "pronunciation": "sūn",
+      "source_word": "孙笑川+"
+    },
+    "SY": {
+      "word": "收音机",
+      "pronunciation": "shōu",
+      "source_word": "收音机"
+    },
+    "SZ": {
+      "word": "刷子",
+      "pronunciation": "shuā",
+      "source_word": "刷子"
+    },
+    "TA": {
+      "word": "塔",
+      "pronunciation": "tǎ",
+      "source_word": "塔"
+    },
+    "TB": {
+      "word": "铜板",
+      "pronunciation": "tóng",
+      "source_word": "铜板"
+    },
+    "TC": {
+      "word": "陶瓷",
+      "pronunciation": "táo",
+      "source_word": "陶瓷"
+    },
+    "TD": {
+      "word": "台灯",
+      "pronunciation": "tái",
+      "source_word": "台灯"
+    },
+    "TE": {
+      "word": "天鹅",
+      "pronunciation": "tiān",
+      "source_word": "天鹅"
+    },
+    "TF": {
+      "word": "条幅",
+      "pronunciation": "tiáo",
+      "source_word": "条幅"
+    },
+    "TG": {
+      "word": "铁轨",
+      "pronunciation": "tiě",
+      "source_word": "铁轨"
+    },
+    "TH": {
+      "word": "糖葫芦",
+      "pronunciation": "táng",
+      "source_word": "糖葫芦"
+    },
+    "TJ": {
+      "word": "透镜",
+      "pronunciation": "tòu",
+      "source_word": "透镜"
+    },
+    "TK": {
+      "word": "坦克",
+      "pronunciation": "tǎn",
+      "source_word": "坦克"
+    },
+    "TL": {
+      "word": "特朗普",
+      "pronunciation": "tè",
+      "source_word": "特朗普"
+    },
+    "TM": {
+      "word": "汤姆",
+      "pronunciation": "tāng",
+      "source_word": "汤姆"
+    },
+    "TN": {
+      "word": "鸵鸟",
+      "pronunciation": "tuó",
+      "source_word": "鸵鸟"
+    },
+    "TO": {
+      "word": "梯",
+      "pronunciation": "tī",
+      "source_word": "梯"
+    },
+    "TP": {
+      "word": "托盘",
+      "pronunciation": "tuō",
+      "source_word": "托盘"
+    },
+    "TQ": {
+      "word": "提琴",
+      "pronunciation": "tí",
+      "source_word": "提琴"
+    },
+    "TR": {
+      "word": "坛肉",
+      "pronunciation": "tán",
+      "source_word": "坛肉"
+    },
+    "TS": {
+      "word": "豚鼠",
+      "pronunciation": "tún",
+      "source_word": "豚鼠"
+    },
+    "TW": {
+      "word": "套娃",
+      "pronunciation": "tào",
+      "source_word": "套娃"
+    },
+    "TX": {
+      "word": "腾讯*",
+      "pronunciation": "téng",
+      "source_word": "腾讯*"
+    },
+    "TY": {
+      "word": "太阳#",
+      "pronunciation": "tài",
+      "source_word": "太阳#"
+    },
+    "TZ": {
+      "word": "团子%",
+      "pronunciation": "tuán",
+      "source_word": "团子%"
+    },
+    "WA": {
+      "word": "娃",
+      "pronunciation": "wá",
+      "source_word": "娃"
+    },
+    "WB": {
+      "word": "王八",
+      "pronunciation": "wáng",
+      "source_word": "王八"
+    },
+    "WC": {
+      "word": "无常",
+      "pronunciation": "wú",
+      "source_word": "无常"
+    },
+    "WD": {
+      "word": "豌豆%",
+      "pronunciation": "wān",
+      "source_word": "豌豆%"
+    },
+    "WE": {
+      "word": "尾",
+      "pronunciation": "wī",
+      "source_word": "`尾"
+    },
+    "WF": {
+      "word": "汪峰",
+      "pronunciation": "wāng",
+      "source_word": "汪峰+"
+    },
+    "WG": {
+      "word": "瓮缸",
+      "pronunciation": "wèng",
+      "source_word": "瓮缸"
+    },
+    "WH": {
+      "word": "万花筒",
+      "pronunciation": "wàn",
+      "source_word": "万花筒"
+    },
+    "WJ": {
+      "word": "玩具",
+      "pronunciation": "wán",
+      "source_word": "玩具"
+    },
+    "WK": {
+      "word": "悟空",
+      "pronunciation": "wù",
+      "source_word": "悟空"
+    },
+    "WL": {
+      "word": "瓦力",
+      "pronunciation": "wǎ",
+      "source_word": "瓦力-"
+    },
+    "WM": {
+      "word": "乌梅",
+      "pronunciation": "wū",
+      "source_word": "乌梅"
+    },
+    "WN": {
+      "word": "蜗牛",
+      "pronunciation": "wō",
+      "source_word": "蜗牛"
+    },
+    "WO": {
+      "word": "wings",
+      "pronunciation": "wìng",
+      "source_word": "`wings"
+    },
+    "WP": {
+      "word": "卧铺",
+      "pronunciation": "wò",
+      "source_word": "卧铺"
+    },
+    "WQ": {
+      "word": "网球",
+      "pronunciation": "wēng",
+      "source_word": "`网球"
+    },
+    "WR": {
+      "word": "温柔#",
+      "pronunciation": "wēn",
+      "source_word": "温柔#"
+    },
+    "WS": {
+      "word": "卫生纸",
+      "pronunciation": "wèi",
+      "source_word": "卫生纸"
+    },
+    "WT": {
+      "word": "外套",
+      "pronunciation": "wài",
+      "source_word": "外套"
+    },
+    "WX": {
+      "word": "蚊香",
+      "pronunciation": "wén",
+      "source_word": "蚊香"
+    },
+    "WY": {
+      "word": "望远镜",
+      "pronunciation": "wàng",
+      "source_word": "望远镜"
+    },
+    "WZ": {
+      "word": "袜子",
+      "pronunciation": "wà",
+      "source_word": "袜子"
+    },
+    "XA": {
+      "word": "虾",
+      "pronunciation": "xiā",
+      "source_word": "虾"
+    },
+    "XB": {
+      "word": "信标",
+      "pronunciation": "xìn",
+      "source_word": "信标-"
+    },
+    "XC": {
+      "word": "小丑",
+      "pronunciation": "xiǎo",
+      "source_word": "小丑"
+    },
+    "XD": {
+      "word": "鞋垫",
+      "pronunciation": "xié",
+      "source_word": "鞋垫"
+    },
+    "XE": {
+      "word": "谢尔顿",
+      "pronunciation": "xiè",
+      "source_word": "谢尔顿-"
+    },
+    "XF": {
+      "word": "旋风",
+      "pronunciation": "xuán",
+      "source_word": "旋风"
+    },
+    "XG": {
+      "word": "西瓜",
+      "pronunciation": "xī",
+      "source_word": "西瓜"
+    },
+    "XH": {
+      "word": "绣花针",
+      "pronunciation": "xiù",
+      "source_word": "绣花针"
+    },
+    "XJ": {
+      "word": "陷阱",
+      "pronunciation": "xiàn",
+      "source_word": "陷阱"
+    },
+    "XK": {
+      "word": "星空%",
+      "pronunciation": "xīng",
+      "source_word": "星空%"
+    },
+    "XL": {
+      "word": "驯鹿",
+      "pronunciation": "xùn",
+      "source_word": "驯鹿"
+    },
+    "XM": {
+      "word": "熊猫#",
+      "pronunciation": "xióng",
+      "source_word": "熊猫#"
+    },
+    "XN": {
+      "word": "仙女",
+      "pronunciation": "xiān",
+      "source_word": "仙女"
+    },
+    "XO": {
+      "word": "席",
+      "pronunciation": "xí",
+      "source_word": "席"
+    },
+    "XP": {
+      "word": "芯片",
+      "pronunciation": "xīn",
+      "source_word": "芯片"
+    },
+    "XQ": {
+      "word": "凶器*",
+      "pronunciation": "xiōng",
+      "source_word": "凶器*"
+    },
+    "XR": {
+      "word": "雪人",
+      "pronunciation": "xuě",
+      "source_word": "雪人"
+    },
+    "XS": {
+      "word": "香水",
+      "pronunciation": "xiāng",
+      "source_word": "香水"
+    },
+    "XT": {
+      "word": "刑天",
+      "pronunciation": "xíng",
+      "source_word": "刑天-"
+    },
+    "XW": {
+      "word": "漩涡",
+      "pronunciation": "xuán",
+      "source_word": "漩涡"
+    },
+    "XY": {
+      "word": "逍遥",
+      "pronunciation": "xiāo",
+      "source_word": "逍遥-"
+    },
+    "XZ": {
+      "word": "勋章",
+      "pronunciation": "xūn",
+      "source_word": "勋章"
+    },
+    "YA": {
+      "word": "鸭",
+      "pronunciation": "yā",
+      "source_word": "鸭"
+    },
+    "YB": {
+      "word": "硬币",
+      "pronunciation": "yìng",
+      "source_word": "硬币"
+    },
+    "YC": {
+      "word": "圆葱",
+      "pronunciation": "yuán",
+      "source_word": "圆葱"
+    },
+    "YD": {
+      "word": "腰带",
+      "pronunciation": "yāo",
+      "source_word": "腰带"
+    },
+    "YE": {
+      "word": "椰",
+      "pronunciation": "yé",
+      "source_word": "椰"
+    },
+    "YF": {
+      "word": "孕妇",
+      "pronunciation": "yùn",
+      "source_word": "孕妇"
+    },
+    "YG": {
+      "word": "衣柜",
+      "pronunciation": "yī",
+      "source_word": "衣柜"
+    },
+    "YH": {
+      "word": "樱花",
+      "pronunciation": "yīng",
+      "source_word": "樱花"
+    },
+    "YJ": {
+      "word": "眼镜",
+      "pronunciation": "yǎn",
+      "source_word": "眼镜"
+    },
+    "YK": {
+      "word": "泳裤",
+      "pronunciation": "yǒng",
+      "source_word": "泳裤"
+    },
+    "YL": {
+      "word": "哑铃",
+      "pronunciation": "yǎ",
+      "source_word": "哑铃"
+    },
+    "YM": {
+      "word": "玉米",
+      "pronunciation": "yù",
+      "source_word": "玉米"
+    },
+    "YN": {
+      "word": "云南",
+      "pronunciation": "yún",
+      "source_word": "云南"
+    },
+    "YO": {
+      "word": "悠悠球",
+      "pronunciation": "yōu",
+      "source_word": "悠悠球"
+    },
+    "YP": {
+      "word": "药瓶",
+      "pronunciation": "yào",
+      "source_word": "药瓶"
+    },
+    "YQ": {
+      "word": "月球",
+      "pronunciation": "yuè",
+      "source_word": "月球"
+    },
+    "YR": {
+      "word": "蚁人",
+      "pronunciation": "yǐ",
+      "source_word": "蚁人-"
+    },
+    "YS": {
+      "word": "约束带",
+      "pronunciation": "yuē",
+      "source_word": "约束带"
+    },
+    "YT": {
+      "word": "油条",
+      "pronunciation": "yóu",
+      "source_word": "油条"
+    },
+    "YW": {
+      "word": "阎王",
+      "pronunciation": "yán",
+      "source_word": "阎王"
+    },
+    "YX": {
+      "word": "音箱",
+      "pronunciation": "yīn",
+      "source_word": "音箱"
+    },
+    "YZ": {
+      "word": "印章",
+      "pronunciation": "yìn",
+      "source_word": "印章"
+    },
+    "ZA": {
+      "word": "藏獒",
+      "pronunciation": "zàng",
+      "source_word": "藏獒"
+    },
+    "ZB": {
+      "word": "毡板",
+      "pronunciation": "zhān",
+      "source_word": "毡板"
+    },
+    "ZC": {
+      "word": "轴承",
+      "pronunciation": "zhóu",
+      "source_word": "轴承"
+    },
+    "ZD": {
+      "word": "炸弹",
+      "pronunciation": "zhà",
+      "source_word": "炸弹"
+    },
+    "ZE": {
+      "word": "灾厄村民",
+      "pronunciation": "zāi",
+      "source_word": "灾厄村民-"
+    },
+    "ZF": {
+      "word": "张飞",
+      "pronunciation": "zhāng",
+      "source_word": "张飞-"
+    },
+    "ZG": {
+      "word": "战鼓",
+      "pronunciation": "zhàn",
+      "source_word": "战鼓"
+    },
+    "ZH": {
+      "word": "中华*",
+      "pronunciation": "zhōng",
+      "source_word": "中华*"
+    },
+    "ZJ": {
+      "word": "坐骑",
+      "pronunciation": "zuò",
+      "source_word": "坐骑"
+    },
+    "ZK": {
+      "word": "竹筐",
+      "pronunciation": "zhú",
+      "source_word": "竹筐"
+    },
+    "ZL": {
+      "word": "泽连斯基",
+      "pronunciation": "zé",
+      "source_word": "泽连斯基+"
+    },
+    "ZM": {
+      "word": "芝麻",
+      "pronunciation": "zhī",
+      "source_word": "芝麻"
+    },
+    "ZN": {
+      "word": "枣泥",
+      "pronunciation": "zǎo",
+      "source_word": "枣泥"
+    },
+    "ZO": {
+      "word": "桌",
+      "pronunciation": "zhuō",
+      "source_word": "桌"
+    },
+    "ZP": {
+      "word": "扎啤",
+      "pronunciation": "zhā",
+      "source_word": "扎啤"
+    },
+    "ZQ": {
+      "word": "蒸汽*",
+      "pronunciation": "zhēng",
+      "source_word": "蒸汽*"
+    },
+    "ZR": {
+      "word": "猪人",
+      "pronunciation": "zhū",
+      "source_word": "猪人-"
+    },
+    "ZS": {
+      "word": "钻石",
+      "pronunciation": "zuàn",
+      "source_word": "钻石"
+    },
+    "ZT": {
+      "word": "枕头",
+      "pronunciation": "zhěn",
+      "source_word": "枕头"
+    },
+    "ZW": {
+      "word": "驺吾",
+      "pronunciation": "zōu",
+      "source_word": "驺吾-"
+    },
+    "ZX": {
+      "word": "准星",
+      "pronunciation": "zhǔn",
+      "source_word": "准星"
+    },
+    "ZY": {
+      "word": "庄园",
+      "pronunciation": "zhuāng",
+      "source_word": "庄园"
+    }
+  }
+}

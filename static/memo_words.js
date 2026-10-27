@@ -1,44 +1,24 @@
-// Approximate English cues, deliberately local so filtering needs no extra lookup.
+// Prefer reviewed sounds over forcing the literal pair letters into a new spelling.
 function memoWordCue(word, pair = '') {
-    const plain = word.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-    const overrides = {pikachu: 'pik', pokemon: 'poke', abacus: 'ab',
-        astronaut: 'ast', aquarium: 'tank', elephant: 'elf', butterfly: 'fly',
-        banana: 'ban', bicycle: 'bike', computer: 'comp', unicorn: 'horn'};
+    const normalized = word.trim().toLowerCase();
+    const plain = normalized.replace(/\([^)]*\)/g, '').trim();
+    const pronunciation = (MEMO_LEXICON[normalized] || MEMO_LEXICON[plain])?.pronunciation;
     const singleWords = new Set(['fire', 'wire', 'hour', 'our', 'ice', 'ace', 'axe', 'eye', 'one']);
-    function syllables(text) {
+    function estimatedSyllables(text) {
         if (singleWords.has(text)) return 1;
-        let normalized = text.replace(/(?:[^aeiouy])e$/, match => match[0]);
+        const normalized = text.replace(/(?:[^aeiouy])e$/, match => match[0]);
         return (normalized.match(/[aeiouy]+/g) || []).length || text.length;
     }
-    if (/^[a-z]+$/.test(plain) && syllables(plain) === 1) return {word, short: word, generated: false};
-    let cue = overrides[plain];
-    if (!cue) {
-        const first = (plain.match(/[a-z]+/) || [''])[0];
-        // Keep the first vowel sound and one following consonant: Pikachu -> pik.
-        cue = first.match(/^[^aeiouy]*[aeiouy]+(?:ch|sh|th|ck|[bcdfghjklmnpqrstvwxz])?/)?.[0];
+    if (pronunciation?.syllables.length === 1 || (!pronunciation && /^[a-z]+$/.test(plain) && estimatedSyllables(plain) === 1)) {
+        return {word, short: word, generated: false, syllables: pronunciation?.syllables || null};
     }
-    const letters = pair.toLowerCase();
-    if (/^[a-z]{2}$/.test(letters)) {
-        const [first, second] = letters;
-        const containsPair = text => {
-            const start = (text || '').indexOf(first);
-            return start !== -1 && text.indexOf(second, start + 1) !== -1;
-        };
-        if (!containsPair(cue)) {
-            // Compress around the pair, retaining a vowel from the image word:
-            // galaxy/GX -> gax, Pikachu/PK -> pik, butterfly/BF -> buf.
-            const start = plain.indexOf(first);
-            const vowel = (plain.slice(Math.max(0, start + 1)).match(/[aeiou]/)
-                || plain.match(/[aeiou]/) || ['a'])[0];
-            const candidate = /[aeiouy]/.test(first + second)
-                ? first + second : first + vowel + second;
-            if (syllables(candidate) === 1) cue = candidate;
-        }
-    }
-    // Never emit common offensive fragments accidentally formed by truncation.
+    // Curated clips may cross a syllable boundary (gua-ca-mo-le -> guac), or
+    // use a sound-equivalent spelling (rac-quet -> rack). Never rewrite them
+    // simply because the literal pair letters are missing.
+    let cue = pronunciation?.pairCues?.[pair.toUpperCase()] || pronunciation?.shortCue || null;
     const blocked = new Set(['ass', 'sex', 'cum', 'tit', 'cock', 'dick', 'fuc', 'fuck', 'shit', 'nig', 'cunt']);
-    if (!cue || cue.length < 2 || blocked.has(cue) || syllables(cue) !== 1) cue = null;
-    return {word, short: cue, generated: true};
+    if (cue && (cue.length < 2 || blocked.has(cue.toLowerCase()))) cue = null;
+    return {word, short: cue, generated: true, syllables: pronunciation?.syllables || null};
 }
 
 // Highlight two distinct occurrences in pair order, including repeated letters.
@@ -72,60 +52,14 @@ function memoWordTokens(memo) {
     return tokens;
 }
 
-// Local story scaffolding: keep every cue in order, and stop at annotations or
-// missing images rather than inventing a word or crossing a technique boundary.
-function memoExampleStory(cues) {
-    const sentences = [];
-    let group = [];
-    function flush() {
-        if (!group.length) return;
-        const joins = ['', ' beside ', ', with ', ' resting on ', ' near '];
-        sentences.push('Picture ' + group.map((cue, i) => joins[i] + cue).join('') + '.');
-        group = [];
-    }
-    cues.forEach(({text, image}) => {
-        if (!image) { flush(); sentences.push(text.startsWith('[') ? text : `[${text}]`); }
-        else { group.push(text); if (group.length === 5) flush(); }
-    });
-    flush();
-    return sentences.join(' ');
-}
-
-function memoStoryMeaning(cues) {
-    const descriptions = [];
-    let group = [];
-    const quote = text => `“${text}”`;
-    function flush() {
-        if (!group.length) return;
-        const [a, b, c, d, e] = group.map(quote);
-        let scene = b
-            ? `In this imagined scene, ${a} and ${b} appear side by side.`
-            : `Imagine a scene centered on an image of ${a}.`;
-        if (c) {
-            scene += d
-                ? ` An image of ${c} rests on a model of ${d}${e ? `, near a representation of ${e}` : ''}.`
-                : ` An image of ${c} is placed nearby, connecting the two.`;
-        }
-        descriptions.push(scene);
-        group = [];
-    }
-    cues.forEach(({original, text, image}) => {
-        if (!image) {
-            flush();
-            descriptions.push(`Keep ${quote(text)} as a separate memo cue.`);
-        } else {
-            // Interpret the original image, not an invented one-syllable sound.
-            group.push(original || text);
-            if (group.length === 5) flush();
-        }
-    });
-    flush();
-    return descriptions.join(' ');
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     const panels = [...document.querySelectorAll('[data-memo-words]')];
     if (!panels.length) return;
+    const languageSelector = document.getElementById('site-language');
+    const currentLanguage = () => languageSelector?.value === 'zh' || document.documentElement?.lang === 'zh-Hans' ? 'zh' : 'en';
+    let language = currentLanguage();
+    try { language = localStorage.getItem('tracer-language') === 'zh' ? 'zh' : language; } catch (_) {}
+    let loadVersion = 0;
     const pairKey = token => token.replace(/[a-z]/g, char => char.toUpperCase());
     const isPair = token => /^[A-Zʧ]{2}$/.test(pairKey(token));
     const entries = panels.map(panel => ({panel,
@@ -145,6 +79,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     let oneSyllable = false;
     try { oneSyllable = localStorage.getItem('memo-one-syllable') === 'true'; } catch (_) {}
     let render = () => {};
+    const fillerRanges = new Map();
+    const updateStories = new Map();
+    const visibleStories = new Set();
+    document.querySelectorAll('[data-show-stories]').forEach(button => {
+        button.addEventListener('click', () => {
+            const scope = button.dataset.showStories;
+            const showing = !visibleStories.has(scope);
+            if (showing) visibleStories.add(scope);
+            else visibleStories.delete(scope);
+            button.setAttribute('aria-expanded', String(showing));
+            button.textContent = showing ? 'Hide memo sentences/stories (in testing mode)' : 'Show memo sentences/stories (in testing mode)';
+            document.querySelectorAll('[data-story-settings]').forEach(control => {
+                if (control.dataset.storySettings === scope) control.hidden = !showing;
+            });
+            render();
+        });
+    });
+    document.querySelectorAll('[data-story-settings]').forEach(control => {
+        const scope = control.dataset.storySettings;
+        const low = control.querySelector('[data-filler-low]');
+        const high = control.querySelector('[data-filler-high]');
+        const output = control.querySelector('[data-filler-output]');
+        function update(changed) {
+            if (+low.value > +high.value) {
+                if (changed === low) high.value = low.value;
+                else low.value = high.value;
+            }
+            fillerRanges.set(scope, [+low.value, +high.value]);
+            output.textContent = `${low.value}–${high.value}`;
+            entries.filter(({panel}) => (panel.dataset.storyRow || 'single') === scope)
+                .forEach(({panel}) => updateStories.get(panel)?.());
+        }
+        low.addEventListener('input', () => update(low));
+        high.addEventListener('input', () => update(high));
+        update(low);
+    });
     async function accountRequest(method = 'GET', data) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 10000);
@@ -339,6 +309,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     selected.forEach(({panel}) => {
         if (panel.dataset.storyRow) document.getElementById(panel.dataset.storyRow).hidden = false;
     });
+    const version = loadVersion;
+    const requestLanguage = language;
     const pairs = [...new Set(selected.flatMap(entry => entry.tokens.filter(isPair).map(pairKey)))];
     if (!pairs.length) {
         selected.forEach(({panel}) => { panel.hidden = false; panel.textContent = 'No ordinary letter pairs to look up.'; });
@@ -348,20 +320,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
-        const response = await fetch('/api/memo-words?pairs=' + encodeURIComponent(pairs.join(',')),
+        const response = await fetch('/api/memo-words?pairs=' + encodeURIComponent(pairs.join(',')) + '&language=' + requestLanguage,
             {signal: controller.signal});
         const result = await response.json();
+        if (version !== loadVersion) return false;
         if (!response.ok) {
             const error = new Error('Unavailable');
             error.policyConfiguration = result.code === 'memo_policy_configuration';
             throw error;
         }
-        if (result.censored !== true) throw new Error('Censorship not verified');
+        if (requestLanguage === 'en' && result.censored !== true) throw new Error('Censorship not verified');
+        if (requestLanguage === 'zh' && (result.language !== 'zh' || result.source !== 'chinese_workbook')) throw new Error('Invalid Chinese word source');
         Object.assign(words, result.words);
         selected.forEach(({panel}) => loaded.add(panel));
         render = () => entries.filter(({panel}) => loaded.has(panel)).forEach(({panel, tokens}) => {
             panel.replaceChildren();
             const bulk = panel.dataset.bulkWords !== undefined;
+            if (language === 'zh') {
+                panel.setAttribute('data-no-translate', '');
+                tokens.forEach((token, index) => {
+                    const word = isPair(token) ? words[pairKey(token)] : null;
+                    const item = document.createElement('span');
+                    if (bulk) {
+                        if (index) panel.appendChild(document.createTextNode(' · '));
+                        item.textContent = word || token;
+                        item.title = token;
+                    } else {
+                        item.className = 'memo-word';
+                        const label = document.createElement('strong');
+                        label.textContent = token;
+                        const text = document.createElement('span');
+                        text.textContent = word || token;
+                        item.append(label, text);
+                    }
+                    panel.appendChild(item);
+                });
+                return;
+            }
+            panel.removeAttribute('data-no-translate');
             const detail = bulk ? document.createElement('div') : null;
             const buttons = [];
             if (detail) {
@@ -428,8 +424,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (detail) panel.appendChild(detail);
             const story = document.createElement('p');
             story.className = 'memo-example-story';
+            story.hidden = !visibleStories.has(panel.dataset.storyRow || 'single');
             const heading = document.createElement('strong');
-            heading.textContent = 'Example story: ';
+            heading.textContent = 'Example sentence-like story: ';
             const sentence = document.createElement('span');
             const storyCues = tokens.map(token => {
                 const original = isPair(token) ? wordFor(token) : null;
@@ -438,17 +435,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return {text: selected ? memoPairCase(selected.toLowerCase(), token) : token,
                     original: original ? memoPairCase(original.toLowerCase(), token) : null, image: Boolean(selected)};
             });
-            sentence.textContent = memoExampleStory(storyCues);
-            story.append(heading, sentence);
             const meaning = document.createElement('small');
             meaning.className = 'memo-story-meaning';
-            meaning.textContent = memoStoryMeaning(storyCues);
+            function updateStory() {
+                const [low, high] = fillerRanges.get(panel.dataset.storyRow || 'single') || [2, 2];
+                // A stable variation within the chosen range avoids changing the
+                // story randomly when a user toggles short cues or opens a picker.
+                const seed = Array.from(panel.dataset.memoWords).reduce((n, char) => (n * 31 + char.charCodeAt(0)) >>> 0, 0);
+                const average = low + (high - low) * (seed % 101) / 100;
+                sentence.replaceChildren();
+                try {
+                    const plan = memoStoryPlan(storyCues, average);
+                    meaning.textContent = plan.meaning;
+                    plan.parts.forEach(part => {
+                        const span = document.createElement('span');
+                        span.className = `story-${part.kind}`;
+                        span.textContent = part.text;
+                        sentence.appendChild(span);
+                    });
+                } catch (error) {
+                    // A local story error must not discard successfully loaded words
+                    // or stop the other memo panel from rendering.
+                    sentence.textContent = 'Story generation is unavailable right now.';
+                    meaning.textContent = 'Your word examples and letter memo are still available.';
+                    console.error('Memo story generation failed', error);
+                }
+            }
+            updateStories.set(panel, updateStory);
+            updateStory();
+            story.append(heading, sentence);
             story.appendChild(meaning);
             panel.appendChild(story);
         });
         render();
         return true;
     } catch (error) {
+        if (version !== loadVersion) return false;
         selected.forEach(({panel}) => { panel.textContent = error.policyConfiguration
             ? 'Word examples are unavailable because the server’s word-filter configuration needs fixing. Your letter memo is ready to use.'
             : 'Word examples are unavailable right now. Your letter memo is ready to use.'; });
@@ -457,18 +479,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const bulkButton = document.getElementById('load-bulk-memo-words');
     const bulkStatus = document.getElementById('bulk-memo-words-status');
-    const bulkEntries = entries.filter(({panel}) => panel.dataset.bulkWords !== undefined);
-    if (bulkButton && bulkEntries.length) {
-        bulkButton.addEventListener('click', async () => {
-            if (bulkButton.disabled) return;
-            bulkButton.disabled = true;
-            bulkStatus.textContent = 'Loading word examples for the displayed scrambles…';
-            const success = await loadEntries(bulkEntries);
-            bulkStatus.textContent = success ? 'Word examples loaded for the displayed scrambles.' : 'Word examples could not be loaded. You can retry.';
-            bulkButton.textContent = success ? 'Memo words & stories shown' : 'Retry memo words & stories';
+    async function loadAllWords() {
+        if (bulkButton) bulkButton.disabled = true;
+        const success = await loadEntries(entries);
+        if (bulkButton) {
+            bulkButton.hidden = success;
             bulkButton.disabled = success;
-        });
+            bulkButton.textContent = 'Retry loading memo words';
+        }
+        if (bulkStatus) bulkStatus.textContent = success ? '' : 'Word examples could not be loaded. You can retry.';
     }
-    const automatic = entries.filter(({panel}) => panel.dataset.bulkWords === undefined);
-    if (automatic.length) await loadEntries(automatic);
+    bulkButton?.addEventListener('click', async () => {
+        if (!bulkButton.disabled) await loadAllWords();
+    });
+    languageSelector?.addEventListener('change', async () => {
+        const next = languageSelector.value === 'zh' ? 'zh' : 'en';
+        if (next === language) return;
+        language = next;
+        loadVersion++;
+        const selected = entries.filter(({panel}) => loaded.has(panel) || !panel.hidden || panel.dataset.bulkWords === undefined);
+        loaded.clear();
+        updateStories.clear();
+        Object.keys(words).forEach(key => delete words[key]);
+        if (selected.length) await loadEntries(selected);
+    });
+    await loadAllWords();
 });

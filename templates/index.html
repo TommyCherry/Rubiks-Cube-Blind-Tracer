@@ -68,6 +68,7 @@
             <nav class="tracer-mode-nav" aria-label="Tracer mode">
                 <a href="{{ url_for('beginner') }}" {% if beginner %}aria-current="page"{% endif %}>Beginner</a>
                 <a href="{{ url_for('expert') }}" {% if not beginner %}aria-current="page"{% endif %}>Expert</a>
+                <a href="{{ url_for('letter_pair_memo') }}">Letter pair memo playground (in testing mode)</a>
             </nav>
         <section class="tracer-configuration preset-section" aria-labelledby="presets-heading"
                  data-mode="{{ 'beginner' if beginner else 'expert' }}" data-csrf="{{ session.get('preset_csrf', '') }}">
@@ -914,6 +915,7 @@
             {% endif %}
 
             <div class="memo-section" id="generated-memo" tabindex="-1">
+                {% with story_scope='single' %}{% include 'memo_story_settings.html' %}{% endwith %}
 
                 {% for kind in (['corner', 'edge'] if beginner and beginner_memo_order == 'corners' else ['edge', 'corner']) %}
                     {% include kind ~ '_memo.html' %}
@@ -1043,6 +1045,9 @@
 <script src="{{ url_for('static', filename='conjugacy_practice.js') }}"></script>
 {% endif %}
 <script src="{{ url_for('static', filename='settings_presets.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_lexicon.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_actions.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_story.js') }}"></script>
 <script src="{{ url_for('static', filename='memo_words.js') }}"></script>
 {% include 'memo_account.html' %}
 <script src="{{ url_for('static', filename='solution_examples.js') }}"></script>

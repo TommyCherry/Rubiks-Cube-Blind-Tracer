@@ -13,6 +13,7 @@ from urllib.parse import urlencode, urlsplit
 from auth_config import session_secret
 import requests
 from colpi import suggestions_for, valid_pair, alternatives_for
+from chinese_memo import chinese_suggestions
 from memo_word_policy import MemoPolicyConfigurationError
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
@@ -795,13 +796,41 @@ def solution_examples():
         return jsonify(error="BLDDB examples are temporarily unavailable. Your trace is still available."), 503
 
 
+@app.get("/memo-story-playground")
+def memo_story_playground():
+    return render_template("memo_story_playground.html")
+
+
+@app.route("/letter-pair-memo", methods=["GET", "POST"])
+def letter_pair_memo():
+    raw = request.form.get("pairs", "") if request.method == "POST" else ""
+    memo = ""
+    error = ""
+    if request.method == "POST":
+        tokens = [token for token in re.split(r"[\s,，]+", raw.strip().upper()) if token]
+        if not tokens:
+            error = "Enter at least one letter pair."
+        elif len(raw) > 1000 or len(tokens) > 60:
+            error = "Enter up to 60 pairs or single-letter cues."
+        elif any(re.fullmatch(r"[A-Zʧ]{1,2}", token) is None for token in tokens):
+            error = "Separate letter pairs with spaces, commas, or new lines. Single letters are kept as separate cues."
+        else:
+            memo = " ".join(tokens)
+    return render_template("letter_pair_memo.html", pair_input=raw, pair_memo=memo, error=error), (400 if error else 200)
+
+
 @app.get("/api/memo-words")
 def memo_words():
+    language = request.args.get("language", "en")
+    if language not in {"en", "zh"}:
+        return jsonify(error="Unsupported memo language."), 400
     raw = request.args.get("pairs", "")
     pairs = list(dict.fromkeys(raw.split(",")))
     if len(raw) > 3000 or len(pairs) > 729 or not all(valid_pair(pair) for pair in pairs):
         return jsonify(error="Provide up to 729 two-letter pairs."), 400
     try:
+        if language == "zh":
+            return jsonify(words=chinese_suggestions(pairs), language="zh", source="chinese_workbook")
         return jsonify(words=suggestions_for(pairs), censored=True, language="en")
     except MemoPolicyConfigurationError:
         app.logger.warning("Memo words unavailable: invalid MEMO_WORD_EXCLUSIONS format")

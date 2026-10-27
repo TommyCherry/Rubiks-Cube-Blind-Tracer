@@ -66,7 +66,7 @@ class MemoWordsTests(unittest.TestCase):
                 response = app.test_client().post('/' + mode, data={'action': 'bulk', 'bulk_scrambles': 'R U\nF2'})
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b'id="load-bulk-memo-words"', response.data)
-                self.assertIn(b'Show memo words &amp; stories', response.data)
+                self.assertIn(b'Show memo sentences/stories', response.data)
                 self.assertLess(response.data.index(b'Showing 2 of 2 lines'),
                                 response.data.index(b'id="load-bulk-memo-words"'))
                 self.assertLess(response.data.index(b'id="load-bulk-memo-words"'),

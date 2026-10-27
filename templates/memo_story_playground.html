@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memo story playground</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="story-playground">
+    <a href="{{ url_for('home') }}">← Back to the tracer</a>
+    <h1>Memo story playground</h1>
+    <p>Turn your own words into a connected memory scene. No scramble or login needed.</p>
+    <form id="story-playground-form">
+        <label for="story-input"><strong>Your words, in memo order</strong></label>
+        <p id="story-input-help">Separate images with commas or new lines. Keep phrases like “apple juice” together. Use brackets for a separate cue or boundary, such as [Q] or [Parity]. Up to 60 images, 120 characters each.</p>
+        <textarea id="story-input" rows="6" maxlength="7200" aria-describedby="story-input-help" placeholder="apple juice, teddy bear, keyboard (qwerty), cog" required></textarea>
+        <div class="story-playground-controls">
+            <label for="story-density">Local generator filler words per image: <output id="story-density-value" for="story-density">2</output></label>
+            <input id="story-density" type="range" min="0" max="2" step="0.1" value="2">
+            <small>Lower values make shorter fragments. The explanation still describes the scene.</small>
+        </div>
+        <div class="story-playground-buttons">
+            <button type="submit">Generate story</button>
+            <button id="story-example" type="button">Try an example</button>
+            <button id="story-clear" type="button">Clear</button>
+        </div>
+        <p id="story-playground-status" role="status" aria-live="polite"></p>
+    </form>
+    <section class="story-ai-controls" aria-labelledby="story-ai-title">
+        <h2 id="story-ai-title">Creative story with browser AI</h2>
+        <p>Runs Qwen2.5 1.5B on your device through WebLLM. The first use downloads roughly 1 GB of model files and needs around 2 GB of available GPU memory. Downloads may take several minutes; cached files can be reused. No API key or AI usage fees.</p>
+        <p>Use up to 12 images. The filler slider above applies only to the local generator.</p>
+        <button id="story-ai-generate" type="button" data-worker-url="{{ url_for('static', filename='memo_webllm_worker.js') }}">Download model &amp; generate with browser AI</button>
+        <button id="story-ai-stop" type="button" hidden>Stop &amp; free GPU memory</button>
+        <p id="story-ai-status" role="status" aria-live="polite"></p>
+    </section>
+    <section id="story-ai-result" hidden aria-labelledby="story-ai-result-title">
+        <h2 id="story-ai-result-title">AI-generated memory story</h2>
+        <p id="story-ai-sentence" class="memo-example-story"></p>
+        <small>Recall actions from initiator to target. Arrows mark the next image when words are omitted.</small>
+        <h3>The imagined scene</h3>
+        <p id="story-ai-meaning" class="memo-story-meaning"></p>
+        <small>This is an imagined scene. Review it before using it for a solve.</small>
+    </section>
+    <section id="story-playground-result" hidden aria-labelledby="story-result-title">
+        <h2 id="story-result-title">Example sentence-like story</h2>
+        <p><span class="story-cue">Your images</span> · <span class="story-filler">Connecting words</span></p>
+        <p id="story-playground-sentence" class="memo-example-story"></p>
+        <small>Recall actions from initiator to target. Arrows mark the next image when words are omitted.</small>
+        <h3>The imagined scene</h3>
+        <p id="story-playground-meaning" class="memo-story-meaning"></p>
+    </section>
+    <p class="story-playground-note">Your words are processed on this device, not sent to an AI service. Browser AI downloads runtime and model files from external hosts. The local generator needs no model download and remains available if browser AI cannot run.</p>
+    <noscript>This tool needs JavaScript to generate stories in your browser.</noscript>
+</main>
+<script src="{{ url_for('static', filename='memo_lexicon.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_actions.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_story.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_playground.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_webllm.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_webllm_ui.js') }}"></script>
+</body>
+</html>

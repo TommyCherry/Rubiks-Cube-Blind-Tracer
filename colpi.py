@@ -7,6 +7,7 @@ from threading import Lock
 
 import requests
 from memo_word_policy import excluded_memo_word, ranked_candidates
+from memo_word_familiarity import rank_candidates
 
 URL = 'https://bestsiteever.net/colpi/'
 _cache = None
@@ -46,11 +47,13 @@ def parse_suggestions(html):
             continue
         text = entry.get('t')
         if isinstance(text, str) and 0 < len(text) <= 500:
-            # Grid tooltips contain CoLPI's top suggestions in ranked order.
-            for word in ranked_candidates(text):
-                if word and not excluded_memo_word(word):
-                    suggestions[pair] = word
-                    break
+            # Rank only censored, privately allowed candidates; this stays one
+            # grid request even for bulk solves, with CoLPI rank breaking ties.
+            choices = [word for word in ranked_candidates(text)
+                       if word and not excluded_memo_word(word)]
+            ranked = rank_candidates(choices)
+            if ranked:
+                suggestions[pair] = ranked[0]
     return suggestions
 
 
@@ -97,4 +100,4 @@ def alternatives_for(pair):
                 and isinstance(word, str) and 0 < len(word.strip()) <= 120
                 and not excluded_memo_word(word) and word.strip() not in words):
             words.append(word.strip())
-    return words
+    return rank_candidates(words)

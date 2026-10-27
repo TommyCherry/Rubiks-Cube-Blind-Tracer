@@ -91,10 +91,11 @@
     {% if not bulk_results %}<p role="status">{{ 'No scrambles match these filters.' if beginner else 'No scrambles match this algorithm count.' }}</p>{% endif %}
     {% if bulk_results %}
     <div class="bulk-word-controls">
-        <button type="button" id="load-bulk-memo-words">Show memo words &amp; stories</button>
-        <p class="bulk-definition">Show words and example stories beneath each displayed scramble. Taken from <a href="https://bestsiteever.net/colpi/" target="_blank" rel="noopener">CoLPI</a>.</p>
-        <label class="memo-word-filter"><input type="checkbox" data-one-syllable> One-syllable words only (approximate short cues when needed)</label>
-        <p class="bulk-definition">Click a word to see its letter pair, original word, and short cue. Short cues are approximate; pairs without an example keep their letters.</p>
+        <button type="button" id="load-bulk-memo-words" hidden>Retry loading memo words</button>
+        <p class="bulk-definition" data-english-memo>Memo words appear beneath each displayed scramble. Taken from <a href="https://bestsiteever.net/colpi/" target="_blank" rel="noopener">CoLPI</a>.</p>
+        <p class="bulk-definition" data-chinese-memo data-no-translate>中文联想词 · 来源：勺子首字读音联想词（2026年7月版）</p>
+                        <label class="memo-word-filter" data-english-memo><input type="checkbox" data-one-syllable> One-syllable words only (approximate short cues when needed)</label>
+        <p class="bulk-definition" data-english-memo>Click a word to see its letter pair, original word, and short cue. Short cues are approximate; pairs without an example keep their letters.</p>
         <p id="bulk-memo-words-status" role="status" aria-live="polite"></p>
     </div>
     {% endif %}
@@ -145,6 +146,7 @@
                 <tr class="bulk-story-row" id="bulk-story-{{ row.line_number }}" hidden>
                     <td colspan="{{ 6 if beginner else 8 }}">
                         <div class="bulk-story" aria-label="Word memo for scramble {{ row.line_number }}">
+                            {% with story_scope='bulk-story-' ~ row.line_number %}{% include 'memo_story_settings.html' %}{% endwith %}
                             {% for kind, label in [('edge', 'Edges'), ('corner', 'Corners')] %}
                             <div class="bulk-story-section">
                                 <strong class="bulk-story-label">{{ label }}</strong>

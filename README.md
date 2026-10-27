@@ -180,6 +180,66 @@ python app.py
 
 Then open the local address displayed by Flask in your browser.
 
+### Story playground
+
+Open **Story playground** from the tracer header, or visit
+`/memo-story-playground`. Enter comma-separated or one-per-line images; spaces
+within an image stay together (for example, `apple juice`). Bracketed tokens
+such as `[Q]` or `[Parity]` remain separate cues and stop scene continuity.
+The tool accepts up to 60 entries of 120 characters each, with a 7,200-character
+input limit. Generate the story, adjust the 0–2 filler slider, try the built-in
+example, or clear the page. Slider changes apply to the last generated words;
+submit again after editing the input.
+
+The regular “Generate story” button uses the same local dictionary, action frames
+and explanations as scramble results. It needs no scramble, account, database,
+CoLPI lookup, or model download. Typed words are not saved or submitted to the
+server, and output is rendered as plain text. Custom words are user-authored,
+not censored CoLPI suggestions.
+
+The optional **Generate with browser AI** button uses
+[WebLLM](https://webllm.mlc.ai/docs/user/get_started.html), pinned to `0.2.85`,
+and Qwen2.5 1.5B Instruct. It dynamically starts a module worker only when clicked;
+the worker loads the runtime from esm.run/jsDelivr and model assets from WebLLM's
+configured model hosts (Hugging Face and its compiled-library host). No API key,
+server-side AI route, paid inference, or extra Python/npm dependency is required.
+The first download is roughly 1 GB; browser caches can reuse the assets later.
+WebGPU and HTTPS/localhost are required. The supported model configurations
+estimate about 1.6 GB GPU memory for f16 and 1.9 GB for f32; actual availability
+and performance vary. The client chooses f16 when supported, otherwise f32.
+See the [pinned model configuration](https://github.com/mlc-ai/web-llm/blob/v0.2.85/src/config.ts).
+
+AI accepts up to 12 images per request and generates separate scenes across
+bracketed boundaries. It uses fresh messages, not previous user conversations.
+The model returns structured JSON with an opening, exactly one connecting phrase
+between adjacent images, an ending, and an explanation. The app inserts the
+original images in order as separate colored spans; the model no longer has to
+emit specially formatted placeholders. Schema limits keep the connective text
+short. The parser checks types, sizes, and the number of links before display.
+Already-loaded older workers remain readable during a deployment transition.
+This validates structure, not factual accuracy or semantic quality; content/style
+instructions are not a guaranteed moderation filter. All output stays plain text.
+The local filler slider does not constrain the AI story.
+
+Model assets use WebLLM's supported IndexedDB cache backend instead of the
+browser Cache API (`Cache.add` failed in our Chrome test while direct fetch
+worked). A worker-local downloader allows at most two simultaneous asset requests,
+checks the complete response body, and retries transient failures twice. Retries
+request a fresh host redirect and bypass the HTTP cache. Existing completed
+IndexedDB assets remain available between attempts. The helper is restricted to
+MLC model assets on Hugging Face and the official compiled-library host; it does
+not change ordinary site requests or proxy model files through Flask/Vercel.
+
+Loading progress and errors appear on the page. **Stop & free GPU memory**
+terminates the worker, including downloads or generation, and prevents stale
+responses from overwriting newer results. Cached files may remain in browser
+storage. Loading has a ten-minute timeout; each generation has a two-minute
+limit. Unsupported GPUs, download failures, memory problems and invalid outputs
+leave the regular local generator available. Response-limit and GPU failures have distinct messages; generation failures no
+longer tell users to reduce an already-valid word count. Detailed worker errors
+go to the browser console for diagnosis. There is no paid fallback. This initial AI
+integration is limited to the playground, not automatic bulk generation.
+
 ### Example memo words
 
 Generated edge and corner memos load English letter-pair examples from
@@ -188,19 +248,138 @@ separately from tracing and does not need a database or CoLPI login. Repeated
 pairs retain their positions; single letters and bracketed technique annotations
 are left unchanged. Ordinary A–Z (and CoLPI's `ʧ`) pairs are supported.
 
+Defaults prefer familiar everyday vocabulary using the authored tiers in
+`memo_word_familiarity.py`: for example, QUAD outranks QUANDALE DINGLE and PARK
+outranks PIKACHU when both occur in CoLPI's censored grid suggestions. Parenthetical
+spelling hints, simple plurals, and combinations of known common words are
+recognized. These are conservative product preferences, not population-frequency
+measurements; unknown or equally ranked candidates keep CoLPI's original order.
+Ranking considers only returned, censored, privately allowed suggestions and
+never inserts a word absent from that pair's candidates. Default loading still
+uses one cached grid request, not a separate detail request for every pair.
+Picker alternatives receive the same ranking after their individual offensive
+flags are checked. Saved account words and current-page overrides retain priority.
+
+Local story rendering errors are isolated from word lookup: a failed story leaves
+the successfully fetched word examples visible and does not stop other panels.
+
 The one-syllable filter is remembered in the browser and applies to both memo
 cards. Longer examples also show an approximate short cue, such as Pikachu → pik;
 enabling the filter makes that cue the main text. These locally generated cues
-use English spelling heuristics and a small override list, not pronunciation
-data. The original CoLPI example remains visible for reference. Missing cues
+prefer stored pronunciation metadata: approximate orthographic syllable chunks,
+a reviewed one-syllable clip, and optional pair-specific exceptions. The initial
+43 pronunciation entries include gua-ca-mo-le → guac, rac-quet → rack, and
+pi-ka-chu → pik. Clips may retain a consonant from the next syllable, and a
+sound-equivalent spelling need not contain both literal pair letters. The earlier
+GX → gax preference is an explicit exception, not a general letter-forcing rule.
+Unreviewed multisyllabic words have no short cue rather than a fabricated
+consonant-vowel-pair combination. A spelling heuristic still recognizes likely
+one-syllable words without metadata; pronunciation and syllable boundaries can
+vary by accent. Capitalization highlights only literal matching pair letters;
+it does not present a substituted C as a literal Q. The original CoLPI example remains visible for reference. Missing cues
 keep their letter pair visible rather than dropping a target from the memo.
 
-Word examples also include a locally assembled example story. Simple connecting
-phrases preserve cue order in groups of up to five; missing images, single
-letters and technique annotations interrupt the sentence and remain bracketed.
-Stories follow the one-syllable setting and pair-letter capitalization. They
-use fixed, nonviolent connectors, require no additional service, and are a
-first-pass memory aid rather than a grammatical or semantic language model.
+Word examples also include an “Example sentence-like story” without an added
+opening command. Each solve has low/high sliders from 0 to 2 for an approximate
+average number of filler words per pair (in steps of 0.1). Both its edge and
+corner stories use that range; other bulk solves are unaffected. At zero,
+images are separated by dots. Short segments may have fewer filler words than
+requested because nothing is inserted across a technique boundary. Memo images
+are teal and connecting words are brown, with a color legend beside the sliders.
+Missing images, single letters and technique annotations remain bracketed.
+Stories follow the one-syllable setting and pair-letter capitalization. The
+smaller explanation is generated locally from the same adjacent-image connections.
+No LLM, API key, login, or paid inference service is required for stories. CoLPI
+word lookup still needs a network connection. The earlier paid story endpoint
+and AI button have been removed.
+
+`static/memo_lexicon.js` contains the first 368 vocabulary entries, seeded from
+CoLPI's censored English grid with a few illustrative additions. Entries record
+part of speech, category, grammatical number, and properties such as portable,
+edible, musical, or container. Common images also have concrete descriptions.
+For 68 less tangible cues, a `representation` supplies a concrete mnemonic
+stand-in with its own category, grammatical number, properties, and first/repeated
+phrasing. Examples include Siri → a glowing phone, love → a heart-shaped cushion,
+and rage → a person stamping a foot. Connections use the stand-in's physical
+properties; the compact memo retains the original cue. Explanations explicitly
+say which cue the image represents, including when short sounds are enabled.
+These are suggested memory associations, not dictionary definitions or factual
+claims about the represented subjects. They do not add words to CoLPI results or
+bypass censorship/private exclusions.
+
+This is partial coverage, not a complete semantic dictionary of CoLPI. Unreviewed
+words and custom phrases use neutral spatial links without invented definitions.
+`static/memo_story.js` connects adjacent images by category/property, varies
+compatible connections, preserves annotations, and uses original words for
+explanations even when short sounds are displayed. Lower filler settings use
+fragments; explanations remain full sentences. The default is now 2 filler words
+per pair to leave room for articles, relative clauses (who/which), and modal verbs
+such as can. Filler allocation is a word budget, not a requirement to pad a sentence:
+whole grammatical units are preferred to extra adverbs. Explanations connect
+clauses with conjunctions and transitions such as “and then” and “meanwhile,”
+with occasional “could” constructions. Spatial fallbacks vary among behind,
+above, opposite, and underneath. At zero, the compact memo remains dot-separated,
+while explanations still describe meaningful connections. Word overrides regenerate both.
+
+Supported role chains now link wearables → wearers → vehicles → operators and
+people → imagined thoughts → head. A wearable can turn an object into a character,
+so a blindfold-wearing cog can become a taxi passenger. Vehicle metadata supplies
+driver, rider, pilot, captain, or paddler roles; proper names omit articles.
+The short chain and explanation come from the same role plan. At low filler
+budgets, the compact chain stays dot-separated instead of cutting a role phrase
+in half, while its explanation retains the scene. Technique annotations stop
+role propagation. Personal thoughts are explicitly imaginary; the rules do not
+infer real beliefs or change CoLPI/private filtering. Other chains continue to
+use the ordinary category/property connections.
+
+Every shipped lexicon entry now has an `affordances` profile: physical `tags`,
+`canDo` actions, `canReceive` actions, `associations`, sensory `detail`, and its
+`basis`. Shared category traits are supplemented by reviewed word-specific
+traits (81 entries in this first pass). Empty lists mean no supported knowledge,
+not permission to invent properties. Symbolic cues use their depicted stand-in's
+traits instead of treating an abstract concept as a physical substance.
+
+`static/memo_actions.js` matches authored action frames against both participants.
+Specific frames (sticky liquid on keyboard keys, liquid on a visor) outrank broad
+ones; recent action families receive a repetition penalty. A small lookahead
+bonus favors effects useful for the next image. Frames can pass wet, sticky,
+filled, tangled, moving, or sounding state to the next image. State is local to
+one contiguous memo group and resets at annotations and between solves. For
+example, juice soaks a teddy bear, the bear drips onto a keyboard, and the sticky
+keyboard clings to a cog. A full cup can tip its contents over the next image.
+Only compatible authored effects are used; this is not a general physics model.
+
+The same selected frame supplies the compact action and the explanatory
+consequence. If the filler budget cannot fit a complete action phrase, that gap
+stays dot-separated while the explanation retains the scene. Cue spans remain
+in order, with no inserted associated object becoming another target. Associated
+objects are currently vocabulary for authors, not automatically inserted cues.
+Existing role-chain rules still handle clothing, passengers, drivers, and thoughts.
+Unknown/custom words retain conservative fallback links. The imported private
+review queue is larger than the shipped lexicon; it is not all semantically annotated.
+No LLM or paid inference is used at runtime or by the dictionary import script.
+
+To extend coverage, add verified traits to an entry's `affordances.tags` and keep
+its human-readable action lists consistent. Add a frame only with explicit source
+and target constraints, singular/plural verb forms, an explanation, and defined
+effects; test both valid and invalid matches as well as effect reset boundaries.
+
+To draft additional entries from the public censored grid, load your private
+`MEMO_WORD_EXCLUSIONS` environment setting and run:
+
+```bash
+python scripts/draft_memo_dictionary.py
+```
+
+This writes `instance/memo_dictionary_review.json` (ignored by git), keeping the
+pair-to-choices mapping separate from word definitions. It verifies censorship,
+applies private exclusions, and flags unfamiliar words for review rather than
+inventing properties. It includes grid suggestions, not every alternative in
+CoLPI's pair-detail database. Review definitions and properties before adding
+entries to the public lexicon; do not publish the private review file or exclusion
+list. `--html path/to/page.html` supports an offline snapshot. Runtime filtering
+still happens in the existing CoLPI endpoints; dictionary membership never makes
+an otherwise excluded suggestion eligible. No database migration is needed.
 
 Each pair has a “Choose word” picker (in bulk, click its word first). Alternatives
 are fetched on demand from CoLPI's pair-detail page, with censorship verified

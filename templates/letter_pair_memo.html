@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter pair memo playground (in testing mode)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='i18n.js') }}" defer></script>
+</head>
+<body>
+{% include 'language_selector.html' %}
+<main class="story-playground">
+    <nav class="tracer-mode-nav" aria-label="Tracer mode">
+        <a href="{{ url_for('beginner') }}">Beginner</a>
+        <a href="{{ url_for('expert') }}">Expert</a>
+        <a href="{{ url_for('letter_pair_memo') }}" aria-current="page">Letter pair memo playground (in testing mode)</a>
+    </nav>
+    <h1>Letter pair memo playground (in testing mode)</h1>
+    <p class="bulk-definition" role="note">This playground is in testing mode. Generated stories may be awkward or inaccurate; review them before using them for memorization.</p>
+    <p>Enter letter pairs to get their assigned words and a memory story. No scramble needed.</p>
+    <form method="POST" action="{{ url_for('letter_pair_memo') }}">
+        <label for="pair-input"><strong>Letter pairs, in memo order</strong></label>
+        <p id="pair-input-help">Separate pairs with spaces, commas, or new lines. Up to 60 pairs. Single letters stay as separate cues.</p>
+        <textarea id="pair-input" name="pairs" rows="4" maxlength="1000" placeholder="AB CD EF GH" aria-describedby="pair-input-help" required data-no-translate>{{ pair_input }}</textarea>
+        <button type="submit">Generate memo</button>
+        {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    </form>
+    {% if pair_memo %}
+    <section class="memo-section" aria-labelledby="pair-result-heading">
+        <h2 id="pair-result-heading">Your memo</h2>
+        <p id="pairs-memo" class="memo" data-no-translate>{{ pair_memo }}</p>
+        {% with story_scope='single' %}{% include 'memo_story_settings.html' %}{% endwith %}
+        {% with kind='pairs' %}{% include 'memo_words.html' %}{% endwith %}
+    </section>
+    {% endif %}
+    <noscript>Enable JavaScript to look up words and generate the memo story.</noscript>
+</main>
+{% include 'memo_account.html' %}
+<script src="{{ url_for('static', filename='memo_lexicon.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_actions.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_story.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_words.js') }}"></script>
+</body>
+</html>

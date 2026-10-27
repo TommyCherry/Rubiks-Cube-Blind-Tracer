@@ -15,6 +15,9 @@
         <form id="bulk-query-form" method="GET" action="{{ url_for('query_bulk', batch_id=bulk_batch_id) }}"></form>
     </main>
 <script src="{{ url_for('static', filename='bulk_images.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_lexicon.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_actions.js') }}"></script>
+<script src="{{ url_for('static', filename='memo_story.js') }}"></script>
 <script src="{{ url_for('static', filename='memo_words.js') }}"></script>
 {% include 'memo_account.html' %}
 </body>

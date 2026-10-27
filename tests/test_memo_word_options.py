@@ -21,7 +21,7 @@ class MemoWordOptionsTests(unittest.TestCase):
     def test_filters_each_word_and_private_exclusions(self):
         with patch.dict(os.environ, MEMO_WORD_EXCLUSIONS='["private test entry"]'), patch.object(colpi.requests, 'get') as get:
             get.return_value = Mock(text=payload())
-            self.assertEqual(colpi.alternatives_for('AB'), ['ABACUS', 'APPLE BOX'])
+            self.assertEqual(colpi.alternatives_for('AB'), ['APPLE BOX', 'ABACUS'])
             self.assertEqual(get.call_args.kwargs['params'], {'lp': 'AB'})
             self.assertNotIn('cookies', get.call_args.kwargs)
 
