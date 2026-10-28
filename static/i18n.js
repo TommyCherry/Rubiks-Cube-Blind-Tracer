@@ -480,6 +480,15 @@ Select two different edges for parity case {0}, or leave both as Default.|请为
 `;
     errors.trim().split('\n').forEach(line => { const index = line.indexOf('|'); add(line.slice(0, index), line.slice(index + 1)); });
     'JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split(' ').forEach((month, index) => add(month, `${index + 1}月`));
+    add('Save presets to', '预设保存位置');
+    add('WCA profile', 'WCA 个人资料');
+    add('This device (no account needed)', '此设备（无需账户）');
+    add('Device presets stay in this browser. Clearing site data removes them; they do not sync between devices.', '设备预设保存在当前浏览器中。清除网站数据会删除预设，且预设不会在设备间同步。');
+    add('Saved “{0}” on this device.', '已将“{0}”保存到此设备。');
+    add('Browser storage is unavailable. Allow site storage to use device presets.', '浏览器存储不可用。请允许网站存储以使用设备预设。');
+    add('Device presets could not be read. Existing data has not been overwritten.', '无法读取设备预设。现有数据未被覆盖。');
+    add('Could not save to this browser. Storage may be full or disabled.', '无法保存到此浏览器。存储空间可能已满或已被禁用。');
+    add('Copied letters, colors and orientation from “{0}”. Solving options are unchanged. Save a new preset to keep this combination.', '已从“{0}”复制字母、颜色及朝向，还原选项保持不变。请保存新预设以保留此组合。');
     // Match specific sentences before generic count labels.
     patterns.sort((a, b) => b[0].source.length - a[0].source.length);
     add('Letter-pair memo', '编码记忆');

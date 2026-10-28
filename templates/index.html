@@ -74,7 +74,13 @@
                  data-mode="{{ 'beginner' if beginner else 'expert' }}" data-csrf="{{ session.get('preset_csrf', '') }}">
             <div class="tracer-section-heading"><div><h2 id="presets-heading">{{ 'Beginner' if beginner else 'Expert' }} presets</h2>
                 <p>Save and load settings for this mode. Copy letters, colors, and cube orientation from the other mode without changing your solving options.</p></div></div>
-            {% if wca_user %}
+            <label for="preset-storage">Save presets to
+                <select id="preset-storage">
+                    {% if wca_user %}<option value="profile">WCA profile</option>{% endif %}
+                    <option value="device">This device (no account needed)</option>
+                </select>
+            </label>
+            <p>Device presets stay in this browser. Clearing site data removes them; they do not sync between devices.</p>
             <div class="preset-controls">
                 <label for="preset-name">Preset name<input id="preset-name" maxlength="80" placeholder="e.g. My competition setup"></label>
                 <button type="button" id="save-preset">Save new preset</button>
@@ -87,7 +93,7 @@
             </div>
             <p id="preset-status" role="status" aria-live="polite"></p>
             <button type="button" id="retry-presets" hidden>Retry loading presets</button>
-            {% else %}
+            {% if not wca_user %}
             <a class="wca-sign-in" href="{{ url_for('wca_login') }}">Sign in with WCA to save settings to your profile</a>
             {% endif %}
         </section>

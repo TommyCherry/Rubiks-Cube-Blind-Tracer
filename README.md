@@ -603,3 +603,7 @@ Data comes from [BLDDB](https://blddb.net/edge.html) and its
 on demand, caches it under `instance/blddb` for 24 hours, and uses cached data if
 refresh fails. Algorithm contributors and a case link appear beside each example.
 The data is not bundled with the application source.
+
+### Device-only settings presets
+
+Beginner and Expert presets can be saved without an account. Use **Save new preset** to store the current settings in this browser, then select a preset and **Load preset** on a later visit. Signed-in users can choose **This device (no account needed)** or **WCA profile** in **Save presets to**. Both support copying letters, colors, and orientation from the other mode. Device presets are separate from WCA profile presets and do not sync or migrate automatically. Clearing site data removes them, and private browsing may discard them when the session ends.

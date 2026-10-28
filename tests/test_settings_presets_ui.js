@@ -17,6 +17,7 @@ async function fixture(mode = 'beginner', fail = false, network = {}) {
     const ids = Object.fromEntries(['save-preset', 'load-preset', 'preset-list', 'preset-name',
         'preset-status', 'shared-preset-list', 'copy-shared-preset', 'retry-presets', 'memo-form',
         ...'UFRBLD'.split('').map(face => `color-${face.toLowerCase()}`)].map(id => [id, element()]));
+    if (network.storageMode) ids['preset-storage'] = element({value: network.storageMode});
     const letter = element({name: 'letter_UF', type: 'text', value: 'A'});
     const buffer = element({name: 'edge_buffer', type: 'select-one', tagName: 'SELECT', value: 'UR',
         options: [{value: 'UR'}, {value: 'DF'}]});
@@ -39,7 +40,8 @@ async function fixture(mode = 'beginner', fail = false, network = {}) {
         setTimeout(fn) { timers.set(++nextTimer, fn); return nextTimer; },
         clearTimeout(id) { timers.delete(id); }, Option: function(text, value) { this.text = text; this.value = value; },
         colorScheme: {}, cubeOrientation: {}, updateCubeColors() {}, saveCubeColors() {}, saveLetterScheme() {},
-        localStorage: {setItem() {}},
+        crypto: require('node:crypto').webcrypto,
+        localStorage: network.localStorage || {setItem() {}},
         fetch: async (_, options) => {
             if (network.fetch) return network.fetch(options);
             if (fail) return {ok: false, json: async () => ({error: 'Storage unavailable'})};
@@ -147,4 +149,44 @@ test('hanging save restores controls and explains uncertain save outcome', async
     assert.equal(f.ids['save-preset'].disabled, false);
     assert.equal(f.ids['retry-presets'].hidden, false);
     assert.match(f.ids['preset-status'].textContent, /may have been saved/);
+});
+
+test('device presets persist across visits and load without any network requests', async () => {
+    const data = new Map();
+    const network = {storageMode: 'device',
+        localStorage: {getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value)},
+        fetch() { throw new Error('Device presets must not contact the server'); }};
+    const first = await fixture('beginner', false, network);
+    first.ids['preset-name'].value = 'Local setup';
+    first.letter.value = 'Q';
+    await first.ids['save-preset'].dispatchEvent(new Event('click'));
+    assert.match(first.ids['preset-status'].textContent, /on this device/);
+    const second = await fixture('beginner', false, network);
+    assert.equal(second.ids['preset-list'].options[1].text, 'Local setup');
+    second.ids['preset-list'].value = second.ids['preset-list'].options[1].value;
+    await second.ids['load-preset'].dispatchEvent(new Event('click'));
+    assert.equal(second.letter.value, 'Q');
+    const expert = await fixture('expert', false, network);
+    assert.equal(expert.ids['preset-list'].options.length, 1);
+    assert.equal(expert.ids['shared-preset-list'].options[1].text, 'Local setup');
+    await second.ids['save-preset'].dispatchEvent(new Event('click'));
+    assert.match(second.ids['preset-status'].textContent, /already exists/);
+});
+
+test('device storage errors are reported without overwriting corrupt data', async () => {
+    for (const raw of ['broken json', '{}']) {
+        let writes = 0;
+        const f = await fixture('expert', false, {storageMode: 'device',
+            localStorage: {getItem: () => raw, setItem() { writes++; }}});
+        f.ids['preset-name'].value = 'Local';
+        await f.ids['save-preset'].dispatchEvent(new Event('click'));
+        assert.equal(writes, 0);
+        assert.match(f.ids['preset-status'].textContent, /not been overwritten/);
+    }
+    const f = await fixture('expert', false, {storageMode: 'device',
+        localStorage: {getItem: () => null, setItem() { throw new Error('Quota'); }}});
+    f.ids['preset-name'].value = 'Local';
+    await f.ids['save-preset'].dispatchEvent(new Event('click'));
+    assert.match(f.ids['preset-status'].textContent, /full or disabled/);
+    assert.equal(f.ids['preset-list'].options.length, 1);
 });
