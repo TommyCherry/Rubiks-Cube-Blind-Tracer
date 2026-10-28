@@ -480,6 +480,18 @@ Select two different edges for parity case {0}, or leave both as Default.|请为
 `;
     errors.trim().split('\n').forEach(line => { const index = line.indexOf('|'); add(line.slice(0, index), line.slice(index + 1)); });
     'JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC'.split(' ').forEach((month, index) => add(month, `${index + 1}月`));
+    add('Beginner presets', '入门模式预设');
+    add('Expert presets', '进阶模式预设');
+    add('Your beginner presets', '你的入门模式预设');
+    add('Your expert presets', '你的进阶模式预设');
+    add('Copy from expert', '从进阶模式预设复制');
+    add('Copy from beginner', '从入门模式预设复制');
+    add('Copy letters, colors & orientation', '复制编码、配色和朝向');
+    add('Save and load settings for this mode. Copy letters, colors, and cube orientation from the other mode without changing your solving options.', '保存和加载当前模式的设置。也可从另一模式的预设中复制字母编码、魔方配色和朝向，保留当前的还原选项。');
+    add('Loading presets…', '正在加载预设…');
+    add('Retry loading presets', '重新加载预设');
+    add('Saving timed out. Your preset may have been saved. Retry loading presets before saving again.', '保存超时，预设可能已保存成功。请先重新加载预设，再尝试保存。');
+    add('Loading presets timed out. Please retry. You can still try saving a new preset.', '加载预设超时，请重试。你仍可尝试保存新预设。');
     add('Save presets to', '预设保存位置');
     add('WCA profile', 'WCA 个人资料');
     add('This device (no account needed)', '此设备（无需账户）');
@@ -488,7 +500,7 @@ Select two different edges for parity case {0}, or leave both as Default.|请为
     add('Browser storage is unavailable. Allow site storage to use device presets.', '浏览器存储不可用。请允许网站存储以使用设备预设。');
     add('Device presets could not be read. Existing data has not been overwritten.', '无法读取设备预设。现有数据未被覆盖。');
     add('Could not save to this browser. Storage may be full or disabled.', '无法保存到此浏览器。存储空间可能已满或已被禁用。');
-    add('Copied letters, colors and orientation from “{0}”. Solving options are unchanged. Save a new preset to keep this combination.', '已从“{0}”复制字母、颜色及朝向，还原选项保持不变。请保存新预设以保留此组合。');
+    add('Copied letters, colors and orientation from “{0}”. Solving options are unchanged. Save a new preset to keep this combination.', '已从“{0}”复制字母编码、魔方配色和朝向，还原选项保持不变。请保存新预设以保留此组合。');
     // Match specific sentences before generic count labels.
     patterns.sort((a, b) => b[0].source.length - a[0].source.length);
     add('Letter-pair memo', '编码记忆');
