@@ -393,6 +393,19 @@ alone affects only the current page. Signed-out users see a WCA login link.
 Choices are private to the account and never sent to CoLPI. Custom text is user-authored
 and displayed as plain text; it is not a moderated CoLPI suggestion.
 
+Chinese memo also has a word picker in single and bulk results. The original
+506 workbook defaults remain available. `data/chinese_memo_alternatives.json`
+adds concrete words with pinyin, plus two object anchors for every supported
+letter. All 729 supported pairs (A–Z and ʧ, including doubles) have at least two
+additional choices before private exclusions. Common words come first; gaps
+use explicitly labeled two-object scenes whose anchors encode the letters.
+I/U/V/ʧ use letter-shaped objects, not claimed Mandarin initials. Workbook
+choices retain their original sound associations and are labeled separately.
+`/api/memo-word-options?language=zh&pair=RG` returns both plain words and
+labeled options without contacting CoLPI. Chinese selections update repeated
+pairs and persist in this browser's local storage, separately from English
+account choices; restoring the default removes that local selection.
+
 Account words use the preset database. Local SQLite creates `memo_word_choices`
 automatically; PostgreSQL requires `migrations/003_memo_word_choices.sql`.
 Apply pending migrations with `python scripts/persistent_data.py init` using

@@ -13,7 +13,7 @@ from urllib.parse import urlencode, urlsplit
 from auth_config import session_secret
 import requests
 from colpi import suggestions_for, valid_pair, alternatives_for
-from chinese_memo import chinese_suggestions
+from chinese_memo import chinese_suggestions, chinese_options
 from memo_word_policy import MemoPolicyConfigurationError
 import mysql.connector
 from itsdangerous import URLSafeTimedSerializer, BadData
@@ -830,7 +830,7 @@ def memo_words():
         return jsonify(error="Provide up to 729 two-letter pairs."), 400
     try:
         if language == "zh":
-            return jsonify(words=chinese_suggestions(pairs), language="zh", source="chinese_workbook")
+            return jsonify(words=chinese_suggestions(pairs), language="zh", source="chinese_memo")
         return jsonify(words=suggestions_for(pairs), censored=True, language="en")
     except MemoPolicyConfigurationError:
         app.logger.warning("Memo words unavailable: invalid MEMO_WORD_EXCLUSIONS format")
@@ -843,10 +843,17 @@ def memo_words():
 
 @app.get("/api/memo-word-options")
 def memo_word_options():
+    language = request.args.get("language", "en")
+    if language not in {"en", "zh"}:
+        return jsonify(error="Unsupported memo language."), 400
     pair = request.args.get("pair", "")
     if not valid_pair(pair):
         return jsonify(error="Provide one two-letter pair."), 400
     try:
+        if language == "zh":
+            options = chinese_options(pair)
+            return jsonify(pair=pair, words=[option["word"] for option in options],
+                           options=options, language="zh", source="chinese_memo")
         return jsonify(pair=pair, words=alternatives_for(pair), censored=True)
     except MemoPolicyConfigurationError:
         app.logger.warning("Memo alternatives unavailable: invalid MEMO_WORD_EXCLUSIONS format")

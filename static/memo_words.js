@@ -66,12 +66,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         tokens: memoWordTokens(document.getElementById(panel.dataset.memoWords).textContent)}));
     const words = {};
     const overrides = new Map();
+    const chineseOverrides = new Map();
+    try {
+        const saved = JSON.parse(localStorage.getItem('memo-chinese-choices') || '{}');
+        Object.entries(saved).forEach(([pair, word]) => {
+            if (/^[A-Zʧ]{2}$/.test(pair) && typeof word === 'string' && word.trim() && word.length <= 120) {
+                chineseOverrides.set(pair, word);
+            }
+        });
+    } catch (_) {}
+    function persistChineseChoices() {
+        try { localStorage.setItem('memo-chinese-choices', JSON.stringify(Object.fromEntries(chineseOverrides))); } catch (_) {}
+    }
+    let activePicker = null;
     const savedWords = new Map();
     const changedAccountPairs = new Set();
     const account = document.getElementById('memo-account')?.dataset || {};
     let signedIn = account.signedIn === 'true';
     let accountWarning = '';
-    const wordFor = token => overrides.has(pairKey(token))
+    const wordFor = token => language === 'zh'
+        ? chineseOverrides.get(pairKey(token)) || words[pairKey(token)]
+        : overrides.has(pairKey(token))
         ? overrides.get(pairKey(token)) || words[pairKey(token)]
         : savedWords.get(pairKey(token)) || words[pairKey(token)];
     const loaded = new Set();
@@ -146,40 +161,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'memo-change-word';
-        button.textContent = 'Choose word';
+        button.textContent = language === 'zh' ? '选择词语' : 'Choose word';
         button.setAttribute('aria-label', `Choose a word for ${token}`);
         button.addEventListener('click', () => openWordPicker(pairKey(token)));
         return button;
     }
     async function openWordPicker(pair) {
+        const pickerLanguage = language;
+        const chinese = pickerLanguage === 'zh';
+        activePicker?.close();
         const dialog = document.createElement('dialog');
+        activePicker = dialog;
         dialog.className = 'memo-word-picker';
+        if (chinese) dialog.setAttribute('data-no-translate', '');
         dialog.setAttribute('aria-label', `Choose a word for ${pair}`);
         const title = document.createElement('h3');
-        title.textContent = `Word for ${pair}`;
+        title.textContent = chinese ? `${pair} 的记忆词` : `Word for ${pair}`;
         const help = document.createElement('p');
-        help.textContent = 'Applies to every occurrence of this pair. Save to your account to reuse it on future visits, or leave unchecked to use it only on this page. Words are not submitted to CoLPI.';
+        help.textContent = chinese
+            ? '选择具体形象；“场景”按两个物体的首字母联想，I/U/V/ʧ 使用字形。原词表选项保留原来的编码方式。中文选择保存在此浏览器（需要允许本地存储），与英文选择分开。'
+            : 'Applies to every occurrence of this pair. Save to your account to reuse it on future visits, or leave unchecked to use it only on this page. Words are not submitted to CoLPI.';
         const status = document.createElement('p');
         status.setAttribute('role', 'status');
-        status.textContent = 'Loading CoLPI alternatives…';
+        status.textContent = chinese ? '正在加载中文备选词…' : 'Loading CoLPI alternatives…';
         const label = document.createElement('label');
-        label.textContent = 'Choose from CoLPI';
+        label.textContent = chinese ? '选择中文词语或场景' : 'Choose from CoLPI';
         const select = document.createElement('select');
         select.disabled = true;
         label.appendChild(select);
         const useChoice = document.createElement('button');
-        useChoice.type = 'button'; useChoice.textContent = 'Use selected word'; useChoice.disabled = true;
+        useChoice.type = 'button'; useChoice.textContent = chinese ? '使用所选词语' : 'Use selected word'; useChoice.disabled = true;
         const customLabel = document.createElement('label');
-        customLabel.textContent = 'Or enter your own word';
+        customLabel.textContent = chinese ? '或输入自己的词语' : 'Or enter your own word';
         const input = document.createElement('input');
         input.type = 'text'; input.maxLength = 120; input.value = wordFor(pair) || '';
         customLabel.appendChild(input);
         const useCustom = document.createElement('button');
-        useCustom.type = 'button'; useCustom.textContent = 'Use my word';
+        useCustom.type = 'button'; useCustom.textContent = chinese ? '使用自定义词语' : 'Use my word';
         const reset = document.createElement('button');
-        reset.type = 'button'; reset.textContent = 'Restore default';
+        reset.type = 'button'; reset.textContent = chinese ? '恢复默认' : 'Restore default';
         const close = document.createElement('button');
-        close.type = 'button'; close.textContent = 'Cancel';
+        close.type = 'button'; close.textContent = chinese ? '取消' : 'Cancel';
         let accountControl = document.createElement(signedIn ? 'label' : 'a');
         const saveAccount = document.createElement('input');
         saveAccount.type = 'checkbox'; saveAccount.checked = false;
@@ -235,10 +257,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 10000);
-        dialog.addEventListener('close', () => { pickerClosed = true; stopLoginChecks(); controller.abort(); clearTimeout(timer); dialog.remove(); });
+        dialog.addEventListener('close', () => { if (activePicker === dialog) activePicker = null; pickerClosed = true; stopLoginChecks(); controller.abort(); clearTimeout(timer); dialog.remove(); });
         async function apply(value) {
             if (!value.trim() || value.trim().length > 120) {
-                status.textContent = 'Enter a word between 1 and 120 characters.'; return;
+                status.textContent = chinese ? '请输入 1–120 个字符。' : 'Enter a word between 1 and 120 characters.'; return;
+            }
+            if (chinese) {
+                chineseOverrides.set(pair, value.trim());
+                persistChineseChoices();
+                render();
+                dialog.close();
+                return;
             }
             overrides.set(pair, value.trim());
             render();
@@ -262,10 +291,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.addEventListener('keydown', event => {
             if (event.key === 'Enter') { event.preventDefault(); apply(input.value); }
         });
-        reset.addEventListener('click', () => { overrides.set(pair, null); dialog.close(); render(); });
+        reset.addEventListener('click', () => {
+            if (chinese) { chineseOverrides.delete(pair); persistChineseChoices(); }
+            else overrides.set(pair, null);
+            dialog.close(); render();
+        });
         close.addEventListener('click', () => dialog.close());
-        dialog.append(title, help, label, useChoice, customLabel, useCustom, reset, close, accountControl, status);
-        if (signedIn) {
+        dialog.append(title, help, label, useChoice, customLabel, useCustom, reset, close);
+        if (!chinese) dialog.appendChild(accountControl);
+        dialog.appendChild(status);
+        if (signedIn && !chinese) {
             const removeSaved = document.createElement('button');
             removeSaved.type = 'button'; removeSaved.textContent = 'Remove saved account word';
             removeSaved.addEventListener('click', async () => {
@@ -281,19 +316,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.appendChild(dialog);
         dialog.showModal();
         try {
-            const response = await fetch('/api/memo-word-options?pair=' + encodeURIComponent(pair), {signal: controller.signal});
+            const response = await fetch('/api/memo-word-options?pair=' + encodeURIComponent(pair) + '&language=' + pickerLanguage, {signal: controller.signal});
             if (!response.ok) throw new Error('Unavailable');
             const result = await response.json();
-            if (result.censored !== true || result.pair !== pair || !Array.isArray(result.words)) throw new Error('Unverified');
+            if (result.pair !== pair || !Array.isArray(result.words) || result.words.some(word => typeof word !== 'string')) throw new Error('Unverified');
+            if (chinese ? result.language !== 'zh' || result.source !== 'chinese_memo' : result.censored !== true) throw new Error('Unverified');
+            if (pickerClosed) return;
             result.words.forEach(word => {
                 const option = document.createElement('option');
-                option.value = word; option.textContent = word;
+                option.value = word; option.textContent = chinese ? result.options?.find(item => item.word === word)?.label || word : word;
                 select.appendChild(option);
             });
             select.disabled = useChoice.disabled = result.words.length === 0;
-            status.textContent = (result.words.length ? 'Choose an alternative or enter your own.' : 'No alternatives available. You can enter your own word.') + (accountWarning ? ` ${accountWarning}` : '');
+            status.textContent = chinese
+                ? (result.words.length ? '请选择备选词，或输入自己的词语。' : '暂无备选词，可以输入自己的词语。')
+                : (result.words.length ? 'Choose an alternative or enter your own.' : 'No alternatives available. You can enter your own word.') + (accountWarning ? ` ${accountWarning}` : '');
         } catch (_) {
-            status.textContent = 'CoLPI alternatives are unavailable. You can still enter your own word.';
+            status.textContent = chinese ? '中文备选词暂时不可用，仍可输入自己的词语。' : 'CoLPI alternatives are unavailable. You can still enter your own word.';
         } finally { clearTimeout(timer); }
     }
     filters.forEach(filter => {
@@ -330,7 +369,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw error;
         }
         if (requestLanguage === 'en' && result.censored !== true) throw new Error('Censorship not verified');
-        if (requestLanguage === 'zh' && (result.language !== 'zh' || result.source !== 'chinese_workbook')) throw new Error('Invalid Chinese word source');
+        if (requestLanguage === 'zh' && (result.language !== 'zh' || result.source !== 'chinese_memo')) throw new Error('Invalid Chinese word source');
         Object.assign(words, result.words);
         selected.forEach(({panel}) => loaded.add(panel));
         render = () => entries.filter(({panel}) => loaded.has(panel)).forEach(({panel, tokens}) => {
@@ -339,12 +378,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (language === 'zh') {
                 panel.setAttribute('data-no-translate', '');
                 tokens.forEach((token, index) => {
-                    const word = isPair(token) ? words[pairKey(token)] : null;
-                    const item = document.createElement('span');
+                    const word = isPair(token) ? wordFor(token) : null;
+                    const item = document.createElement(bulk && isPair(token) ? 'button' : 'span');
                     if (bulk) {
                         if (index) panel.appendChild(document.createTextNode(' · '));
                         item.textContent = word || token;
                         item.title = token;
+                        if (isPair(token)) {
+                            item.type = 'button';
+                            item.className = 'bulk-word-button';
+                            item.setAttribute('aria-label', `${token}: ${word || token}. Choose word`);
+                            item.addEventListener('click', () => openWordPicker(pairKey(token)));
+                        }
                     } else {
                         item.className = 'memo-word';
                         const label = document.createElement('strong');
@@ -352,6 +397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const text = document.createElement('span');
                         text.textContent = word || token;
                         item.append(label, text);
+                        if (isPair(token)) item.appendChild(choiceButton(token));
                     }
                     panel.appendChild(item);
                 });
@@ -495,6 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     languageSelector?.addEventListener('change', async () => {
         const next = languageSelector.value === 'zh' ? 'zh' : 'en';
         if (next === language) return;
+        activePicker?.close();
         language = next;
         loadVersion++;
         const selected = entries.filter(({panel}) => loaded.has(panel) || !panel.hidden || panel.dataset.bulkWords === undefined);

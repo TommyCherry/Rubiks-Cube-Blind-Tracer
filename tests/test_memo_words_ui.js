@@ -17,7 +17,7 @@ function element() {
         append(...items) { this.children.push(...items); },
         appendChild(item) { this.children.push(item); }, replaceChildren() { ownText = ''; this.children = []; }};
 }
-async function fixture(memo, response = {censored: true, words: {AB: 'ABACUS', CD: '<b>CARD</b>'}}, failure = false, bulk = false, options = null, accountState = null, withScopes = false, language = 'en') {
+async function fixture(memo, response = {censored: true, words: {AB: 'ABACUS', CD: '<b>CARD</b>'}}, failure = false, bulk = false, options = null, accountState = null, withScopes = false, language = 'en', initialStorage = {}) {
     const panel = Object.assign(element(), {dataset: {memoWords: 'edge-memo'}});
     if (bulk) panel.dataset.bulkWords = '';
     const otherPanel = Object.assign(element(), {dataset: {memoWords: 'other-memo', bulkWords: '', storyRow: 'solve-2'}});
@@ -34,7 +34,7 @@ async function fixture(memo, response = {censored: true, words: {AB: 'ABACUS', C
     const button = {disabled: false, setAttribute() {}, addEventListener(_, fn) { click = fn; }};
     const status = element();
     const filter = {checked: false, addEventListener(_, fn) { change = fn; }};
-    const storage = new Map([['tracer-language', language]]);
+    const storage = new Map([['tracer-language', language], ...Object.entries(initialStorage)]);
     const languageSelector = Object.assign(element(), {value: language});
     const context = {Event, AbortController, setTimeout, clearTimeout, clearInterval, setInterval: () => 1,
         window: {addEventListener() {}, removeEventListener() {}},
@@ -610,13 +610,13 @@ test('a story exception preserves word examples, other panels, and successful bu
 });
 
 for (const bulk of [false, true]) test(`Chinese workbook words render without English stories (bulk=${bulk})`, async () => {
-    const f = await fixture('AB AC AI Q [Parity]', {language:'zh',source:'chinese_workbook',words:{AB:'阿波罗',AC:'鹌鹑蛋',AI:null}}, false, bulk, null, null, false, 'zh');
+    const f = await fixture('AB AC AI Q [Parity]', {language:'zh',source:'chinese_memo',words:{AB:'阿波罗',AC:'鹌鹑蛋',AI:null}}, false, bulk, null, null, false, 'zh');
     if (bulk) await f.click();
     assert.match(f.panel.textContent,/阿波罗/);
     assert.match(f.panel.textContent,/鹌鹑蛋/);
     assert.match(f.panel.textContent,/AI/);
     assert.match(f.panel.textContent,/\[Parity\]/);
-    assert.doesNotMatch(f.panel.textContent,/Example sentence|short cue|Choose word/);
+    assert.doesNotMatch(f.panel.textContent,/Example sentence|short cue/);
     f.toggle();
     assert.match(f.panel.textContent,/阿波罗/);
 });
@@ -625,7 +625,7 @@ test('changing language reloads loaded pairs and restores English stories', asyn
     const f = await fixture('AB');
     const urls=[];
     f.context.fetch=async url=>{urls.push(url);return {ok:true,json:async()=>url.includes('language=zh')
-        ? {language:'zh',source:'chinese_workbook',words:{AB:'阿波罗'}}
+        ? {language:'zh',source:'chinese_memo',words:{AB:'阿波罗'}}
         : {language:'en',censored:true,words:{AB:'abacus'}}};};
     f.languageSelector.value='zh';
     await f.languageSelector.change();
@@ -799,4 +799,68 @@ test('testing-mode story toggle hides and reopens one scramble without hiding it
     assert.equal(f.panel.children.at(-1).hidden,false);
     assert.equal(f.controls[0].hidden,false);
     assert.equal(f.calls,1);
+});
+
+for (const bulk of [false, true]) test(`Chinese alternatives apply to repeats and persist separately (bulk=${bulk})`, async () => {
+    const response = {language: 'zh', source: 'chinese_memo', words: {RG: '染缸'}};
+    const options = {pair: 'RG', language: 'zh', source: 'chinese_memo', words: ['肉干', '肉鸽'],
+        options: [{word: '肉干', kind: 'word', label: '肉干（rou gan）'}, {word: '肉鸽', kind: 'word', label: '肉鸽（rou ge）'}]};
+    const f = await fixture('RG RG', response, false, bulk, options, {words: {RG: 'rug'}}, false, 'zh');
+    assert.doesNotMatch(f.panel.textContent, /rug/);
+    const urls = [];
+    f.context.fetch = async url => {
+        urls.push(url);
+        return {ok: true, json: async () => url.includes('memo-word-options') ? options : url.includes('language=zh') ? response : {censored: true, words: {RG: 'RUG'}}};
+    };
+    const open = () => bulk ? f.panel.children[0].click() : f.panel.children[0].children[2].click();
+    await open();
+    let dialog = f.context.document.body.children.at(-1);
+    assert.match(urls[0], /pair=RG&language=zh/);
+    assert.doesNotMatch(dialog.textContent, /Save to my account|CoLPI|log in/);
+    assert.equal(dialog.children[2].children[0].children[0].textContent, '肉干（rou gan）');
+    dialog.children[2].children[0].value = '肉干';
+    await dialog.children[3].click();
+    assert.equal((f.panel.textContent.match(/肉干/g) || []).length, 2);
+    assert.equal(JSON.parse(f.storage.get('memo-chinese-choices')).RG, '肉干');
+    f.languageSelector.value = 'en';
+    await f.languageSelector.change();
+    assert.doesNotMatch(f.panel.textContent, /肉干/);
+    f.languageSelector.value = 'zh';
+    await f.languageSelector.change();
+    assert.match(f.panel.textContent, /肉干/);
+    await open();
+    dialog = f.context.document.body.children.at(-1);
+    dialog.children[6].click();
+    assert.match(f.panel.textContent, /染缸/);
+    assert.equal(JSON.parse(f.storage.get('memo-chinese-choices')).RG, undefined);
+});
+
+test('Chinese picker labels scenes, rejects an English source, and permits safe custom text', async () => {
+    const f = await fixture('AI', {language: 'zh', source: 'chinese_memo', words: {AI: '矮人旁的I形钢梁'}}, false, false,
+        {pair: 'AI', censored: true, words: ['English']}, null, false, 'zh');
+    await f.panel.children[0].children[2].click();
+    let dialog = f.context.document.body.children.at(-1);
+    assert.equal(dialog.children[3].disabled, true);
+    assert.match(dialog.children.at(-1).textContent, /暂时不可用/);
+    dialog.children[4].children[0].value = '<b>中文</b>';
+    await dialog.children[5].click();
+    assert.equal(f.panel.children[0].children[1].textContent, '<b>中文</b>');
+    const label = '矮人旁的I形钢梁 — 场景（A: ai ren + I: 字形联想）';
+    f.context.fetch = async () => ({ok: true, json: async () => ({pair: 'AI', language: 'zh', source: 'chinese_memo',
+        words: ['矮人旁的I形钢梁'], options: [{word: '矮人旁的I形钢梁', kind: 'scene', label}]})});
+    await f.panel.children[0].children[2].click();
+    dialog = f.context.document.body.children.at(-1);
+    assert.equal(dialog.children[2].children[0].children[0].textContent, label);
+    dialog.close();
+});
+
+test('Chinese choices restore on a later visit and ignore malformed local data', async () => {
+    const response = {language: 'zh', source: 'chinese_memo', words: {RG: '染缸'}};
+    const f = await fixture('RG RG', response, false, false, null, null, false, 'zh',
+        {'memo-chinese-choices': JSON.stringify({RG: '肉干', BAD: 'ignored', AB: 123})});
+    assert.equal((f.panel.textContent.match(/肉干/g) || []).length, 2);
+    for (const value of ['not json', 'null', '{"RG":123}', '{"RG":" "}']) {
+        const invalid = await fixture('RG', response, false, false, null, null, false, 'zh', {'memo-chinese-choices': value});
+        assert.match(invalid.panel.textContent, /染缸/);
+    }
 });
