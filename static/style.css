@@ -1445,3 +1445,8 @@ html[lang="zh-Hans"] [data-story-settings] { display: none; }
 .show-memo-stories:disabled { opacity: .65; cursor: default; }
 .show-memo-stories:focus-visible { outline: 2px solid #243342; outline-offset: 3px; }
 .memo-story-settings[hidden], .memo-example-story[hidden] { display: none; }
+
+.scramble-type-controls { display: grid; gap: 8px; margin-bottom: 16px; }
+.scramble-type-controls label { font-size: 12px; color: #586877; }
+.scramble-type-controls select { width: 100%; max-width: 240px; }
+.scramble-type-controls p { margin: 0; font-size: 13px; color: #586877; }

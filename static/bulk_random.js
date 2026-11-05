@@ -10,6 +10,7 @@
     });
     button.addEventListener('click', async () => {
         const amount = Number(count.value);
+        const scrambleType = document.getElementById('scramble-type')?.value || '333';
         if (!Number.isInteger(amount) || amount < 1 || amount > 1000) {
             status.textContent = 'Enter a whole number from 1 to 1,000.';
             return;
@@ -35,7 +36,7 @@
                         if (typeof value !== 'string' || !value.trim()) finish(new Error('empty'));
                         else finish(null, value.trim());
                     };
-                    worker.postMessage([i + 1, 'scramble', ['333']]);
+                    worker.postMessage([i + 1, 'scramble', [scrambleType]]);
                 });
                 scrambles.push(scramble);
             }

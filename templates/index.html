@@ -103,11 +103,24 @@
 
             <!-- SCRAMBLE -->
 
+                {% if beginner %}
+                <div class="scramble-type-controls">
+                <label for="scramble-type">Scramble type</label>
+                <select id="scramble-type" name="scramble_type" aria-describedby="scramble-type-help">
+                    {% for value, label in [('333', 'Full cube'), ('edges', 'Edges only'), ('corners', 'Corners only')] %}
+                    <option value="{{ value }}" {% if request.form.get('scramble_type', '333') == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <p id="scramble-type-help">Applies to single and bulk random scrambles. Edges only keeps corners solved; corners only keeps edges solved.</p>
+                </div>
+                {% endif %}
+
             <div class="scramble-section">
 
                 <label for="scramble">
                     <strong>Scramble:</strong>
                 </label>
+
 
                 <div class="scramble-entry">
                     <input

@@ -38,6 +38,11 @@ Leave bounds blank for any count. Set the same minimum and maximum for an exact 
 Distributions describe all valid scrambles in this batch. Cycle breaks count edge and corner cycle entries, including entries for flips and twists. Flips and twists count pieces already in their correct position but misoriented, including the buffer, before pseudoswap.|分布统计本批次所有有效打乱。借位次数包含棱块和角块的借位，也包含翻棱和反角的借位。翻棱和反角统计反编前已在正确位置但朝向错误的块，包括缓冲块。
 Scramble image|打乱图
 Number of scrambles|打乱数量
+Scramble type|打乱类型
+Full cube|完整魔方
+Edges only|仅棱块
+Corners only|仅角块
+Applies to single and bulk random scrambles. Edges only keeps corners solved; corners only keeps edges solved.|适用于单条和批量随机打乱。仅棱块保持角块复原；仅角块保持棱块复原。
 Generate {0} random scrambles|生成 {0} 个随机打乱
 Enter a whole number from 1 to 1,000.|请输入 1 到 1,000 之间的整数。
 Generating scrambles: {0}/{1}|正在生成打乱：{0}/{1}

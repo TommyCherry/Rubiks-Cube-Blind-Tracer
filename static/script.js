@@ -207,7 +207,7 @@ usePseudoswap.addEventListener("change", function () {
 
 generateScrambleButton.addEventListener("click", function () {
 
-    cstimerWorker.getScramble("333").then(function (scramble) {
+    cstimerWorker.getScramble(document.getElementById("scramble-type")?.value || "333").then(function (scramble) {
         scrambleInput.value = scramble;
     });
 

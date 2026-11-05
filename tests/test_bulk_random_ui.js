@@ -2,16 +2,17 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-function fixture(value, fail = false) {
+function fixture(value, fail = false, scrambleType) {
     const ids = {};
     for (const id of ['generate-bulk-scrambles','bulk-random-count','bulk-scrambles','generate-bulk-memo','bulk-generation-status']) {
         ids[id] = {value: id === 'bulk-random-count' ? value : 'original', handlers: {},
             addEventListener(name, fn) { this.handlers[name] = fn; }, dispatchEvent() {}};
     }
+    if (scrambleType) ids['scramble-type'] = {value: scrambleType};
     const workers = [];
     class Worker {
         constructor() { workers.push(this); }
-        postMessage(message) { queueMicrotask(() => fail ? this.onerror() : this.onmessage({data: [message[0], 'scramble', 'R U F']})); }
+        postMessage(message) { (this.messages ||= []).push(message); queueMicrotask(() => fail ? this.onerror() : this.onmessage({data: [message[0], 'scramble', 'R U F']})); }
         terminate() { this.terminated = true; }
     }
     vm.runInNewContext(fs.readFileSync('static/bulk_random.js', 'utf8'), {
@@ -36,4 +37,11 @@ test('failure preserves input, releases worker and enables retry', async () => {
     assert.equal(f.ids['bulk-scrambles'].value, 'original');
     assert.equal(f.workers[0].terminated, true);
     assert.equal(f.ids['generate-bulk-scrambles'].disabled, false);
+});
+
+test('bulk generation uses the selected piece type, defaulting to full cube', async () => {
+    for (const type of [undefined, 'edges', 'corners']) {
+        const f = fixture('2', false, type); await f.run();
+        assert.deepEqual(f.workers[0].messages.map(message => message[2][0]), [type || '333', type || '333']);
+    }
 });
